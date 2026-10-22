@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商城-分销系统 产品需求文档 v0.7</title>
+<style>
+  :root{
+    --paper:#f6f4ef;
+    --surface:#fffdf9;
+    --ink:#1b1a17;
+    --ink-2:#45413a;
+    --muted:#7a756b;
+    --line:#e2ddd2;
+    --line-soft:#ece7dc;
+    --accent:#0d5c53;
+    --accent-soft:#e6efed;
+    --warn:#96690f;
+    --warn-soft:#fbf1dc;
+    --warn-line:#e8d5ae;
+    --radius:12px;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --serif:"Songti SC","Source Han Serif SC","Noto Serif SC",Georgia,serif;
+    --mono:"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .layout{display:grid;grid-template-columns:268px minmax(0,1fr)}
+
+  /* ---------- sidebar ---------- */
+  .sidebar{
+    position:sticky;top:0;height:100vh;overflow:auto;
+    border-right:1px solid var(--line);background:#f1eee6;
+    padding:30px 20px 26px;display:flex;flex-direction:column;gap:20px;
+  }
+  .brand{font-family:var(--serif);font-size:19px;font-weight:700;line-height:1.45;letter-spacing:.01em}
+  .brand small{display:block;font-family:var(--sans);font-size:10.5px;font-weight:500;color:var(--muted);letter-spacing:.16em;margin-top:7px}
+  .toc{list-style:none;margin:0;padding:0;font-size:13px}
+  .toc li{margin:1px 0}
+  .toc a{
+    display:flex;align-items:baseline;gap:8px;
+    padding:7px 10px;border-radius:7px;color:var(--ink-2);
+    text-decoration:none;border-left:2px solid transparent;
+    transition:background .15s ease;
+  }
+  .toc a:hover{background:#e8e3d6}
+  .toc a.active{background:var(--accent-soft);color:var(--accent);border-left-color:var(--accent);font-weight:600}
+  .toc .num{font-family:var(--mono);font-size:10.5px;color:var(--muted);min-width:14px}
+  .toc a.active .num{color:var(--accent)}
+  .side-meta{font-size:10.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;line-height:1.95;margin-top:auto}
+  .side-meta b{display:block;color:var(--ink-2);font-size:10.5px;letter-spacing:.1em;margin-bottom:2px}
+
+  /* ---------- main ---------- */
+  main{padding:50px 54px 90px;max-width:980px;min-width:0}
+  .kicker{font-size:10.5px;letter-spacing:.24em;color:var(--accent);font-weight:700;text-transform:uppercase}
+  h1{font-family:var(--serif);font-size:38px;line-height:1.25;margin:12px 0 8px;letter-spacing:-.005em;font-weight:700}
+  .sub{font-size:15px;color:var(--muted);margin:0}
+  .doc-head{border-bottom:2px solid var(--ink);padding-bottom:26px;margin-bottom:30px}
+  .meta-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+    background:var(--line);border:1px solid var(--line);border-radius:9px;
+    overflow:hidden;margin-top:26px;
+  }
+  .meta-grid div{background:var(--surface);padding:10px 14px}
+  .meta-grid dt{font-size:9.5px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+  .meta-grid dd{margin:3px 0 0;font-size:13px;font-weight:600}
+
+  .lede{
+    background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);
+    padding:18px 22px;border-radius:0 9px 9px 0;font-size:14.5px;line-height:1.85;
+    margin:0 0 8px;
+  }
+  .lede b{color:var(--accent)}
+
+  h2{
+    font-family:var(--serif);font-size:24px;font-weight:700;letter-spacing:.005em;
+    margin:0 0 10px;padding-top:24px;border-top:1px solid var(--line);
+    display:flex;align-items:baseline;gap:12px;
+  }
+  h2 .snum{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:400;letter-spacing:.06em}
+  section{margin-top:46px}
+  h3{font-size:15.5px;font-weight:700;margin:28px 0 6px;color:var(--ink)}
+  h4{font-size:13.5px;font-weight:700;margin:18px 0 4px;color:var(--ink-2)}
+  p{margin:9px 0}
+  ul,ol{margin:9px 0;padding-left:22px}
+  li{margin:5px 0}
+  .note{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+  .strong{font-weight:700}
+
+  /* ---------- decisions ---------- */
+  .decision-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:12px;margin:18px 0 4px}
+  .decision{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+  .decision .dd{font-family:var(--mono);font-size:10.5px;color:var(--accent);letter-spacing:.08em;font-weight:700}
+  .decision h4{margin:7px 0 5px;font-size:13.5px}
+  .decision p{font-size:12.5px;color:var(--ink-2);margin:0;line-height:1.7}
+
+  /* ---------- tables ---------- */
+  .tbl-wrap{overflow-x:auto;margin:14px 0 6px;border:1px solid var(--line);border-radius:10px;background:var(--surface);max-width:100%}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{
+    background:#efeae0;text-align:left;font-weight:600;padding:9px 12px;
+    border-bottom:1px solid var(--line);white-space:nowrap;
+    font-size:11px;letter-spacing:.05em;color:var(--ink-2);
+  }
+  td{padding:9px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top;line-height:1.65}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#faf8f2}
+  td.mono{font-family:var(--mono);font-size:11px;color:var(--accent);white-space:nowrap}
+  td.c{text-align:center;color:var(--muted)}
+  .tbl-wrap table{min-width:620px}
+
+  /* ---------- lanes ---------- */
+  .lanes{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:14px 16px;overflow-x:auto;margin:18px 0 6px}
+  .lanes-inner{min-width:860px}
+  .stage-head{display:grid;grid-template-columns:104px repeat(7,1fr);gap:6px;padding:0 0 8px}
+  .stage-head span{
+    font-size:10px;letter-spacing:.06em;color:var(--muted);text-align:center;
+    font-family:var(--mono);
+  }
+  .lane{display:grid;grid-template-columns:104px repeat(7,1fr);gap:6px;padding:6px 0;border-top:1px dashed var(--line)}
+  .lane-label{
+    display:flex;align-items:center;gap:7px;justify-content:center;
+    font-size:11.5px;font-weight:700;letter-spacing:.06em;
+    color:var(--accent);background:var(--accent-soft);border-radius:8px;
+  }
+  .lane-label .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .lane:nth-child(3) .lane-label{color:#7a5a12;background:#f6eeda}
+  .lane:nth-child(3) .lane-label .dot{background:#a8801f}
+  .lane:nth-child(4) .lane-label{color:#4d4a6b;background:#eeedf6}
+  .lane:nth-child(4) .lane-label .dot{background:#5f5b86}
+  .cell{
+    background:#fbf9f3;border:1px solid var(--line-soft);border-radius:8px;
+    padding:8px 9px;font-size:11px;line-height:1.55;color:var(--ink-2);min-height:58px;
+  }
+  .cell.empty{background:transparent;border:1px dashed #e6e0d2;color:#c6bfb0;text-align:center;display:flex;align-items:center;justify-content:center}
+  .cell b{color:var(--ink);display:block;font-weight:600;margin-bottom:2px;font-size:11px}
+
+  /* ---------- code pair ---------- */
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0 4px}
+  .pair .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+  .pair .card h4{margin:0 0 8px;font-size:13.5px;display:flex;align-items:center;gap:8px}
+  .pair .tag{font-family:var(--mono);font-size:9.5px;padding:2px 6px;border-radius:4px;letter-spacing:.06em}
+  .pair .tag.a{background:var(--accent-soft);color:var(--accent)}
+  .pair .tag.b{background:#eeece0;color:#6f6234}
+  .pair ul{margin:0;padding-left:18px}
+  .pair li{font-size:12.5px;line-height:1.7;margin:4px 0}
+
+  /* ---------- FR ---------- */
+  .fr{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin:14px 0}
+  .fr-head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+  .fr-id{font-family:var(--mono);font-size:10.5px;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:5px;font-weight:700;letter-spacing:.05em}
+  .fr-title{font-size:16px;font-weight:700;letter-spacing:.005em}
+  .fr p{margin:8px 0;font-size:13.5px;line-height:1.8}
+  .fr ol,.fr ul{margin:8px 0;padding-left:20px}
+  .fr li{font-size:13.5px;line-height:1.8;margin:5px 0}
+  .lb{
+    display:inline-block;font-size:10.5px;font-weight:700;color:var(--accent);
+    background:var(--accent-soft);border-radius:4px;padding:1px 6px;
+    margin-right:8px;letter-spacing:.08em;
+  }
+  .sublabel{font-size:12.5px;font-weight:700;color:var(--ink-2);margin:14px 0 2px;letter-spacing:.03em}
+  .fr .exc{background:#fbf4f4;border-left:2px solid #d8bcbc;padding:8px 12px;border-radius:0 6px 6px 0;font-size:12.5px}
+  .fr .exc .lb{color:#8d5252;background:#f3e4e4}
+
+  /* ---------- fsm ---------- */
+  .fsm{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 6px}
+  .node{border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);padding:5px 12px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+  .node.grey{border-color:#cfc7b6;background:#f2efe6;color:var(--muted)}
+  .node.bad{border-color:#cfaeae;background:#f7ecec;color:#8d5252}
+  .arrow{color:#bdb5a5;font-size:12px}
+
+  .tbd{
+    display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;
+    background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn-line);
+    border-radius:4px;padding:0 5px;line-height:16px;vertical-align:1px;
+  }
+  .callout{
+    background:var(--warn-soft);border:1px solid var(--warn-line);border-radius:10px;
+    padding:14px 18px;font-size:13px;line-height:1.8;margin:16px 0;
+  }
+  .callout b{color:var(--warn)}
+  .callout.green{background:var(--accent-soft);border-color:#c6ddd8}
+  .callout.green b{color:var(--accent)}
+
+  footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+  @media (max-width:960px){
+    .layout{grid-template-columns:minmax(0,1fr)}
+    .sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+    .toc{display:flex;flex-wrap:wrap;gap:4px}
+    .toc a{padding:5px 9px}
+    .side-meta{display:none}
+    main{padding:34px 22px 60px}
+    h1{font-size:29px}
+    .meta-grid{grid-template-columns:repeat(2,1fr)}
+    .pair{grid-template-columns:1fr}
+  }
+  @media print{
+    body{background:#fff}
+    .sidebar{display:none}
+    .layout{display:block}
+    main{padding:0;max-width:none}
+    .fr,.decision,.pair .card,.tbl-wrap,.lanes{break-inside:avoid}
+    h2{break-after:avoid}
+    .toc{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      商城-分销系统
+      <small>PRODUCT REQUIREMENT DOC</small>
+    </div>
+    <nav>
+      <ul class="toc">
+        <li><a href="#decisions"><span class="num">·</span>关键决策</a></li>
+        <li><a href="#s1"><span class="num">1</span>背景与目标</a></li>
+        <li><a href="#s2"><span class="num">2</span>角色与对象</a></li>
+        <li><a href="#s3"><span class="num">3</span>范围与边界</a></li>
+        <li><a href="#s4"><span class="num">4</span>核心流程</a></li>
+        <li><a href="#s5"><span class="num">5</span>功能需求</a></li>
+        <li><a href="#s6"><span class="num">6</span>共享规则</a></li>
+        <li><a href="#s7"><span class="num">7</span>待确认问题</a></li>
+      </ul>
+    </nav>
+    <div class="side-meta">
+      <b>文档状态</b>
+      v0.7 · 待评审<br>
+      2026-10-22
+      <b style="margin-top:10px">本版变更</b>
+      22 项 TBD 全部落值<br>
+      电子签支持双服务商切换<br>
+      报告开放下载
+      <b style="margin-top:10px">标注说明</b>
+      <span class="tbd">TBD</span> 需业务方确认后填入
+    </div>
+  </aside>
+
+  <main>
+
+    <header class="doc-head">
+      <div class="kicker">Product Requirement Document</div>
+      <h1>商城-分销系统</h1>
+      <p class="sub">检测盒分销 · 商家小程序 · 预付款采购 · 报告解读 · 佣金结算 · 合同签约 · 销售培训 · 合规留痕</p>
+      <dl class="meta-grid">
+        <div><dt>版本</dt><dd>v0.7</dd></div>
+        <div><dt>状态</dt><dd>待评审</dd></div>
+        <div><dt>日期</dt><dd>2026-10-22</dd></div>
+        <div><dt>范围</dt><dd>一期 P0</dd></div>
+      </dl>
+    </header>
+
+    <p class="lede">
+      系统把「检测盒」作为核心商品，用三条主线把分散的角色串起来：<b>订单流</b>管钱和货，<b>样本流</b>管检测履约，<b>权益流</b>管客户归属与分佣。归属不看谁先点链接，看客户手里那盒检测盒上的码：出库时码已绑定出货渠道，客户扫码激活即归属该渠道，同时这份样本也有了唯一身份。报告内容按归属对渠道方开放，C 端可关闭授权并自查浏览记录。分销做两级，一级是归属渠道、二级是其邀请上级。商家在 B 端小程序用预付款采购、查看本店渠道的客户报告；系统只记账不碰钱，金额在后台算清、按周期出对账单。报告与解读完成后通知商家，由商家转给客户；对外怎么讲，由平台统一课程与合规素材约束。
+    </p>
+
+    <section id="decisions" style="margin-top:34px">
+      <h2><span class="snum">00</span>关键决策</h2>
+      <p>以下七条是本方案的地基，任何一条被推翻都会改变功能结构和开发量，建议评审时优先对齐。</p>
+      <div class="decision-grid">
+        <div class="decision">
+          <div class="dd">D1</div>
+          <h4>系统只记账，不碰资金</h4>
+          <p>不代收货款、不做自动分账、不做提现打款。金额在后台算清并按周期出对账单，资金收付与开票在线下完成。好处是不涉及支付与税务资质，上线快；代价是账实一致依赖线下对账纪律，系统只能保证算得准、记得清。</p>
+        </div>
+        <div class="decision">
+          <div class="dd">D2</div>
+          <h4>分销做两级，层级硬上限</h4>
+          <p>一级是订单归属人，二级是其邀请上级。系统在数据结构上把深度限制为 2，第三级无法创建，不靠配置约束。二级佣金只按商品成交金额计算，不按发展人员数量计酬。</p>
+        </div>
+        <div class="decision">
+          <div class="dd">D3</div>
+          <h4>盒码即渠道，扫码即归属</h4>
+          <p>每盒检测盒出库时生成唯一盒码，并绑定出货渠道。客户扫码激活的同时完成两件事：这份样本是谁的，这一单算哪个渠道。归属一次写定，不设保护期，不做点击归因，争议以盒码为准。</p>
+        </div>
+        <div class="decision">
+          <div class="dd">D4</div>
+          <h4>报告内容对渠道方可见，以订单归属为界</h4>
+          <p>商家、合伙人、销售可查看自己所辖订单的报告、解读与营养方案，用于向客户解释和服务。C 端在下单与激活时被告知，可随时关闭授权；每次查看留痕，C 端可自查浏览记录。跨归属不可见。</p>
+        </div>
+        <div class="decision">
+          <div class="dd">D5</div>
+          <h4>未取得票证不算结清</h4>
+          <p>对账单逐户显示应付金额与已登记票证金额。没有发票或收据的部分保持「未结清」，不因线下口头确认就标记完成。这样「开不了票」在系统里是一个看得见的口径，而不是账算完才发现付不出去。</p>
+        </div>
+        <div class="decision">
+          <div class="dd">D6</div>
+          <h4>培训只做记录，不设交易门槛</h4>
+          <p>课程由平台统一提供，销售与合伙人自主完成。完成情况与考试成绩作为能力与合规留痕，供平台和商家查看，但不阻断上架、下单或出库。是否对未完成培训的人采取措施，由商家自行管理。</p>
+        </div>
+        <div class="decision">
+          <div class="dd">D7</div>
+          <h4>报告通知商家，由商家转给客户</h4>
+          <p>报告与 AI 解读完成后，系统在后台通知平台，并通过微信服务通知提醒商家小程序；商家查看后一键转发给对应消费者。推送只带「报告已生成」与入口，不携带指标数值；入口需身份校验，转发出去的卡片对第三人无效。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="s1">
+      <h2><span class="snum">01</span>背景与目标</h2>
+      <p>一条完整的检测生意链上同时存在多种角色：上游供应商与实验室提供检测盒和报告，平台提供商城与账目，下游商家、合伙人、销售负责获客和服务，C 端用户完成购买与采样。链条一旦跨过三个角色，五类问题会同时出现：</p>
+      <ul>
+        <li><span class="strong">归属问题。</span>同一客户可能被多个渠道接触，靠聊天记录和表格争不出结论；销售离职时客户能不能带走，也没有规则。</li>
+        <li><span class="strong">算账问题。</span>两级分销之后，一级与二级的比例、退款冲回、层级变更叠加在一起，靠表格算不清，合伙人也无法核对每笔佣金的来源。</li>
+        <li><span class="strong">凭证问题。</span>合伙人多为自然人，无法开具发票；线下对账缺少统一的应付口径与票证登记，平台与合伙人双方都承担税务风险。</li>
+        <li><span class="strong">交付问题。</span>报告和解读分散在微信与邮件里，渠道方要反复截图转发，既低效也无法保证口径一致；谁看过、谁改过，事后无法还原。</li>
+        <li><span class="strong">说错话的问题。</span>真正面对客户的是销售和合伙人，他们若承诺疗效、解读超出边界，风险由平台承担，而平台没有培训与授权的抓手。</li>
+      </ul>
+      <p>产品的回应是把这些问题各自收敛到一个机制上：<span class="strong">盒码固定归属、下单快照固定算账口径、对账单与票证登记固定结清口径、报告按归属开放并留痕、培训考核固定对外表达资格</span>。</p>
+
+      <h3>目标（以可观察的结果描述）</h3>
+      <ul>
+        <li>任意一笔 C 端订单，都能由盒码追溯到唯一归属渠道、唯一归属销售、唯一样本与唯一报告版本。</li>
+        <li>合伙人可在系统内逐单看到佣金的计算基数、比例、层级、金额、规则版本与当前对账状态。</li>
+        <li>每个结算周期，供应商、商家、合伙人各拿到一份可逐单下钻的对账单，数字与后台总览一致。</li>
+        <li>对账单上能直接看出「已登记票证」与「未取得票证」的金额，未取得票证的部分不会被标记为结清。</li>
+        <li>渠道方可在自己的订单范围内直接查看报告与解读，不需要线下索要；C 端能看到谁在何时看过自己的报告。</li>
+        <li>商家能在 B 端小程序用预付款完成进货，并在同一处看到本店渠道消费者的报告与 AI 解读。</li>
+        <li>报告与解读完成后提醒商家转发，通知与转发记录均可追溯。</li>
+        <li>培训完成情况与考试成绩可追溯，作为平台与商家管理对外表达口径的依据。</li>
+        <li>商家与销售无需自行设计物料，即可生成带自己渠道码的推广素材与服务话术。</li>
+      </ul>
+    </section>
+
+    <section id="s2">
+      <h2><span class="snum">02</span>角色与对象</h2>
+
+      <h3>2.1 角色定义</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>角色</th><th>归属</th><th>核心职责</th><th>数据边界</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">平台运营</td><td>平台</td><td>商品定价、佣金规则、对账审核、票证登记、合规管理、素材与课程审核</td><td>全量</td></tr>
+            <tr><td class="mono">供应商</td><td>平台</td><td>建品、报供货价、供货、批次与库存</td><td>自己的商品、采购单与批次</td></tr>
+            <tr><td class="mono">实验室</td><td>平台或供应商</td><td>收样、检测、出报告、样本异常登记</td><td>样本与自己出具的报告</td></tr>
+            <tr><td class="mono">商家</td><td>平台</td><td>选品上架、定价、履约、发展销售、服务散户</td><td>本店订单、客户、销售、报告与预付款</td></tr>
+            <tr><td class="mono">合伙人</td><td>平台</td><td>推广获客、持有渠道码、按规则拿佣金</td><td>本渠道订单、客户与报告</td></tr>
+            <tr><td class="mono">销售</td><td>商家</td><td>跟进客户、登记成交、讲解报告</td><td>自己负责的客户与报告</td></tr>
+            <tr><td class="mono">营养师</td><td>平台或商家</td><td>复核 AI 解读、出具营养方案、随访</td><td>被指派且 C 端已授权的报告</td></tr>
+            <tr><td class="mono">C 端用户</td><td>—</td><td>购买检测盒、采样、查看报告与解读</td><td>仅本人报告、解读与方案</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">一个主体可同时拥有商家与合伙人身份，但同一笔 C 端订单只按盒码判定一个归属，不叠加两份佣金。</p>
+
+      <h3>2.2 核心对象</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>对象</th><th>说明</th><th>唯一键</th><th>关键属性</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>商品 SKU</td><td>检测盒及服务包</td><td>SKU 编码</td><td>检测项目、样本类型、供货价、零售价、是否可分佣</td></tr>
+            <tr><td>批次</td><td>供应商生产批</td><td>批次号</td><td>生产日期、有效期、库存、所属供应商</td></tr>
+            <tr><td>渠道码</td><td>商家 / 合伙人 / 销售的推广身份码</td><td>码值全局唯一</td><td>归属主体、可用商品、状态；出库时写入盒码</td></tr>
+            <tr><td>客户档案</td><td>C 端用户 + 归属关系</td><td>手机号</td><td>实名信息、归属渠道、归属销售、归属来源盒码、归属时间</td></tr>
+            <tr><td>采购单</td><td>商家向供应商进货</td><td>单号</td><td>供货价快照、批次、支付状态</td></tr>
+            <tr><td>销售单</td><td>C 端向商家购买</td><td>单号</td><td>价格快照、归属快照、佣金规则快照、履约状态</td></tr>
+            <tr><td>盒码 / 样本</td><td>一盒一码，出库时绑定出货渠道</td><td>盒码</td><td>归属渠道、采购单、批次、激活人实名、样本状态、报告</td></tr>
+            <tr><td>报告</td><td>实验室出具的检测结果</td><td>报告号 + 版本号</td><td>结构化指标、PDF、审核人、发布时间</td></tr>
+            <tr><td>解读</td><td>AI 生成并经营养师复核的内容</td><td>解读版本号</td><td>输入快照、模型版本、复核差异</td></tr>
+            <tr><td>佣金流水</td><td>按订单与规则计算的应付金额</td><td>佣金流水号</td><td>基数、比例、金额、层级（一级 / 二级）、状态、规则版本</td></tr>
+            <tr><td>合同</td><td>电子签署的合作与服务约定</td><td>合同号 + 模板版本</td><td>签署方、签署时间、存证编号、到期日</td></tr>
+            <tr><td>邀请关系</td><td>渠道主体之间的上下级绑定</td><td>下级主体</td><td>上级主体、绑定时间、生效状态、变更记录</td></tr>
+            <tr><td>票证登记</td><td>对账时登记的发票或收据</td><td>票号</td><td>抬头、税号、金额、开具日期、影像件、关联账单</td></tr>
+            <tr><td>对账单</td><td>按周期与主体汇总的应收应付</td><td>账单号</td><td>周期、主体、应付金额、已登记票证、差异、对账状态</td></tr>
+            <tr><td>预付款账户</td><td>商家在平台的采购余额</td><td>账户号</td><td>可用余额、冻结金额、累计充值、累计扣减</td></tr>
+            <tr><td>充值单</td><td>线下打款后的入账记录</td><td>充值单号</td><td>打款凭证、金额、入账人、入账时间</td></tr>
+            <tr><td>推送记录</td><td>报告通知与商家转发的记录</td><td>推送号</td><td>接收人、渠道、模板版本、发送时间、转发人、送达状态</td></tr>
+            <tr><td>课程</td><td>按角色与检测项目组织的培训单元</td><td>课程编码 + 版本</td><td>章节、学时、是否必修、关联商品、有效期</td></tr>
+            <tr><td>学习档案</td><td>一个人的学习与考试记录</td><td>账号 + 课程</td><td>完成进度、成绩、补考次数、已学课程、合规课到期时间</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>2.3 盒码：一个二维码，两个答案</h3>
+      <p>平台不再靠「谁先点链接」判断客户归谁，而是靠一个物理凭据：检测盒上贴的那张码。它在出库时生成，已经绑定了出货渠道。客户扫码激活时，同一次操作回答两个问题——这份样本是谁的，这一单算哪个渠道。</p>
+      <div class="pair">
+        <div class="card">
+          <h4><span class="tag a">权益</span>扫一次即定渠道</h4>
+          <ul>
+            <li>码在出库时绑定出货渠道（商家 / 合伙人 / 平台自营）</li>
+            <li>客户首次激活即归属该渠道，不需要再扫码抢客</li>
+            <li>归属一次写定，不可转移；之后再扫只更新样本状态</li>
+            <li>不设保护期，也不存在「首次点击」或「最后点击」归因</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4><span class="tag b">履约</span>一盒一码一身份</h4>
+          <ul>
+            <li>码值全局唯一，一盒一个，不可复用</li>
+            <li>绑定出货渠道、采购单、批次与激活人实名</li>
+            <li>退款或作废后码失效，不能再被激活</li>
+            <li>报告只认这个码对应的实名，不认转发的链接</li>
+          </ul>
+        </div>
+      </div>
+      <p class="note">物理上可以是一张合成码（扫码同时解析渠道与盒号），也可以是「渠道码 + 盒号」两张标。系统按合成码设计；若实际使用两张标，以盒号为准绑定归属。</p>
+
+      <h3>2.4 两个商城不能混</h3>
+      <p>商家进货与消费者购买是两条链路，商品池、价格、结算方式、是否计佣都不同。系统里必须拆成两个入口，否则预付款扣错、佣金算错。</p>
+      <div class="pair">
+        <div class="card">
+          <h4><span class="tag a">B 端</span>采购商城</h4>
+          <ul>
+            <li>使用者：商家（小程序）</li>
+            <li>买什么：检测盒、耗材、采样包</li>
+            <li>价格：供货价 / 平台采购价</li>
+            <li>怎么付：预付款余额扣减，线下充值入账</li>
+            <li>产生：采购单，不产生分销佣金</li>
+            <li>票证：平台对商家开票，线下完成</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4><span class="tag b">C 端</span>零售商城</h4>
+          <ul>
+            <li>使用者：消费者（C 端小程序 / H5）</li>
+            <li>买什么：检测盒 + 报告解读服务</li>
+            <li>价格：零售价，不得低于平台底价</li>
+            <li>怎么付：商家线下收款或既有收款方式，系统登记状态</li>
+            <li>产生：销售单，按盒码归属算两级佣金</li>
+            <li>履约：盒码 → 实验室 → 报告与解读 → 微信送达</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="s3">
+      <h2><span class="snum">03</span>范围与边界</h2>
+
+      <h3>3.1 一期 P0（最小完整闭环）</h3>
+      <p>四个闭环必须同时成立，缺一个都不算「跑通」：交易闭环、履约闭环、结算闭环、合规底座。</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>闭环</th><th>包含能力</th><th>完成标志</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">P0-A 交易</td>
+              <td>B 端小程序、采购商城、预付款账户、商品与批次、采购单、销售单、账目记录</td>
+              <td>商家能在小程序用预付款完成一次采购，C 端能完成一笔下单</td>
+            </tr>
+            <tr>
+              <td class="mono">P0-B 履约</td>
+              <td>商家入驻生成渠道身份、采购出库生成并贴附盒码、扫码归属、样本激活与收样、报告发布、AI 解读与营养方案、微信送达</td>
+              <td>一盒检测盒从出库贴码到报告送达消费者全程有状态，归属在扫码时一次写定</td>
+            </tr>
+            <tr>
+              <td class="mono">P0-C 结算</td>
+              <td>两级佣金计算、账目账本、对账单、票证登记与结清</td>
+              <td>合伙人能在对账单上逐单核对一级与二级佣金，差异有处理记录</td>
+            </tr>
+            <tr>
+              <td class="mono">P0-D 合规与能力</td>
+              <td>实名与资质、电子合同（商家与供应商）、线下协议登记、销售培训与学习记录、留痕查询、素材模板、商家与销售工作台</td>
+              <td>未完成电子签的商家不能上架、供应商不能供货；任一订单可导出完整证据链</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3.2 P1（一期不做，但结构上预留）</h3>
+      <ul>
+        <li>商家自有 App 或官网通过开放接口接入 AI 解读能力。</li>
+        <li>销售提成：商家自设比例，从商家收入中扣减后发放给销售。</li>
+        <li>阶梯佣金、季度激励、区域保护等激励规则。</li>
+        <li>营养师排班、服务工单、付费增值服务包。</li>
+        <li>培训相关：直播授课、AI 陪练对练、积分与排行榜、电子证书。</li>
+        <li>合同相关：批量签署、合同模板可视化配置、第三方存证区块链对接。</li>
+        <li>优惠券、拼团、直播分销等营销玩法。</li>
+        <li>供应商自动对账与税务服务商直连开票。</li>
+      </ul>
+
+      <h3>3.3 明确不做</h3>
+      <p>以下五条不是排期问题，而是产品边界，写在这里是为了避免后续需求反复：</p>
+      <ul>
+        <li>不做三级及以上分销，不做按发展人员数量计酬的团队奖励。</li>
+        <li>不做基于点击、加好友或聊天记录的归属判定，归属只认盒码。</li>
+        <li>不在报告或解读中输出疾病诊断、处方药推荐与疗效承诺。</li>
+        <li>不向渠道方提供报告内容的二次编辑、改写或自制「解读版」，渠道方只能引用系统内的报告与解读，保证对 C 端的口径唯一。</li>
+        <li>不做在线资金清结算：不代收货款、不做自动分账、不做提现打款、不代扣代缴。资金与发票均在线下完成，系统只负责计算、记账与对账。</li>
+      </ul>
+      <div class="callout">
+        <b>关于「参考」部分的说明：</b>需求原文中的「参考 / 实验室 生产生成报告」指向实验室侧的报告生成能力。本期只定义报告在系统中的接收、审核、发布与版本管理；是否需要直连特定实验室的 LIS 或检测仪器接口，属于集成范围，需在 <span class="tbd">Q10</span> 确认后再决定是否纳入一期。
+      </div>
+    </section>
+
+    <section id="s4">
+      <h2><span class="snum">04</span>核心流程</h2>
+      <p>把整条链拆成三条泳道后，每个角色只需要关心自己在哪条线上动作。三条线由三个键连接：订单号、盒码、渠道身份。</p>
+
+      <div class="lanes">
+        <div class="lanes-inner">
+          <div class="stage-head">
+            <span></span>
+            <span>① 选品定价</span>
+            <span>② 采购入库</span>
+            <span>③ 出库贴码</span>
+            <span>④ 客户扫码</span>
+            <span>⑤ 采样收样</span>
+            <span>⑥ 报告解读</span>
+            <span>⑦ 结算开票</span>
+          </div>
+
+          <div class="lane">
+            <div class="lane-label"><span class="dot"></span>订单流</div>
+            <div class="cell"><b>供应商建品</b>报供货价、检测项目、有效期</div>
+            <div class="cell"><b>商家采购</b>预付款下单，批次锁定库存</div>
+            <div class="cell"><b>平台出库</b>按采购单发货，逐盒贴码</div>
+            <div class="cell"><b>成交登记</b>商家成交并登记金额与支付状态</div>
+            <div class="cell"><b>物流跟踪</b>采样盒寄回，订单等待报告</div>
+            <div class="cell"><b>报告交付</b>报告送达后订单完成</div>
+            <div class="cell"><b>账目拆分</b>货款 / 服务费 / 一级与二级佣金 / 商家收入</div>
+          </div>
+
+          <div class="lane">
+            <div class="lane-label"><span class="dot"></span>样本流</div>
+            <div class="cell"><b>项目配置</b>采样方式、问卷字段、报告字段</div>
+            <div class="cell"><b>批次绑定</b>批次号与有效期随出库绑定</div>
+            <div class="cell"><b>生成盒码</b>按采购数量一盒一码，绑定渠道</div>
+            <div class="cell"><b>扫码激活</b>实名、问卷、同意书一次完成</div>
+            <div class="cell"><b>采样与收样</b>寄回、实验室登记、异常补采</div>
+            <div class="cell"><b>检测出报告</b>审核发布、AI 解读、营养师复核</div>
+            <div class="cell empty">·</div>
+          </div>
+
+          <div class="lane">
+            <div class="lane-label"><span class="dot"></span>权益流</div>
+            <div class="cell"><b>规则配置</b>佣金比例按 SKU 与角色分别设定</div>
+            <div class="cell empty">·</div>
+            <div class="cell"><b>渠道身份</b>商家入驻生成，出库时写入盒码</div>
+            <div class="cell"><b>归属写定</b>扫码即归属，不可转移，无保护期</div>
+            <div class="cell empty">·</div>
+            <div class="cell empty">·</div>
+            <div class="cell"><b>对账与票证</b>售后期满、生成对账单、登记票证、结清</div>
+          </div>
+        </div>
+      </div>
+      <p class="note">任何一个键断开，都可以从留痕中心按订单号反查到对应盒码与渠道身份，定位断点在哪一环。</p>
+
+      <h3>4.1 一次完整的成交（主路径）</h3>
+      <ol>
+        <li>供应商建品并报供货价，平台审核上架，设定零售价、平台服务费率与两级佣金比例，并为该商品配置建议学习的课程。</li>
+        <li>商家入驻审核通过，系统生成该商家的渠道身份码，并由平台开放其可售商品范围。</li>
+        <li>商家在小程序采购商城选品，用预付款余额下单，平台按采购单发货。</li>
+        <li>出库时为每一盒生成唯一盒码，并把该商家的渠道身份写入盒码，贴附在包装上发出。</li>
+        <li>商家把检测盒交付给客户并登记成交金额（线下收款或既有收款方式，系统不代收）。</li>
+        <li>客户扫码激活：完成实名、填写采样问卷、签署服务协议与知情同意书。激活的同一刻，客户归属到盒码所绑定的商家，样本也获得唯一身份。</li>
+        <li>客户采样并寄回，实验室收样、检测、出报告，审核发布。</li>
+        <li>报告发布触发 AI 解读；若用户购买了营养师服务，营养师复核并出具营养方案。渠道方在同一时刻可查看本店归属的报告。</li>
+        <li>解读完成后系统通过微信服务通知把报告送达消费者，商家也可在小程序内一键转发；送达与查看均留痕。</li>
+        <li>报告交付完成，售后期满后一级与二级佣金转入待对账；系统按周期生成对账单，财务线下核对并登记票证，标记结清。</li>
+      </ol>
+      <p class="note">线上直接下单是另一条入口：出库时按订单预归属渠道生成盒码，客户激活后以盒码为准；若实际使用的盒子来自其他渠道，归属随之改写并留痕。</p>
+
+      <h3>4.2 关键失败路径必须先定义</h3>
+      <ul>
+        <li><span class="strong">样本不合格：</span>实验室登记异常原因，系统按原归属渠道生成新盒码并补寄，不向 C 端重复收费。</li>
+        <li><span class="strong">订单退款：</span>按 SKU 实付比例冲回账目与两级佣金；若已结清，在下一期账单生成负数调整行。</li>
+        <li><span class="strong">归属争议：</span>以盒码为准，平台只处理盒码异常（标签破损、发错货、系统错绑），不处理「谁先联系客户」这类主张。</li>
+        <li><span class="strong">对账差异：</span>主体不认可账单时，账单停在「差异处理中」，差异需录入原因并有人确认，不影响其他主体的对账进度。</li>
+      </ul>
+    </section>
+
+    <section id="s5">
+      <h2><span class="snum">05</span>功能需求</h2>
+      <p>共 16 个功能域，每个需求按「目的 → 触发 → 规则 → 异常」组织。规则部分是可以直接进入开发判断的行为描述，不是目标描述。</p>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-01</span><span class="fr-title">账号、组织与实名</span></div>
+        <p><span class="lb">目的</span>建立多角色身份与组织归属，让后续的权限、归属、结算都有明确主体。</p>
+        <p><span class="lb">触发</span>平台创建账号，或角色自助注册后由平台审核。</p>
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>平台可创建供应商、实验室、商家、合伙人、营养师账号；商家可创建本店销售账号，销售不可跨商家存在。商家审核通过时生成唯一的渠道身份码。</li>
+          <li>同一主体可同时拥有商家与合伙人身份，但同一笔 C 端订单只按盒码判定一个归属，不叠加佣金。合伙人可绑定一个邀请上级，形成两级渠道关系，深度由系统硬限制为 2。</li>
+          <li>商家须提交营业执照与法人身份证；供应商须提交营业执照与生产或经营许可；合伙人须提交身份证与已签协议；营养师须提交相关职业资质。资质信息由各身份用户在后台自行维护与补充，平台审核；到期前 30 天提醒更新。</li>
+          <li>C 端用手机号注册。购买检测类商品必须完成实名，并按检测项目采集必需信息（性别、年龄、采样条件等），字段随项目配置，不硬编码。</li>
+          <li>账号停用不删除历史数据；停用后其渠道身份与未激活盒码立即失效，未对账佣金进入人工处理队列。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>资质过期 → 限制新订单与推广并提示更新；同一主体重复注册 → 由平台判定合并或拒绝，合并需保留原归属关系。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-02</span><span class="fr-title">商品、供货价与批次</span></div>
+        <p><span class="lb">目的</span>把检测盒做成可定价、可分销、可履约的标准商品，而不是一个只有名字和价格的 SKU。</p>
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>供应商维护 SKU：名称、检测项目、样本类型、采样方式、保存条件、有效期、供货价、建议零售价、是否允许分销。</li>
+          <li>平台审核上架，并设定零售价、平台服务费率、佣金比例上限、可售渠道范围，并为该商品配置建议学习的课程（不影响可售）。</li>
+          <li>商家从平台可分销商品池选品上架，售价不得低于平台底价，加价部分归商家。</li>
+          <li>批次：供应商按批入库，记录批次号、生产日期、有效期、数量；发货按先进先出，过期批次不可出库。</li>
+          <li>盒码：出库时为每一盒生成唯一盒码，写入出货渠道、批次与采购单；贴标在出库环节完成，漏贴或破损按补码流程处理。</li>
+          <li>库存扣减以支付成功为准；未支付订单不占用库存，下单时校验库存，支付成功才扣减。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>库存不足 → 阻断下单并提示可替代商品；在途批次临期 → 拦截发货并通知供应商换批；商品下架 → 已在途订单继续履约。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-03</span><span class="fr-title">盒码、渠道归属与客户绑定</span></div>
+        <p><span class="lb">目的</span>让客户归属有一个不可争辩的物理凭据，而不是靠谁先加微信、谁先发链接。归属的确认点只有一个：客户扫码激活的那一刻。</p>
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>商家入驻审核通过后，系统生成唯一的渠道身份码，用于线上推广、素材嵌入与结算主体识别。</li>
+          <li>商家在 B 端商城完成采购、平台出库时，按采购数量为每一盒生成唯一盒码，写入出货渠道、批次与采购单。贴标默认由平台在出库环节完成；若改为商家自行贴标，需提供批量打印与绑定工具 <span class="tbd">Q17</span>。</li>
+          <li>客户扫码 → 系统解析盒码 → 首次激活即把该客户归属到盒码绑定的渠道，同时建立样本。归属与样本在同一次操作中完成，不可拆分。</li>
+          <li>归属长期有效，一次写定，不设到期；不采用「首次点击」或「最后点击」归因。已归属客户再扫其他渠道码，只记录触点，不改变归属。</li>
+          <li>线上直接下单的场景：出库时按订单预归属渠道生成盒码；若客户实际使用的是另一渠道给他的盒子，以盒码为准，预归属在激活时被改写并留痕。</li>
+          <li>换绑仅平台可执行，且只处理盒码异常（发错货、标签错贴、系统错绑）；已激活的归属不变。记录原因、操作人与变更前后值。</li>
+          <li>销售归属：盒码只确定商家或合伙人层级。销售归属由商家在后台或小程序分配，或客户激活时扫描销售推荐码确定，以先发生为准，不改变一级渠道归属。</li>
+          <li>C 端在「我的 - 归属」可查看归属商家与对接销售。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>同一盒码被两人扫描 → 首人激活成功，第二人提示「该盒已被使用」并转客服；客户拿错盒（盒码与订单不符）→ 以盒码实际绑定的渠道为准，同时提示可能拿错，平台可介入；盒码未激活即退款 → 码作废；标签破损无法识别 → 客服按采购单与批次补发盒码，原码作废；销售离职 → 客户归属在商家，不随销售离职转移，只调整销售分配关系。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-04</span><span class="fr-title">订单流（采购单与销售单）</span></div>
+        <p><span class="lb">目的</span>用两种订单分别承载「进货」和「零售」，让金额、库存、履约各自可核对，不混在一张单子里。</p>
+
+        <div class="sublabel">A. 采购单（商家 → 平台 / 供应商）</div>
+        <ol>
+          <li>商家在 B 端小程序采购商城按供货价下单，默认从预付款余额扣减；账期采购一期不做。</li>
+          <li>余额不足时阻断提交，显示差额与充值指引；余额充足时提交即冻结对应金额。</li>
+          <li>冻结后锁定批次库存，供应商发货，商家确认收货后冻结金额转为实际扣减。</li>
+          <li>状态：已扣款 → 待发货 → 已发货 → 已收货 → 已完成；旁支：已取消（余额退回）、售后中、已退款（退回余额）。</li>
+        </ol>
+
+        <div class="sublabel">B. 销售单（C 端 → 商家店铺）</div>
+        <ol>
+          <li>C 端可经有效渠道码进入线上商城，该渠道记为预归属渠道；也可从平台商城直营入口进入并归属平台自营。</li>
+          <li>系统不做代收，支付状态由商家或财务登记；订单金额按 FR-09 的规则生成账目。</li>
+          <li>下单快照：固化商品价、供货价、平台服务费率、佣金比例、预归属渠道与规则版本。预归属仅用于出库生成盒码；最终归属以客户扫码激活的盒码为准，二者不一致时按 FR-03 改写并留痕。</li>
+          <li>一单多 SKU 时，按 SKU 分别计算佣金与账目，不做整单均摊。</li>
+          <li>退款支持整单与部分退款，账目与佣金按 SKU 实付比例冲回。</li>
+          <li>状态：待支付 → 已支付 → 待发货 → 已发货 → 待采样 → 检测中 → 报告已出 → 已完成；旁支：已取消、退款中、已退款、售后中。</li>
+          <li>待支付订单 30 分钟未支付自动关闭。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>支付成功但批次库存失效 → 自动退款并通知，不允许人工改成缺货发货；报告长期未出 → 订单不自动完成，进入异常看板由平台跟进；重复支付回调 → 幂等处理只生成一笔订单。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-05</span><span class="fr-title">样本激活、收样与检测</span></div>
+        <p><span class="lb">目的</span>让「一盒检测盒」对应「一份可追溯的样本」，避免报告挂错人、样本来源说不清。</p>
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>出库时按采购数量生成盒码，唯一且一次性使用，印刷或贴附于采样盒，同时写入出货渠道。</li>
+          <li>C 端扫码激活：校验盒码状态与实名 → 填写采样问卷（必填项由检测项目配置）→ 签署检测服务协议与知情同意书 → 选择上门采样或自行采样寄回。激活成功的同一刻写入客户归属。</li>
+          <li>知情同意书需同时确认报告可见范围：报告内容将向所属渠道方开放，用于解读与随访；C 端可随时关闭该授权。</li>
+          <li>盒码激活后不可转移到其他用户；未激活的盒码在订单退款或采购退货时作废。</li>
+          <li>样本状态：已生成 → 已激活 → 待寄出 → 运输中 → 实验室已收样 → 检测中 → 报告生成 → 已发布；旁支：样本异常、样本作废。</li>
+          <li>实验室收样需核对盒码、采样时间、保存条件与运输时长；不合格时登记异常原因并触发补采。</li>
+          <li>补采：系统按原归属渠道生成新盒码并安排补寄，补采上限 2 次，不向 C 端重复收费。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>盒码被重复扫码 → 第二人不可激活，提示联系客服；样本超期送达 → 实验室可拒收并触发补采；报告需更正 → 生成新版本，旧版本归档，通知 C 端并留痕。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-06</span><span class="fr-title">报告发布与按归属可见</span></div>
+        <p><span class="lb">目的</span>报告既是检测业务的核心资产，也是渠道方服务客户的主要抓手。可见性要同时满足两件事：渠道方讲得清，平台说得清谁看过。</p>
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>实验室完成检测后在系统内生成报告，经审核后发布；发布前 C 端只看到「检测中」，看不到任何中间结果。</li>
+          <li>可见范围以订单归属为边界：
+            <ul>
+              <li><span class="strong">C 端：</span>本人报告、本人解读、本人方案。</li>
+              <li><span class="strong">销售：</span>本人负责客户的报告、解读与方案。</li>
+              <li><span class="strong">商家：</span>本店订单对应的报告、解读与方案。</li>
+              <li><span class="strong">合伙人：</span>本渠道订单对应的报告、解读与方案。</li>
+              <li><span class="strong">营养师：</span>被指派且 C 端已授权的报告。</li>
+              <li><span class="strong">实验室：</span>样本与自己出具的报告。</li>
+              <li><span class="strong">平台：</span>全量。</li>
+            </ul>
+          </li>
+          <li>授权与撤回：C 端在激活样本的知情同意中被告知「报告内容将向所属渠道方开放」；C 端可在隐私设置中关闭。关闭后渠道方仅见「报告已出 / 解读完成」状态，不见内容，此前的查看记录仍保留。</li>
+          <li>查看留痕：渠道方每次查看报告，记录查看人、角色、时间、报告版本与来源设备；C 端可在「我的报告 - 查看记录」看到谁在何时看过。</li>
+          <li>内容一致：渠道方看到的与 C 端是同一份报告与同一版解读，不做删减版、不做渠道专供版，避免口径分叉。</li>
+          <li>页面防护：报告页展示动态水印（查看人 + 时间），降低截图外传风险；允许下载，下载行为记录到留痕；转发卡片仍需身份校验。</li>
+          <li>报告页面固定展示「本报告仅用于健康风险提示，不作为临床诊断依据」，位置与文案由平台锁定，不可被商家覆盖。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>发布失败 → 保留草稿并告警，C 端状态不前进；C 端撤回授权时渠道方正在查看 → 会话立即失效并记录；报告指标缺失 → 允许发布部分项目并标注缺项；渠道方越权访问非本归属报告 → 拒绝并记录尝试。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-07</span><span class="fr-title">AI 报告解读与营养方案（解读端口）</span></div>
+        <p><span class="lb">目的</span>把报告翻译成 C 端看得懂的行动建议，并让营养师在 AI 结果上做人工增值。这是渠道方愿意卖检测盒的核心服务能力，也是渠道方讲解时的统一口径。</p>
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>触发：报告发布后自动发起解读任务；营养师也可手动重跑。</li>
+          <li>输入：结构化报告指标、采样问卷、C 端基础信息。不引入未授权的历史数据与其他客户的相似数据。</li>
+          <li>输出结构固定为六段：指标释义、异常项说明、可能影响因素、饮食与生活方式建议、复检建议、免责声明。</li>
+          <li>内容边界：不输出疾病诊断，不推荐处方药与剂量，不做疗效承诺与治愈率暗示；命中敏感表述时拦截并要求人工复核，词表由平台运营维护，首版包含诊断、治愈、疗效、处方药、替代药物等。</li>
+          <li>展示：C 端只读；渠道方在其订单归属范围内只读，与 C 端看到的版本完全一致；营养师可编辑。标注「AI 生成」、生成时间、模型版本；营养师复核后展示复核版本，并标注「已由营养师复核」及复核人。</li>
+          <li>营养师操作：采纳、编辑、加注、驳回重生成；可基于模板产出营养方案（周期、餐次建议、随访节点）。</li>
+          <li>端口：C 端 H5 / 小程序只读端口；B 端营养师工作台；渠道方从订单详情进入同一份解读，不另开一套内容。送达规则见 FR-16。</li>
+          <li>留痕：保存 AI 原始输出、提示词版本、模型版本、复核前后差异、发布人与时间，进入 FR-14 的留痕中心。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>AI 服务不可用 → 报告照常发布，解读区显示「生成中 / 暂不可用」并支持重试，不阻塞 C 端看报告；复核超时 → 不自动发布未复核版本，提醒平台人工处理；用户撤回授权 → 已发布内容保留但停止后续更新，渠道方同步失去访问权。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-08</span><span class="fr-title">素材与模板中心</span></div>
+        <p><span class="lb">目的</span>让商家和销售不用自己做物料就能服务散户，同时保证对外口径与合规文案统一。</p>
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>平台素材库：海报、详情图文、朋友圈文案、短视频脚本、检测项目说明、常见问题、合规话术。</li>
+          <li>商家基于模板生成自有素材：自动嵌入商家名称、门店信息与本人渠道码二维码，生成结果即时预览、可下载。</li>
+          <li>服务模板：报告解读话术、营养方案框架、随访提醒、复检提醒，供商家与营养师取用。</li>
+          <li>平台锁定项（资质说明、免责声明、检测范围、价格口径）不可编辑、不可删除，只能整体使用。</li>
+          <li>素材可设有效期与适用商品范围；下架后不可再生成，已分发的不追溯。</li>
+          <li>使用记录：谁在何时生成了哪一版素材、用了哪个渠道码，均写入留痕。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>模板含违规词 → 生成时拦截并指出具体位置；渠道码已失效 → 生成时自动替换为新码并提示；素材涉及未上架商品 → 不可生成。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-09</span><span class="fr-title">两级分销佣金计算</span></div>
+        <p><span class="lb">目的</span>把每一单该算给谁、按哪一级算、算多少算清楚。系统只出数字、不处理资金，但数字必须能逐单下钻，经得起线下对账。</p>
+
+        <div class="sublabel">层级结构</div>
+        <div class="fsm">
+          <span class="node grey">邀请上级（二级）</span><span class="arrow">→</span>
+          <span class="node">订单归属人（一级）</span><span class="arrow">→</span>
+          <span class="node">C 端订单</span>
+        </div>
+        <p class="note">箭头方向即分佣方向：订单归一级，一级的邀请人拿二级。系统把深度硬限制为 2，第三级在数据结构上无法创建。</p>
+
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>层级上限：每个合伙人可绑定一个邀请上级，形成且仅形成两级。禁止自邀、禁止循环邀请、禁止跨级绑定。</li>
+          <li>计佣对象：一级 = 客户激活盒码所绑定的渠道；二级 = 该渠道的邀请上级。无上级时只计一级。</li>
+          <li>防重复计酬：同一主体在同一订单上只能取得一种收益。商家取得商品差价，不再取得二级佣金；销售提成由商家自行发放（P1），不参与分销层级。</li>
+          <li>比例配置：按 SKU × 层级 × 生效时间配置，支持固定比例与固定金额。一级与二级比例之和不得超过平台设定的佣金上限，保存时即校验。</li>
+          <li>计算基数 = 商品实付金额 − 运费 − 平台优惠分摊 − 退款金额。按已确认口径实现，字段结构保留毛利口径的扩展位，便于后续切换。</li>
+          <li>账目构成：商品实付 = 供应商货款 + 平台服务费 + 一级佣金 + 二级佣金 + 商家收入。尾差计入商家收入。</li>
+          <li>快照：下单时固化一级与二级的归属主体、层级关系、比例与规则版本；之后调整关系或比例不影响已支付订单。</li>
+          <li>归属口径：佣金归以客户激活的盒码确定的渠道为准。下单时的预归属只用于出库，若与盒码不一致，按盒码改写归属，原预归属对应的佣金作废重算。</li>
+          <li>幂等：同一订单、同一层级、同一规则版本只生成一条佣金流水，重复回调不重复计佣。</li>
+          <li>自购不返：一级或二级与下单人实名一致时，该层佣金不生效，记录保留但不进入对账单。</li>
+          <li>退款：按 SKU 实付比例同时冲回一级与二级，累计冲回不超过该层原佣金金额。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>上级账号停用 → 二级佣金照常计算但标注「归属待确认」，由平台在对账前裁定；层级关系变更 → 需平台审批，变更只对新订单生效；比例之和超上限 → 保存失败并提示超出的层级；规则缺失 → 订单仍可成交，佣金进入「待定」并告警。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-10</span><span class="fr-title">对账、票证登记与结清</span></div>
+        <p><span class="lb">目的</span>直接对应「所有的账只在后台显示数字，线下会进行对账」与「合伙人分佣担心开不了票」。系统不做资金清结算，只负责把数字算准、把对账单出对、把票证与结清状态记清。</p>
+
+        <div class="sublabel">系统不做的事</div>
+        <ul>
+          <li>不代收货款、不做自动分账、不做提现与打款、不代扣代缴。</li>
+          <li>不判断税务处理方式，不给税务结论；票种、税率与开票主体由线下决定。</li>
+          <li>资金收付、发票开具与流转全部在线下完成，系统只登记结果。</li>
+        </ul>
+
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>对账单生成：按周期（默认自然月）× 主体（供应商 / 商家 / 合伙人）生成。内容包含上期未结清、本期新增应付、退款冲回、调整项、本期应付合计、已登记票证金额、未取得票证金额。</li>
+          <li>逐单下钻：对账单每一行对应一个订单或一条佣金流水，显示基数、比例、层级、金额与规则版本。</li>
+          <li>对账状态：待对账 → 对账中 → 已对账 → 已结清；旁支：有差异 → 差异处理中 → 已对账。</li>
+          <li>差异处理：线下核对后由财务录入差异金额、原因与处理方式（调整账单 / 补开票 / 下期抵扣），差异必须有人确认并留下记录。</li>
+          <li>票证登记：财务按账单登记发票或收据的号码、抬头、金额、开具日期与影像件；系统校验金额与账单应付是否一致，不一致转入差异。</li>
+          <li>结清条件：只有「已对账」且「已登记票证金额覆盖应付金额」的账单才可标记已结清。未取得票证的部分保持未结清，并在总览中单独显示。</li>
+          <li>后台总览：显示应付总额、待对账金额、未取得票证金额、差异金额；任一数字可下钻到订单与佣金流水。</li>
+          <li>导出：对账单支持 Excel 与 PDF 导出，字段与现行线下对账表一致，含订单号、商品、实付、各项金额、退款与应付合计。</li>
+          <li>留痕：对账、差异处理、票证登记、结清与反结清，全部记录操作人、时间、前后值。</li>
+        </ol>
+        <div class="callout">
+          <b>边界声明：</b>系统不承担税务处理，也不在界面里给出税务结论。票种、税率、代征或自开的选择属于线下与法务财务的决策；系统只保证「应付多少、已收到什么凭证、还差多少」这三件事在后台说得清。
+        </div>
+        <p class="exc"><span class="lb">异常</span>账单生成后发生退款 → 生成调整行，不修改原账单；票证金额不足 → 差额保留未结清；同一发票重复登记 → 校验拦截；已结清后发现错误 → 反结清需审批，并生成调整账单；主体不认可对账结果 → 账单停在「差异处理中」，不影响其他主体的进度。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-11</span><span class="fr-title">合同签署与协议登记</span></div>
+        <p><span class="lb">目的</span>把佣金比例、开票义务、报告使用范围、禁止性条款这些有法律后果的约定固化。电子签只覆盖商家与供应商两类合同，其余走线下签署加后台登记，避免为少量合同引入完整电子签改造。</p>
+        <div class="sublabel">合同类型与签署方式</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>合同</th><th>签署方</th><th>关键条款</th><th>签署方式</th><th>时点</th></tr></thead>
+            <tbody>
+              <tr><td>入驻与供货合作协议</td><td>平台 + 商家</td><td>供货价、零售底价、售后责任、报告使用范围</td><td>电子签</td><td>首次上架前</td></tr>
+              <tr><td>供货协议</td><td>平台 + 供应商</td><td>质量标准、批次与有效期、缺货与召回责任</td><td>电子签</td><td>首次供货前</td></tr>
+              <tr><td>分销合作协议</td><td>平台 + 合伙人</td><td>佣金比例与结算周期、开票义务、报告使用范围、禁止性条款</td><td>线下签署 + 后台登记</td><td>首次对账前</td></tr>
+              <tr><td>服务合作协议</td><td>平台 + 营养师</td><td>服务范围、解读边界、保密与授权</td><td>线下签署 + 后台登记</td><td>首次接单前</td></tr>
+              <tr><td>检测服务协议 + 知情同意书</td><td>平台 + C 端</td><td>检测范围、样本用途、报告可见范围、数据授权与撤回</td><td>线上勾选确认</td><td>盒码激活前</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>电子签范围：仅平台与商家、平台与供应商两类合同。电子签通过统一适配层同时接入 e签宝与腾讯电子签，可在后台切换服务商；切换只影响新发起的签署任务，已签合同与存证不受影响。</li>
+          <li>电子签流程：平台发起 → 生成待签文件 → 签署方实名核身 → 签署 → 平台盖章 → 归档生效。</li>
+          <li>线下协议：合伙人与营养师协议在线下签署，后台登记合同编号、签署日期、有效期、扫描件与登记人。</li>
+          <li>线上同意：C 端在激活盒码时勾选检测服务协议与知情同意书，系统记录模板版本、确认时间、IP 与设备，不做电子签名。</li>
+          <li>模板版本化：模板有版本号；已生效的合同不可修改；条款变更生成新版本，电子签触发重签，线下协议重新登记。</li>
+          <li>未签拦截：电子签未完成时阻断商家上架与供应商供货；合伙人协议未登记时账单照常生成，但结清按钮提示「协议未登记」，需平台确认后放行。</li>
+          <li>佣金条款与系统规则的关系：系统内佣金比例调整只对新订单生效，不自动变更已签合同；合同约定固定比例的，变更需签补充协议。</li>
+          <li>续签与终止：到期前 30 天提醒；终止后渠道身份失效，未对账佣金按合同约定处理。</li>
+          <li>存证与台账：电子签保存文件哈希与存证编号；线下协议保存扫描件与登记信息；按主体可查全部合同、生效版本与到期日。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>电子签服务商不可用 → 流程顺延，商家上架与供应商供货保持阻断；线下协议扫描件缺失 → 台账标红并提醒补录，不阻断交易；C 端未勾选同意 → 无法激活盒码；主体信息变更 → 触发重签或重新登记。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-12</span><span class="fr-title">销售培训与学习记录</span></div>
+        <p><span class="lb">目的</span>真正面对客户的是销售和合伙人。讲错一句功效、承诺一次疗效，风险由平台承担。培训解决的是「知道该怎么说」，而不是「不准他卖」——本版已确认培训不作为交易前置。</p>
+        <div class="sublabel">课程结构</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>类别</th><th>内容</th><th>对象</th><th>建议</th></tr></thead>
+            <tbody>
+              <tr><td>新人课</td><td>平台规则、盒码与渠道码使用、下单与售后流程、客户跟进</td><td>销售、合伙人</td><td>必修</td></tr>
+              <tr><td>产品课</td><td>按检测项目：测什么、适合谁、采样要求、报告看什么</td><td>销售、合伙人</td><td>按商品</td></tr>
+              <tr><td>解读基础课</td><td>指标含义、异常项怎么讲、哪些话不能说、何时建议就医</td><td>销售、合伙人</td><td>必修</td></tr>
+              <tr><td>合规课</td><td>禁止诊断、禁止疗效承诺、禁止虚构案例、禁止私自降价与窜货</td><td>销售、合伙人</td><td>必修，有有效期</td></tr>
+              <tr><td>进阶课</td><td>异议处理、复购与随访、营养方案基础</td><td>销售、合伙人</td><td>选修</td></tr>
+              <tr><td>专项课</td><td>营养师解读规范与方案出具标准</td><td>营养师</td><td>必修</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>课程由平台统一提供与更新，商家不能自建课程，也不能修改课程内容。</li>
+          <li>课程形态：图文、视频、测验。每门课有章节、学时与完成条件，完成条件为章节全部完成。</li>
+          <li>学习路径：平台按角色配置建议路径，新账号自动分配；商家可查看本店销售的进度，但不能追加或删减课程。</li>
+          <li>考试：题库按课程归属，题型为单选、多选、判断；及格线由平台设定；未通过可补考 2 次，不设冷却间隔。</li>
+          <li>不做前置：培训完成情况不阻断上架、下单、出库、对账与结清。系统只在后台标记「未完成合规培训」，供平台与商家参考，是否处理由商家自行决定。</li>
+          <li>有效期与复训：合规课有效期 12 个月，到期前 30 天提醒；到期只提醒与标记，不阻断业务。</li>
+          <li>学习档案：记录每人的课程进度、考试成绩、补考记录与合规课到期时间，可按人、按商家、按课程查询并导出。</li>
+          <li>与素材联动：课程页直接挂载对应的合规话术与可用素材，学完即可取用，避免「学完不知道去哪拿物料」。</li>
+          <li>商家视图：商家可查看本店销售的完成率、未通过名单与到期名单，可催学；不可查看其他商家数据。</li>
+        </ol>
+
+        <div class="sublabel">学习记录路径</div>
+        <div class="fsm">
+          <span class="node grey">未学习</span><span class="arrow">→</span>
+          <span class="node">学习中</span><span class="arrow">→</span>
+          <span class="node">待考试</span><span class="arrow">→</span>
+          <span class="node">已通过</span><span class="arrow">→</span>
+          <span class="node">已过期（待复训）</span>
+        </div>
+
+        <p class="exc"><span class="lb">异常</span>考试异常（切屏超 3 次或答题间隔异常）→ 标记异常并作废成绩，转人工复核后允许重考；课程下架 → 已完成记录保留，未完成的学习路径终止并通知；培训记录缺失 → 不能作为已履行培训义务的证据，平台侧告警。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-13</span><span class="fr-title">商家小程序与销售工作台</span></div>
+        <p><span class="lb">目的</span>让商家在手机上就能进货、看客户、看报告；让销售在自己的数据边界内看清客户、算清收入、拿到素材。这也是需求中「自己的销售看到自己负责的客户、客单价、绑定客户」的落地位置。</p>
+
+        <div class="sublabel">商家小程序（B 端）</div>
+        <ol>
+          <li>首页：商家名称与资质状态、可用预付款余额、待办（待充值、待对账、待签合同、待学课程）。</li>
+          <li>采购商城：平台可采商品、供货价、起订量、库存；下单扣减预付款。</li>
+          <li>预付款：可用余额、冻结金额、充值记录、扣减流水，可导出。</li>
+          <li>我的客户：通过本商家盒码激活的消费者列表，含归属销售、成交金额与报告状态。</li>
+          <li>报告与解读：本店渠道消费者的报告可直接查看，AI 解读同屏展示；可一键转发给消费者。</li>
+          <li>我的生意：订单、收入、佣金支出、月度对账单入口。</li>
+          <li>素材与培训：素材生成、课程与考试入口。</li>
+        </ol>
+
+        <div class="sublabel">商家工作台（后台）</div>
+        <ol>
+          <li>选品上架、定价（不低于平台底价）、库存查看。</li>
+          <li>订单履约：发货、填写物流、处理售后。</li>
+          <li>客户与销售管理：创建销售、分配客户、查看客户归属与成交情况。</li>
+          <li>报告与解读：本店订单对应的报告可直接查看；可查看哪些销售看过哪份报告。</li>
+          <li>培训管理：本店销售的学习进度、考试结果、授权到期名单。</li>
+          <li>收入账单与佣金支出明细，可下钻到订单。</li>
+        </ol>
+
+        <div class="sublabel">销售工作台</div>
+        <ol>
+          <li>我的客户：客户列表、归属时间、累计成交单数、累计成交金额、客单价、最近下单时间、报告状态。</li>
+          <li>客单价定义：统计区间内该销售负责客户的成交金额合计 ÷ 成交订单数。支持按日、按月、自定义区间切换，区间变更时口径提示同步显示。</li>
+          <li>客户分配：客户归属由盒码决定，销售归属由商家在后台或小程序分配，或客户激活时扫描销售推荐码确定；销售也可提交客户手机号申请认领，需客户确认后生效。两种方式都必须留下分配时间与来源。</li>
+          <li>报告服务：可在客户订单内直接查看报告与解读，用于向客户解释；查看行为留痕。</li>
+          <li>我的学习：待学课程、考试入口、已完成课程与到期提醒。</li>
+          <li>不可见：其他销售的客户、非本人归属客户的报告、商家整体经营数据。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>客户归属以盒码为准，工作台不接收「谁先联系客户」类申诉，只受理盒码异常；销售离职 → 客户归属不转移，只调整销售分配关系，历史业绩保留在原销售名下；无成交客户 → 客单价显示为「—」而非 0。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-14</span><span class="fr-title">合规留痕与查询</span></div>
+        <p><span class="lb">目的</span>需求原文提到「体系合规服务客户，主要是记录：1、订单流 2、AI 智能报告解读端口」。这一条落地为独立的留痕中心，承载全链路证据，而不只是订单日志。</p>
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>留痕对象：合同签署与终止、C 端授权与撤回、订单流（下单 / 支付状态登记 / 发货 / 退款）、盒码生成与归属变更、样本流转、报告版本、报告查看记录、AI 解读版本、营养师操作、两级佣金计算、对账与票证登记、培训学习与考试成绩、授权授予与撤销、素材生成。</li>
+          <li>每条记录包含：业务单号、操作类型、操作人、角色、时间、来源 IP 或设备、变更前后值、关联凭证。</li>
+          <li>只追加不修改：留痕记录不可编辑与删除，更正以新增记录表达，保留原始记录。</li>
+          <li>查询：按订单号、盒码、客户、渠道、合伙人、时间区间检索；平台合规角色可查全量，其他角色仅见与自己相关的记录。</li>
+          <li>导出：支持按客户或按订单导出全链路凭证包，格式为 PDF 汇总加 Excel 明细。</li>
+          <li>留存期限：报告与解读相关记录留存 1 年；合同、佣金与对账记录按财务档案要求留存 10 年；到期销毁需审批并留痕。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>记录缺失 → 系统巡检发现断点并告警，不允许静默跳过；越权查询 → 拒绝并记录尝试行为；导出含敏感信息 → 需二次确认并记录导出人与用途。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-15</span><span class="fr-title">预付款账户与充值入账</span></div>
+        <p><span class="lb">目的</span>商家先充值、再采购，采购不依赖线上支付。系统不碰资金，预付款只是一个受控的余额台账，但它必须对得上账、追得到凭证。</p>
+
+        <div class="sublabel">账户结构</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>字段</th><th>含义</th><th>计算关系</th></tr></thead>
+            <tbody>
+              <tr><td>可用余额</td><td>当前可直接用于下单的金额</td><td>累计充值 − 累计扣减 − 冻结金额</td></tr>
+              <tr><td>冻结金额</td><td>已下单未收货的占用金额</td><td>由采购单状态驱动</td></tr>
+              <tr><td>累计充值</td><td>线下打款并入账的总额</td><td>所有充值单之和</td></tr>
+              <tr><td>累计扣减</td><td>已完成采购的实际扣款总额</td><td>所有已完成采购单之和</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>充值流程：商家线下打款 → 上传打款凭证 → 平台财务登记入账 → 可用余额增加。系统不发起支付、不对接银行。</li>
+          <li>入账校验：同一笔打款凭证不可重复入账；付款方名称、金额与商家主体不一致时转入人工核验，核验通过才入账。</li>
+          <li>下单扣减：提交采购单即冻结对应金额；确认收货后转为实际扣减；订单取消或退款则解冻回可用余额。</li>
+          <li>余额不足：阻断提交，显示差额与充值指引，不允许负余额。</li>
+          <li>流水完整性：每次充值、冻结、扣减、解冻、退款生成一条流水，含操作人、时间、关联单号与变更前后余额。</li>
+          <li>对账联动：预付款流水进入 FR-10 的对账单，作为商家侧的付款依据。</li>
+          <li>权限：商家只能查看自己的账户与流水；平台财务可入账与调整，调整需审批并留痕。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>打款金额与登记金额不符 → 差额挂账并由财务处理，不直接改余额；商家主体变更 → 余额迁移需审批；账户因违规被冻结 → 只可退款不可采购；余额与流水对不平 → 自动告警并锁定该账户的采购入口。</p>
+      </div>
+
+      <div class="fr">
+        <div class="fr-head"><span class="fr-id">FR-16</span><span class="fr-title">报告完成后的商家通知与转发</span></div>
+        <p><span class="lb">目的</span>报告生成后如果没人告诉消费者，转化就断在最后一步。本版确认的送达路径是：平台后台可见，商家小程序收到提醒，由商家把报告转给客户；系统不直接向消费者推送。</p>
+
+        <div class="sublabel">规则</div>
+        <ol>
+          <li>触发：报告发布且 AI 解读生成完成；含营养师复核的订单，在复核完成后触发。</li>
+          <li>平台侧：后台生成「报告待转发」待办，按商家归集；超过约定时长未转发，列表标红并提醒平台运营。</li>
+          <li>商家侧：通过微信小程序订阅消息提醒商家「有报告待转发」，附带脱敏订单信息；商家未订阅时用站内消息兜底。</li>
+          <li>转发：商家在小程序内选择报告卡片转发给消费者，可使用平台提供的话术模板，话术受 FR-08 的合规文案约束。</li>
+          <li>内容边界：通知与卡片只带「报告已生成」与查看入口，不含任何指标数值、异常项与结论。</li>
+          <li>入口校验：消费者点开需登录并校验手机号与订单归属，非本人不可打开；转发给第三人无效。</li>
+          <li>记录：记录通知对象、模板版本、发送时间与失败状态；记录转发人、时间与接收人。转发不改变报告归属与查看权限。</li>
+          <li>频率控制：同一报告对同一商家只自动提醒一次，商家可手动再提醒；报告更正后重新提醒一次并注明「报告已更新」。</li>
+        </ol>
+        <p class="exc"><span class="lb">异常</span>商家未订阅消息 → 站内消息兜底并在后台标红；长时间未转发 → 同时提醒商家与平台运营；消费者未收到 → 商家可重新转发；报告更正后旧卡片被打开 → 提示查看最新版本并跳转；同一消费者有多笔订单 → 按订单分别通知与转发，不合并内容。</p>
+      </div>
+    </section>
+
+    <section id="s6">
+      <h2><span class="snum">06</span>共享规则</h2>
+      <p>以下规则被多个功能域引用，只在这里定义一次，各功能章节不再重复。</p>
+
+      <h3>6.1 权限矩阵</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>对象</th><th>C 端</th><th>销售</th><th>商家</th><th>合伙人</th><th>营养师</th><th>实验室</th><th>平台</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>商品与价格</td><td class="c">看售价</td><td class="c">看售价</td><td class="c">本店定价</td><td class="c">看售价</td><td class="c">看售价</td><td class="c">—</td><td class="c">全量</td></tr>
+            <tr><td>采购单</td><td class="c">—</td><td class="c">—</td><td class="c">本店</td><td class="c">—</td><td class="c">—</td><td class="c">关联批次</td><td class="c">全量</td></tr>
+            <tr><td>销售单</td><td class="c">本人</td><td class="c">本人客户</td><td class="c">本店</td><td class="c">本渠道</td><td class="c">关联样本</td><td class="c">关联样本</td><td class="c">全量</td></tr>
+            <tr><td>客户归属</td><td class="c">本人</td><td class="c">本人负责</td><td class="c">本店</td><td class="c">本渠道</td><td class="c">—</td><td class="c">—</td><td class="c">全量</td></tr>
+            <tr><td>报告原文</td><td class="c">本人</td><td class="c">本人客户</td><td class="c">本店</td><td class="c">本渠道</td><td class="c">被授权</td><td class="c">本人出具</td><td class="c">全量</td></tr>
+            <tr><td>报告查看记录</td><td class="c">本人报告</td><td class="c">本人查看</td><td class="c">本店报告</td><td class="c">本渠道</td><td class="c">本人查看</td><td class="c">—</td><td class="c">全量</td></tr>
+            <tr><td>AI 解读</td><td class="c">本人只读</td><td class="c">本人客户只读</td><td class="c">本店只读</td><td class="c">本渠道只读</td><td class="c">被授权可编辑</td><td class="c">—</td><td class="c">全量</td></tr>
+            <tr><td>营养方案</td><td class="c">本人只读</td><td class="c">本人客户只读</td><td class="c">本店只读</td><td class="c">本渠道只读</td><td class="c">被授权可编辑</td><td class="c">—</td><td class="c">全量</td></tr>
+            <tr><td>佣金明细</td><td class="c">—</td><td class="c">—</td><td class="c">支出</td><td class="c">本人</td><td class="c">服务费</td><td class="c">—</td><td class="c">全量</td></tr>
+            <tr><td>渠道上下级</td><td class="c">—</td><td class="c">本人</td><td class="c">本店</td><td class="c">本人</td><td class="c">—</td><td class="c">—</td><td class="c">全量</td></tr>
+            <tr><td>对账单</td><td class="c">—</td><td class="c">—</td><td class="c">本店</td><td class="c">本人</td><td class="c">—</td><td class="c">本人</td><td class="c">全量</td></tr>
+            <tr><td>预付款账户</td><td class="c">—</td><td class="c">—</td><td class="c">本店</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c">全量</td></tr>
+            <tr><td>推送记录</td><td class="c">本人</td><td class="c">本人客户</td><td class="c">本店</td><td class="c">本渠道</td><td class="c">本人发送</td><td class="c">—</td><td class="c">全量</td></tr>
+            <tr><td>合同</td><td class="c">本人同意</td><td class="c">—</td><td class="c">本店</td><td class="c">本人</td><td class="c">本人</td><td class="c">本人</td><td class="c">全量</td></tr>
+            <tr><td>培训课程</td><td class="c">—</td><td class="c">本人学习</td><td class="c">本店进度</td><td class="c">本人学习</td><td class="c">本人专项</td><td class="c">—</td><td class="c">发布与全量</td></tr>
+            <tr><td>素材</td><td class="c">—</td><td class="c">可用</td><td class="c">本店生成</td><td class="c">可用</td><td class="c">可用</td><td class="c">—</td><td class="c">审核与全量</td></tr>
+            <tr><td>留痕</td><td class="c">本人相关</td><td class="c">本人相关</td><td class="c">本店相关</td><td class="c">本渠道相关</td><td class="c">本人相关</td><td class="c">本人相关</td><td class="c">全量</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>6.2 关键状态机</h3>
+
+      <h4>佣金</h4>
+      <p>佣金有独立于订单的生命周期。订单完成不等于账能对清，中间隔着一个售后期与一次线下对账。</p>
+      <div class="fsm">
+        <span class="node">预估</span><span class="arrow">→</span>
+        <span class="node">待对账</span><span class="arrow">→</span>
+        <span class="node">对账中</span><span class="arrow">→</span>
+        <span class="node">已对账</span><span class="arrow">→</span>
+        <span class="node">已结清</span>
+      </div>
+      <div class="fsm">
+        <span class="node grey">已失效</span><span class="arrow">←</span>
+        <span class="node grey">退款冲回</span>
+        <span style="margin:0 12px;color:#bdb5a5">|</span>
+        <span class="node bad">有差异</span><span class="arrow">→</span>
+        <span class="node">差异处理中</span><span class="arrow">→</span>
+        <span class="node">已对账</span>
+      </div>
+      <p class="note">已结清后发生退款，不回溯修改历史流水，而是在下一期对账单生成负数调整行，保证账本可审计。</p>
+
+      <h4>合同</h4>
+      <div class="fsm">
+        <span class="node grey">草稿</span><span class="arrow">→</span>
+        <span class="node">待签署</span><span class="arrow">→</span>
+        <span class="node">签署中</span><span class="arrow">→</span>
+        <span class="node">已生效</span><span class="arrow">→</span>
+        <span class="node">待续签</span><span class="arrow">→</span>
+        <span class="node grey">已终止</span>
+      </div>
+      <p class="note">已生效合同不可修改，只能通过补充协议或新版本变更；作废与终止都保留原文件与操作记录。</p>
+
+      <h4>培训记录</h4>
+      <div class="fsm">
+        <span class="node grey">未学习</span><span class="arrow">→</span>
+        <span class="node">学习中</span><span class="arrow">→</span>
+        <span class="node">待考试</span><span class="arrow">→</span>
+        <span class="node">已通过</span><span class="arrow">→</span>
+        <span class="node grey">已过期（待复训）</span>
+      </div>
+      <p class="note">培训状态只用于展示与提醒，不参与订单、出库与结清的判定。</p>
+
+      <h4>预付款</h4>
+      <div class="fsm">
+        <span class="node grey">待入账</span><span class="arrow">→</span>
+        <span class="node">已入账</span><span class="arrow">→</span>
+        <span class="node">冻结</span><span class="arrow">→</span>
+        <span class="node">已扣减</span>
+      </div>
+      <div class="fsm">
+        <span class="node grey">已解冻</span><span class="arrow">←</span>
+        <span class="node grey">订单取消 / 退款</span>
+      </div>
+      <p class="note">余额与流水必须始终对平；对不平时锁定采购入口，先查账再放行。</p>
+
+      <h3>6.3 金额与舍入</h3>
+      <ul>
+        <li>所有金额以「分」为单位存储，展示保留两位小数，禁止用浮点数参与累计运算。</li>
+        <li>计算顺序固定为：基数 → 比例 → 金额。舍入到分，四舍五入。</li>
+        <li>多 SKU 账目拆分产生的尾差计入商家收入，不分摊到佣金，避免合伙人佣金出现零头争议。</li>
+        <li>退款按 SKU 实付比例分摊，先冲佣金、再冲平台服务费、最后冲商家收入。</li>
+        <li>快照优先：订单支付时固化价格、费率、佣金比例与规则版本；后续配置变更只对新订单生效。</li>
+      </ul>
+
+      <h3>6.4 风控与反作弊</h3>
+      <ul>
+        <li><span class="strong">自购不返：</span>一级或二级与下单人实名一致时，该层佣金不生效，记录保留但不计入对账单。</li>
+        <li><span class="strong">层级异常：</span>自邀、循环邀请、超深绑定、同一主体一日内频繁改绑上级，均阻断并告警；已生效的层级变更需平台审批。</li>
+        <li><span class="strong">盒码异常：</span>同一盒码短时间内被多个账号扫描、盒码在非出库渠道的订单上激活、补码后原码再次出现，均冻结该盒并转人工核查。</li>
+        <li><span class="strong">异常注册：</span>同设备、同 IP、同收款账户批量注册的账号进入风险名单，其订单佣金延迟进入待对账。</li>
+        <li><span class="strong">高频退款：</span>同一渠道月退款率超过 20% 时暂停该渠道账单进入对账并转人工审核。</li>
+        <li><span class="strong">渠道码外泄：</span>推广渠道码可一键停用并重新发码，已归属客户不受影响；已出库但未激活的盒码可批量冻结并补码，补码后旧码失效。</li>
+        <li><span class="strong">预付款异常：</span>同一打款凭证重复入账、余额短时大额跳变后集中下单、余额与流水对不平，均转人工并暂停采购入口。</li>
+        <li><span class="strong">报告外传：</span>报告页加水印并记录查看人，异常高频查看或跨归属访问触发告警；技术手段只能形成约束，不能完全阻止截图，需在合作协议中约定责任。</li>
+        <li><span class="strong">培训作弊：</span>异常答题速度、切屏超 3 次、同设备多账号考试触发标记，成绩作废并要求线下复核后重考。</li>
+      </ul>
+
+      <h3>6.5 通知节点</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>事件</th><th>通知对象</th><th>内容要点</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>支付成功</td><td>C 端、商家、归属渠道</td><td>订单号、金额、预计发货时间</td></tr>
+            <tr><td>已发货</td><td>C 端</td><td>物流信息、采样说明、盒码激活提醒</td></tr>
+            <tr><td>样本已收样</td><td>C 端</td><td>预计出报告时间</td></tr>
+            <tr><td>报告发布</td><td>商家、平台运营</td><td>报告已出，待转发客户</td></tr>
+            <tr><td>解读完成</td><td>商家、平台运营</td><td>是否已由营养师复核，待转发</td></tr>
+            <tr><td>报告被查看</td><td>C 端</td><td>谁在何时查看，默认关闭，可在隐私设置开启</td></tr>
+            <tr><td>报告待转发</td><td>商家、平台运营</td><td>待转发的报告数量、超时提醒</td></tr>
+            <tr><td>充值已入账</td><td>商家</td><td>入账金额、打款凭证、当前可用余额</td></tr>
+            <tr><td>余额不足</td><td>商家</td><td>差额、充值指引、受影响订单</td></tr>
+            <tr><td>对账单生成</td><td>供应商、商家、合伙人</td><td>周期、应付金额、差异提示、票证缺失提示</td></tr>
+            <tr><td>对账单有差异</td><td>对应主体、平台财务</td><td>差异金额、需补的材料</td></tr>
+            <tr><td>合同待签 / 将到期</td><td>签署方</td><td>缺哪份合同、未签会影响什么动作</td></tr>
+            <tr><td>课程待学 / 考试未通过</td><td>销售、合伙人、所属商家</td><td>缺哪门课、建议完成时间</td></tr>
+            <tr><td>合规课即将到期</td><td>销售、合伙人、所属商家</td><td>到期日、需复训的课程</td></tr>
+            <tr><td>票证缺失</td><td>对应主体</td><td>未取得票证的金额、影响结清的说明</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">通知以站内与小程序订阅消息为主；短信仅用于验证码与紧急提醒，同一事件 24 小时内不重复发送。</p>
+    </section>
+
+    <section id="s7">
+      <h2><span class="snum">07</span>待确认问题</h2>
+      <p>以下十七项会实质影响权限、账目口径或合规。除 Q10、Q17 外均已确认并写入正文。表格中的「结论」是正文当前执行的规则，变更会导致对应章节返工。</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>编号</th><th>问题</th><th>为什么重要</th><th>结论</th><th>状态</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">Q1</td><td>分销层级是一级还是两级？</td><td>涉及合规红线，直接改变佣金计算与账本结构</td><td>两级，系统硬限制深度为 2</td><td>已确认</td></tr>
+            <tr><td class="mono">Q2</td><td>佣金基数是商品实付金额还是毛利？</td><td>直接影响合伙人到手金额与商家利润</td><td>商品实付金额</td><td>已确认</td></tr>
+            <tr><td class="mono">Q3</td><td>票证由谁开具、按什么口径登记？</td><td>决定对账单的登记字段与线下对账表格式</td><td>线下开票，后台登记票号、抬头与金额</td><td>已确认</td></tr>
+            <tr><td class="mono">Q4</td><td>资金是否由平台统一收取？C 端支付走线上还是线下？</td><td>决定是否需要支付、分账与代扣能力</td><td>系统不碰资金，收付线下完成；C 端支付方式仍待细化</td><td>已确认</td></tr>
+            <tr><td class="mono">Q5</td><td>客户归属有期限吗？换绑谁来做？</td><td>决定归属稳定性与争议处理入口</td><td>归属长期有效、不设到期；换绑只在后台由平台执行</td><td>已确认</td></tr>
+            <tr><td class="mono">Q6</td><td>报告数据如何定性、留存多久？</td><td>决定存储、授权、导出与销毁规则</td><td>按健康数据管理，留存 1 年</td><td>已确认</td></tr>
+            <tr><td class="mono">Q7</td><td>哪些合同走电子签？</td><td>决定集成范围与开发量</td><td>仅平台↔商家、平台↔供应商两类</td><td>已确认</td></tr>
+            <tr><td class="mono">Q8</td><td>售后期多长？佣金何时进入待对账？</td><td>决定对账周期与退款风险敞口</td><td>订单完成后 7 天</td><td>已确认</td></tr>
+            <tr><td class="mono">Q9</td><td>销售提成是否纳入一期？</td><td>决定工作台范围与商家收入扣减逻辑</td><td>一期不做，仅展示业绩</td><td>已确认</td></tr>
+            <tr><td class="mono">Q10</td><td>检测项目清单与报告字段结构是什么？是否需对接实验室 LIS？</td><td>决定 AI 解读的输入结构与报告模块工作量</td><td>清单待提交，字段先按可配置结构实现</td><td>待确认</td></tr>
+            <tr><td class="mono">Q11</td><td>渠道方可见的报告范围是否收窄？</td><td>决定展示粒度与脱敏工作量</td><td>完整内容，以归属为边界</td><td>已确认</td></tr>
+            <tr><td class="mono">Q12</td><td>销售培训是否作为推广与新单的强制前置？</td><td>决定与交易链路的耦合程度</td><td>不做强制前置，只记录完成情况</td><td>已确认</td></tr>
+            <tr><td class="mono">Q13</td><td>课程由平台统一提供还是商家自建？</td><td>决定课程管理权限与审核成本</td><td>平台统一提供，商家不可自建</td><td>已确认</td></tr>
+            <tr><td class="mono">Q14</td><td>报告与解读通过什么方式送达？</td><td>决定授权方式、到达率与开发量</td><td>后台通知平台 + 商家小程序提醒，由商家转发消费者</td><td>已确认</td></tr>
+            <tr><td class="mono">Q15</td><td>预付款是否可退、可结转、可否跨主体使用？</td><td>决定余额台账的退款与迁移规则</td><td>可退需审批，不可跨主体</td><td>已确认</td></tr>
+            <tr><td class="mono">Q16</td><td>B 端小程序是否独立 AppID？</td><td>决定微信侧注册、授权与消息模板配置</td><td>独立 AppID，共用同一后台</td><td>已确认</td></tr>
+            <tr><td class="mono">Q17</td><td>盒码由平台出库贴标，还是商家自行贴标？</td><td>决定出库流程、设备投入与串单风险</td><td>平台出库贴标，客服补码并作废旧码</td><td>待确认</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout green">
+        <b>当前只剩两项影响排期：</b>Q10 检测项目清单决定报告字段与 AI 解读的输入结构，Q17 决定出库贴码流程。其余事项已定，可直接进入设计与开发；开发过程中若出现与已确认结论冲突的新情况，回到本表登记再改。
+      </div>
+    </section>
+
+    <footer>
+      <span>商城-分销系统 产品需求文档 · v0.7</span>
+      <span>待评审 · 2026-10-22</span>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+    var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+    if (!('IntersectionObserver' in window) || !sections.length) return;
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          var id = '#' + entry.target.id;
+          links.forEach(function(l){ l.classList.toggle('active', l.getAttribute('href') === id); });
+        }
+      });
+    }, { rootMargin: '-8% 0px -78% 0px', threshold: 0 });
+    sections.forEach(function(s){ io.observe(s); });
+  })();
+</script>
+</body>
+</html>
