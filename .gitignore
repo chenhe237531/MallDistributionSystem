@@ -1,1 +1,15 @@
 .DS_Store
+node_modules/
+dist/
+coverage/
+.taro/
+.turbo/
+.swc/
+apps/*/.swc/
+*.log
+.env
+.env.local
+.env.*.local
+apps/*/.env
+apps/*/dist/
+packages/*/dist/
