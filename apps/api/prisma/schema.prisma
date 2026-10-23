@@ -1,0 +1,1105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  platform
+  supplier
+  lab
+  merchant
+  partner
+  sales
+  nutritionist
+  customer
+}
+
+enum AccountStatus {
+  pending
+  active
+  suspended
+  rejected
+}
+
+enum ChannelType {
+  platform
+  merchant
+  partner
+}
+
+model SystemConfig {
+  key       String   @id
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Organization {
+  id        String        @id @default(cuid())
+  name      String
+  type      Role
+  status    AccountStatus @default(pending)
+  users     User[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model User {
+  id               String           @id @default(cuid())
+  phone            String           @unique
+  passwordHash     String
+  name             String
+  roles            Role[]
+  primaryRole      Role
+  status           AccountStatus    @default(pending)
+  organizationId   String?
+  organization     Organization?    @relation(fields: [organizationId], references: [id])
+  qualifications   Qualification[]
+  channels         ChannelIdentity[]
+  products         Product[]
+  merchantListings MerchantProduct[]
+  prepaidAccount   PrepaidAccount?
+  rechargeOrders   RechargeOrder[]
+  procurementOrders ProcurementOrder[] @relation("MerchantProcurement")
+  suppliedProcurementOrders ProcurementOrder[] @relation("SupplierProcurement")
+  salesOrdersAsCustomer SalesOrder[] @relation("CustomerSalesOrders")
+  salesOrdersAsMerchant SalesOrder[] @relation("MerchantSalesOrders")
+  customerOwnership CustomerOwnership?
+  samples          Sample[]
+  consents         ConsentRecord[]
+  learningRecords  LearningRecord[]
+  examAttempts     ExamAttempt[]
+  realName         String?
+  idCardNo         String?
+  gender           String?
+  birthDate        DateTime?
+  deviceId         String?
+  riskLevel        String            @default("normal")
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([organizationId])
+}
+
+model Qualification {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  fileUrl     String?
+  expiresAt   DateTime?
+  status      String     @default("pending")
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime   @default(now())
+  reminders   Reminder[]
+
+  @@index([userId])
+}
+
+model ChannelIdentity {
+  id            String      @id @default(cuid())
+  code          String      @unique
+  type          ChannelType
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        String      @default("active")
+  riskStatus    String      @default("normal")
+  riskReason    String?
+  riskUpdatedAt DateTime?
+  createdAt     DateTime    @default(now())
+
+  @@index([userId])
+}
+
+model Invitation {
+  id        String   @id @default(cuid())
+  partnerId String   @unique
+  inviterId String
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+
+  @@index([inviterId])
+}
+
+model Reminder {
+  id              String         @id @default(cuid())
+  type            String
+  subjectId       String
+  dueAt           DateTime
+  status          String         @default("pending")
+  qualificationId String?
+  qualification   Qualification? @relation(fields: [qualificationId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now())
+
+  @@unique([type, subjectId, dueAt])
+}
+
+enum ContractStatus {
+  draft
+  pending_sign
+  signing
+  active
+  pending_renewal
+  terminated
+}
+
+enum SignMode {
+  esignbao
+  tencent
+  offline
+}
+
+model ContractTemplate {
+  id            String     @id @default(cuid())
+  code          String
+  name          String
+  version       Int
+  partyType     Role
+  body          String
+  lockedClauses String[]
+  active        Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  contracts     Contract[]
+
+  @@unique([code, version])
+}
+
+model Contract {
+  id              String            @id @default(cuid())
+  contractNo      String            @unique
+  templateId      String
+  template        ContractTemplate  @relation(fields: [templateId], references: [id])
+  templateVersion Int
+  subjectUserId   String
+  subjectType     Role
+  status          ContractStatus    @default(draft)
+  signMode        SignMode?
+  provider        String?
+  fileHash        String?
+  evidenceNo      String?
+  effectiveAt     DateTime?
+  expiresAt       DateTime?
+  terminatedAt    DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  tasks           ESignTask[]
+  offline         OfflineAgreement?
+
+  @@index([subjectUserId])
+}
+
+model ESignTask {
+  id          String   @id @default(cuid())
+  contractId  String
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  provider    String
+  externalId  String
+  signUrl     String
+  status      String   @default("pending")
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([contractId])
+}
+
+model OfflineAgreement {
+  id             String   @id @default(cuid())
+  contractId     String   @unique
+  contract       Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  scanFileUrl    String?
+  registeredBy   String
+  registeredAt   DateTime @default(now())
+  validFrom      DateTime
+  validTo        DateTime?
+}
+
+enum ProductStatus {
+  draft
+  pending_review
+  active
+  inactive
+}
+
+model Product {
+  id                       String            @id @default(cuid())
+  skuCode                  String            @unique
+  name                     String
+  supplierId               String
+  supplier                 User              @relation(fields: [supplierId], references: [id])
+  testItems                String[]
+  sampleType               String
+  samplingMethod           String
+  storageCondition         String
+  shelfLifeDays            Int?
+  questionnaireFields      Json?
+  supplyPriceCents         Int
+  suggestedRetailPriceCents Int?
+  retailPriceCents         Int?
+  platformServiceRateBps   Int               @default(0)
+  commissionRateCapBps     Int               @default(0)
+  distributable            Boolean           @default(false)
+  status                   ProductStatus     @default(draft)
+  batches                  Batch[]
+  listings                 MerchantProduct[]
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+
+  @@index([supplierId])
+}
+
+model Batch {
+  id             String   @id @default(cuid())
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  batchNo        String
+  productionDate DateTime
+  expiresAt      DateTime
+  quantity       Int
+  remaining      Int
+  createdAt      DateTime @default(now())
+
+  @@unique([productId, batchNo])
+  @@index([productId, expiresAt])
+}
+
+model MerchantProduct {
+  id               String   @id @default(cuid())
+  merchantId       String
+  merchant         User     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  retailPriceCents Int
+  status           String   @default("active")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([merchantId, productId])
+  @@index([productId])
+}
+
+enum PrepaidAccountStatus {
+  active
+  locked
+}
+
+enum RechargeStatus {
+  pending
+  pending_review
+  credited
+  rejected
+}
+
+enum PrepaidEntryType {
+  recharge
+  freeze
+  deduct
+  unfreeze
+  refund
+  adjust
+}
+
+model PrepaidAccount {
+  id                 String               @id @default(cuid())
+  merchantId         String               @unique
+  merchant           User                 @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  availableCents     Int                  @default(0)
+  frozenCents        Int                  @default(0)
+  totalRechargeCents Int                  @default(0)
+  totalDeductedCents Int                  @default(0)
+  adjustmentCents    Int                  @default(0)
+  status             PrepaidAccountStatus @default(active)
+  entries            PrepaidLedger[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+}
+
+model RechargeOrder {
+  id             String         @id @default(cuid())
+  rechargeNo     String         @unique
+  merchantId     String
+  merchant       User           @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  amountCents    Int
+  paidAmountCents Int?
+  voucherUrl     String?        @unique
+  payerName      String?
+  status         RechargeStatus @default(pending)
+  note           String?
+  registeredBy   String?
+  creditedAt     DateTime?
+  createdAt      DateTime       @default(now())
+
+  @@index([merchantId])
+}
+
+model PrepaidLedger {
+  id               String          @id @default(cuid())
+  accountId        String
+  account          PrepaidAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  type             PrepaidEntryType
+  amountCents      Int
+  balanceAfterCents Int
+  frozenAfterCents Int
+  relatedType      String?
+  relatedId        String?
+  operatorId       String?
+  note             String?
+  createdAt        DateTime        @default(now())
+
+  @@index([accountId, createdAt])
+}
+
+enum ProcurementStatus {
+  deducted
+  pending_shipment
+  shipped
+  received
+  completed
+  cancelled
+  after_sale
+  refunded
+}
+
+model ProcurementOrder {
+  id               String            @id @default(cuid())
+  orderNo          String            @unique
+  merchantId       String
+  merchant         User              @relation("MerchantProcurement", fields: [merchantId], references: [id])
+  supplierId       String
+  supplier         User              @relation("SupplierProcurement", fields: [supplierId], references: [id])
+  status           ProcurementStatus @default(deducted)
+  totalAmountCents Int
+  remark           String?
+  items            ProcurementItem[]
+  boxCodes         BoxCode[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([merchantId])
+  @@index([supplierId])
+}
+
+model ProcurementItem {
+  id               String           @id @default(cuid())
+  orderId          String
+  order            ProcurementOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId        String
+  productName      String
+  skuCode          String
+  batchId          String
+  batchNo          String
+  supplyPriceCents Int
+  quantity         Int
+  amountCents      Int
+
+  @@index([orderId])
+}
+
+enum BoxCodeStatus {
+  generated
+  active
+  used
+  voided
+}
+
+model BoxCode {
+  id                 String           @id @default(cuid())
+  code               String           @unique
+  qrPayload          String
+  procurementOrderId String
+  procurementOrder   ProcurementOrder @relation(fields: [procurementOrderId], references: [id], onDelete: Cascade)
+  procurementItemId  String?
+  productId          String
+  productName        String
+  skuCode            String
+  batchId            String
+  batchNo            String
+  merchantId         String
+  channelId          String
+  status             BoxCodeStatus    @default(generated)
+  voidReason         String?
+  activatedAt        DateTime?
+  sample             Sample?
+  createdAt          DateTime         @default(now())
+
+  @@index([procurementOrderId])
+  @@index([merchantId])
+}
+
+enum SampleStatus {
+  generated
+  activated
+  pending_mail
+  in_transit
+  received_by_lab
+  testing
+  report_generated
+  published
+  abnormal
+  voided
+}
+
+model CustomerOwnership {
+  id           String   @id @default(cuid())
+  customerId   String   @unique
+  customer     User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  channelId    String
+  channelType  String
+  merchantId   String?
+  salesId      String?
+  sourceBoxCode String
+  ownedAt      DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([channelId])
+}
+
+model ConsentRecord {
+  id                  String   @id @default(cuid())
+  customerId          String
+  customer            User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderId             String?
+  boxCode             String
+  templateCode        String
+  templateVersion     Int
+  reportAuthorization Boolean  @default(true)
+  ip                  String?
+  device              String?
+  agreedAt            DateTime @default(now())
+
+  @@index([customerId])
+}
+
+model Sample {
+  id             String       @id @default(cuid())
+  sampleNo       String       @unique
+  boxCodeId      String       @unique
+  boxCode        BoxCode      @relation(fields: [boxCodeId], references: [id])
+  orderId        String?
+  customerId     String
+  customer       User         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  merchantId     String
+  channelId      String
+  status         SampleStatus @default(activated)
+  samplingMethod String
+  questionnaire  Json
+  abnormalReason String?
+  resampleOfId   String?
+  resampleCount  Int          @default(0)
+  activatedAt    DateTime     @default(now())
+  receivedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  events         SampleEvent[]
+  reports        Report[]
+
+  @@index([customerId])
+  @@index([merchantId])
+  @@index([status])
+}
+
+model SampleEvent {
+  id        String   @id @default(cuid())
+  sampleId  String
+  sample    Sample   @relation(fields: [sampleId], references: [id], onDelete: Cascade)
+  type      String
+  note      String?
+  operatorId String?
+  createdAt DateTime @default(now())
+
+  @@index([sampleId])
+}
+
+enum SalesOrderStatus {
+  pending_payment
+  paid
+  pending_shipment
+  shipped
+  pending_sampling
+  testing
+  report_ready
+  completed
+  cancelled
+  refunding
+  refunded
+  after_sale
+}
+
+model SalesOrder {
+  id                    String           @id @default(cuid())
+  orderNo               String           @unique
+  merchantId            String
+  merchant              User             @relation("MerchantSalesOrders", fields: [merchantId], references: [id])
+  customerId            String
+  customer              User             @relation("CustomerSalesOrders", fields: [customerId], references: [id])
+  status                SalesOrderStatus @default(pending_payment)
+  totalAmountCents      Int
+  paidAmountCents       Int?
+  refundedAmountCents   Int              @default(0)
+  preAttributionChannelId String?
+  preAttributionChannelType String?
+  attributedChannelId   String?
+  attributedSalesId     String?
+  commissionRuleVersion String?
+  contactName           String?
+  contactPhone          String?
+  address               String?
+  paidAt                DateTime?
+  shippedAt             DateTime?
+  completedAt           DateTime?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  items                 SalesOrderItem[]
+  stockAllocations      SalesStockAllocation[]
+  refunds               SalesRefund[]
+
+  @@index([merchantId])
+  @@index([customerId])
+  @@index([status, createdAt])
+}
+
+model SalesOrderItem {
+  id                   String           @id @default(cuid())
+  orderId              String
+  order                SalesOrder       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId            String
+  productName          String
+  skuCode              String
+  unitPriceCents       Int
+  quantity             Int
+  amountCents          Int
+  supplyPriceCents     Int
+  platformServiceRateBps Int
+  commissionRateCapBps Int
+  refundedQuantity     Int              @default(0)
+  refundedAmountCents  Int              @default(0)
+  allocations          SalesStockAllocation[]
+
+  @@index([orderId])
+}
+
+model SalesStockAllocation {
+  id              String         @id @default(cuid())
+  orderItemId     String
+  orderItem       SalesOrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  orderId         String
+  order           SalesOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  batchId         String
+  batchNo         String
+  quantity        Int
+  releasedQuantity Int           @default(0)
+
+  @@index([orderItemId])
+  @@index([orderId])
+}
+
+model SalesRefund {
+  id          String        @id @default(cuid())
+  orderId     String
+  order       SalesOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItemId String?
+  quantity    Int
+  amountCents Int
+  reason      String?
+  operatorId  String
+  createdAt   DateTime      @default(now())
+
+  @@index([orderId])
+}
+
+enum ReportStatus {
+  draft
+  pending_review
+  published
+  corrected
+  archived
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  reportNo     String
+  version      Int          @default(1)
+  sampleId     String
+  sample       Sample       @relation(fields: [sampleId], references: [id])
+  orderId      String?
+  customerId   String
+  merchantId   String
+  channelId    String
+  labUserId    String
+  status       ReportStatus @default(draft)
+  fields       Json
+  summary      String?
+  missingItems String[]     @default([])
+  pdfUrl       String?
+  reviewerId   String?
+  publishedAt  DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  views        ReportView[]
+  interpretations Interpretation[]
+  nutritionPlans NutritionPlan[]
+
+  @@unique([reportNo, version])
+  @@index([sampleId])
+  @@index([customerId])
+  @@index([merchantId])
+  @@index([channelId])
+}
+
+model ReportView {
+  id        String   @id @default(cuid())
+  reportId  String
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  viewerId  String
+  role      Role
+  action    String   @default("view")
+  version   Int
+  ip        String?
+  device    String?
+  viewedAt  DateTime @default(now())
+
+  @@index([reportId, viewedAt])
+}
+
+enum InterpretationStatus {
+  generating
+  generated
+  blocked
+  reviewed
+  rejected
+  failed
+}
+
+model Interpretation {
+  id             String               @id @default(cuid())
+  reportId       String
+  report         Report               @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  version        Int                  @default(1)
+  status         InterpretationStatus @default(generating)
+  sections       Json?
+  aiRawOutput    String?
+  promptVersion  String               @default("v1")
+  modelVersion   String               @default("mock-ai-v1")
+  sensitiveHits  String[]             @default([])
+  reviewNote     String?
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  reviewDiff     Json?
+  publishedAt    DateTime?
+  createdAt      DateTime             @default(now())
+  nutritionPlans NutritionPlan[]
+
+  @@unique([reportId, version])
+  @@index([reportId])
+}
+
+model NutritionPlan {
+  id               String          @id @default(cuid())
+  reportId         String
+  report           Report          @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  interpretationId String?
+  interpretation   Interpretation? @relation(fields: [interpretationId], references: [id])
+  customerId       String
+  nutritionistId   String
+  cycle            String
+  meals            Json
+  followUpNodes    Json
+  status           String          @default("draft")
+  publishedAt      DateTime?
+  createdAt        DateTime        @default(now())
+
+  @@index([reportId])
+  @@index([customerId])
+}
+
+enum CommissionStatus {
+  estimated
+  pending_reconciliation
+  reconciling
+  reconciled
+  settled
+  invalid
+  disputed
+}
+
+enum CommissionRateType {
+  percentage
+  fixed
+}
+
+model CommissionRule {
+  id               String              @id @default(cuid())
+  productId        String
+  level            Int
+  rateType         CommissionRateType
+  rateBps          Int?
+  fixedAmountCents Int?
+  effectiveFrom    DateTime
+  effectiveTo      DateTime?
+  createdAt        DateTime            @default(now())
+
+  @@index([productId, level, effectiveFrom])
+}
+
+model Commission {
+  id                String          @id @default(cuid())
+  commissionNo      String          @unique
+  orderId           String
+  orderItemId       String
+  level             Int
+  generation        Int             @default(1)
+  beneficiaryId     String
+  beneficiaryType   String
+  baseAmountCents   Int
+  rateType          CommissionRateType
+  rateBps           Int?
+  fixedAmountCents  Int?
+  amountCents       Int
+  reversedAmountCents Int           @default(0)
+  ruleId            String?
+  ruleVersion       String
+  status            CommissionStatus @default(estimated)
+  selfPurchase      Boolean         @default(false)
+  note              String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([orderItemId, level, ruleVersion, generation])
+  @@index([orderId])
+  @@index([beneficiaryId])
+}
+
+model OrderSettlement {
+  id                     String   @id @default(cuid())
+  orderId                String
+  orderItemId            String   @unique
+  supplyCostCents        Int
+  platformServiceFeeCents Int
+  level1CommissionCents  Int
+  level2CommissionCents  Int
+  merchantIncomeCents    Int
+  createdAt              DateTime @default(now())
+
+  @@index([orderId])
+}
+
+enum StatementStatus {
+  pending
+  reconciling
+  reconciled
+  settled
+  disputed
+}
+
+model Statement {
+  id                   String       @id @default(cuid())
+  statementNo          String       @unique
+  period               String
+  subjectType          String
+  subjectId            String
+  status               StatementStatus @default(pending)
+  openingUnsettledCents Int         @default(0)
+  newPayableCents      Int          @default(0)
+  adjustmentCents      Int          @default(0)
+  totalPayableCents    Int          @default(0)
+  voucherRegisteredCents Int        @default(0)
+  voucherMissingCents  Int          @default(0)
+  differenceCents      Int          @default(0)
+  generatedAt          DateTime     @default(now())
+  reconciledAt         DateTime?
+  settledAt            DateTime?
+  reopenedAt           DateTime?
+  lines                StatementLine[]
+  vouchers             StatementVoucher[]
+  differences          StatementDifference[]
+
+  @@unique([period, subjectType, subjectId])
+  @@index([subjectType, subjectId])
+}
+
+model StatementLine {
+  id             String    @id @default(cuid())
+  statementId    String
+  statement      Statement @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  sourceType     String
+  sourceId       String
+  description    String
+  baseAmountCents Int
+  rateBps        Int?
+  level          Int?
+  ruleVersion    String?
+  amountCents    Int
+  createdAt      DateTime  @default(now())
+
+  @@index([statementId])
+}
+
+model StatementVoucher {
+  id          String    @id @default(cuid())
+  statementId String
+  statement   Statement @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  voucherNo   String    @unique
+  title       String
+  taxNo       String?
+  amountCents Int
+  issuedAt    DateTime
+  imageUrl    String?
+  registeredBy String
+  createdAt   DateTime  @default(now())
+
+  @@index([statementId])
+}
+
+model StatementDifference {
+  id          String    @id @default(cuid())
+  statementId String
+  statement   Statement @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  amountCents Int
+  reason      String
+  resolution  String?
+  status      String    @default("open")
+  createdBy   String
+  createdAt   DateTime  @default(now())
+
+  @@index([statementId])
+}
+
+enum TrainingStatus {
+  not_started
+  learning
+  pending_exam
+  passed
+  expired
+}
+
+model Course {
+  id             String          @id @default(cuid())
+  code           String          @unique
+  name           String
+  category       String
+  audience       Role[]
+  required       Boolean         @default(false)
+  validityMonths Int             @default(12)
+  chapters       CourseChapter[]
+  questions      ExamQuestion[]
+  records        LearningRecord[]
+  createdAt      DateTime        @default(now())
+}
+
+model CourseChapter {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([courseId])
+}
+
+model ExamQuestion {
+  id       String   @id @default(cuid())
+  courseId String
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  type     String
+  prompt   String
+  options  Json
+  answer   Json
+  score    Int      @default(10)
+  createdAt DateTime @default(now())
+
+  @@index([courseId])
+}
+
+model LearningRecord {
+  id                  String         @id @default(cuid())
+  userId              String
+  user                User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId            String
+  course              Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  status              TrainingStatus @default(not_started)
+  progress            Int            @default(0)
+  completedChapterIds String[]       @default([])
+  examScore           Int?
+  attemptCount        Int            @default(0)
+  passedAt            DateTime?
+  expiresAt           DateTime?
+  lastExamAt          DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@index([userId])
+}
+
+model ExamAttempt {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId     String
+  answers      Json
+  score        Int
+  passed       Boolean  @default(false)
+  anomaly      Boolean  @default(false)
+  anomalyNote  String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, courseId])
+}
+
+model MaterialTemplate {
+  id                   String    @id @default(cuid())
+  code                 String    @unique
+  name                 String
+  category             String
+  contentType          String
+  body                 String
+  lockedClauses        String[]  @default([])
+  applicableProductIds String[]  @default([])
+  validUntil           DateTime?
+  active               Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  materials            Material[]
+}
+
+model Material {
+  id               String           @id @default(cuid())
+  templateId       String
+  template         MaterialTemplate @relation(fields: [templateId], references: [id])
+  merchantId       String
+  channelId        String
+  channelCode      String
+  productId        String?
+  title            String
+  content          String
+  qrPayload        String
+  status           String           @default("active")
+  generatedBy      String
+  channelReplaced  Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+
+  @@index([merchantId])
+  @@index([templateId])
+}
+
+enum ClaimStatus {
+  pending
+  confirmed
+  rejected
+}
+
+model SalesCustomerClaim {
+  id         String      @id @default(cuid())
+  salesId    String
+  merchantId String
+  customerId String
+  status     ClaimStatus @default(pending)
+  createdAt  DateTime    @default(now())
+  resolvedAt DateTime?
+  resolvedBy String?
+
+  @@index([salesId])
+  @@index([customerId])
+}
+
+model SystemAlert {
+  id          String   @id @default(cuid())
+  type        String
+  subjectType String
+  subjectId   String
+  message     String
+  severity    String   @default("warning")
+  status      String   @default("open")
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+  resolvedBy  String?
+
+  @@index([type, subjectId])
+}
+
+enum NotificationChannel {
+  in_app
+  subscription
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  read
+  failed
+}
+
+model Notification {
+  id              String              @id @default(cuid())
+  type            String
+  recipientId     String
+  recipientRole   String
+  subjectType     String
+  subjectId       String
+  title           String
+  body            String
+  channel         NotificationChannel @default(in_app)
+  status          NotificationStatus  @default(pending)
+  templateCode    String
+  templateVersion Int                 @default(1)
+  dedupeKey       String?             @unique
+  payload         Json?
+  failureReason   String?
+  sentAt          DateTime?
+  readAt          DateTime?
+  createdAt       DateTime            @default(now())
+
+  @@index([recipientId, status])
+  @@index([subjectType, subjectId])
+}
+
+model ReportShare {
+  id             String    @id @default(cuid())
+  token          String    @unique
+  reportId       String
+  orderId        String?
+  merchantId     String
+  forwarderId    String
+  receiverUserId String?
+  receiverPhone  String
+  status         String    @default("active")
+  openedById     String?
+  openedAt       DateTime?
+  expiresAt      DateTime
+  createdAt      DateTime  @default(now())
+
+  @@index([reportId])
+  @@index([merchantId])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorId      String?
+  actorRole    String?
+  action       String
+  resourceType String
+  resourceId   String
+  orderId      String?
+  orderNo      String?
+  boxCode      String?
+  customerId   String?
+  channelId    String?
+  merchantId   String?
+  detail       Json?
+  createdAt    DateTime @default(now())
+
+  @@index([resourceType, resourceId])
+  @@index([orderNo])
+  @@index([boxCode])
+  @@index([customerId])
+  @@index([channelId])
+  @@index([merchantId])
+  @@index([createdAt])
+}

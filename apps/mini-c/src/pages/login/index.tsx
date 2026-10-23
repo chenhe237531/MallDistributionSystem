@@ -1,0 +1,104 @@
+import { useState } from 'react'
+import Taro from '@tarojs/taro'
+import { Button, Input, Text, View } from '@tarojs/components'
+import { api, setToken } from '../../lib/api'
+
+type AuthResponse = {
+  token: string
+  user: { id: string; name: string; role: string }
+}
+
+function deviceId(): string {
+  const key = 'mall_c_device'
+  const existing = Taro.getStorageSync(key)
+  if (existing) {
+    return existing
+  }
+  const value = `h5-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  Taro.setStorageSync(key, value)
+  return value
+}
+
+export default function Login() {
+  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const submit = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const path = mode === 'login' ? '/auth/login' : '/auth/register'
+      const data =
+        mode === 'login'
+          ? { phone, password }
+          : { phone, password, name, deviceId: deviceId() }
+      const result = await api<AuthResponse>(path, { method: 'POST', data })
+      if (result.user.role !== 'customer') {
+        setError('该入口仅限 C 端用户')
+        return
+      }
+      setToken(result.token)
+      void Taro.redirectTo({ url: '/pages/index/index' })
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '操作失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <View className="page">
+      <View className="hero">
+        <Text className="hero-role">C 端</Text>
+        <Text className="hero-title">检测商城</Text>
+        <Text className="hero-status">居家采样、扫码激活、查看报告与解读</Text>
+      </View>
+      <View className="card" style={{ marginTop: '24px' }}>
+        <Text className="section-title">{mode === 'login' ? '登录' : '注册'}</Text>
+        {mode === 'register' ? (
+          <Input
+            className="input"
+            value={name}
+            placeholder="姓名"
+            onInput={(event) => setName(event.detail.value)}
+          />
+        ) : null}
+        <Input
+          className="input"
+          type="number"
+          maxlength={11}
+          value={phone}
+          placeholder="手机号"
+          onInput={(event) => setPhone(event.detail.value)}
+        />
+        <Input
+          className="input"
+          password
+          value={password}
+          placeholder="密码（至少 6 位）"
+          onInput={(event) => setPassword(event.detail.value)}
+        />
+        {error ? <Text className="error">{error}</Text> : null}
+        <Button className="btn" loading={loading} onClick={() => void submit()}>
+          {mode === 'login' ? '登录' : '注册并登录'}
+        </Button>
+        <Button
+          className="btn-secondary"
+          onClick={() => {
+            setError('')
+            setMode(mode === 'login' ? 'register' : 'login')
+          }}
+        >
+          {mode === 'login' ? '没有账号，去注册' : '已有账号，去登录'}
+        </Button>
+      </View>
+      <View className="notice">
+        <Text>本报告仅用于健康风险提示，不作为临床诊断依据。</Text>
+      </View>
+    </View>
+  )
+}

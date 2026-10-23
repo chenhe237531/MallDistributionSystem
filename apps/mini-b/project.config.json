@@ -1,0 +1,12 @@
+{
+  "miniprogramRoot": "dist/",
+  "projectname": "mall-mini-b",
+  "appid": "touristappid",
+  "setting": {
+    "urlCheck": false,
+    "es6": false,
+    "postcss": false,
+    "minified": false
+  },
+  "compileType": "miniprogram"
+}
