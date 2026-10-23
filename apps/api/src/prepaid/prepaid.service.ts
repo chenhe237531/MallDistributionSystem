@@ -144,6 +144,30 @@ export class PrepaidService {
         update: {},
         create: { merchantId: order.merchantId },
       })
+      // 条件状态转移：并发重复入账只有一个事务能成功
+      const claimed = await tx.rechargeOrder.updateMany({
+        where: {
+          id: order.id,
+          status: dto.reviewApproved
+            ? { in: [RechargeStatus.pending, RechargeStatus.pending_review] }
+            : RechargeStatus.pending,
+        },
+        data: {
+          status: RechargeStatus.credited,
+          registeredBy: operatorId,
+          creditedAt: new Date(),
+        },
+      })
+      if (claimed.count === 0) {
+        const current = await tx.rechargeOrder.findUniqueOrThrow({ where: { id: order.id } })
+        if (current.status === RechargeStatus.credited) {
+          throw new ConflictException('该充值单已入账')
+        }
+        if (current.status === RechargeStatus.rejected) {
+          throw new BadRequestException('该充值单已拒绝')
+        }
+        throw new BadRequestException('该充值单需人工核验通过后才能入账')
+      }
       const updatedAccount = await tx.prepaidAccount.update({
         where: { id: account.id },
         data: {
@@ -164,15 +188,10 @@ export class PrepaidService {
           note: `充值单 ${order.rechargeNo} 入账`,
         },
       })
-      const updatedOrder = await tx.rechargeOrder.update({
-        where: { id: order.id },
-        data: {
-          status: RechargeStatus.credited,
-          registeredBy: operatorId,
-          creditedAt: new Date(),
-        },
-      })
-      return { order: updatedOrder, account: updatedAccount }
+      return {
+        order: await tx.rechargeOrder.findUniqueOrThrow({ where: { id: order.id } }),
+        account: updatedAccount,
+      }
     })
     await this.notificationsService.emit({
       type: 'recharge_credited',
@@ -209,19 +228,23 @@ export class PrepaidService {
 
   async adjust(dto: AdjustPrepaidDto, operatorId: string) {
     const account = await this.getOrCreateAccount(dto.merchantId)
-    const nextAvailable = account.availableCents + dto.amountCents
-    if (nextAvailable < 0) {
-      throw new BadRequestException('调整后可用余额不能为负')
-    }
 
     return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.prepaidAccount.update({
-        where: { id: account.id },
+      // 条件更新保证负向调整不会把余额扣成负数（并发安全）
+      const guarded = await tx.prepaidAccount.updateMany({
+        where:
+          dto.amountCents < 0
+            ? { id: account.id, availableCents: { gte: -dto.amountCents } }
+            : { id: account.id },
         data: {
           availableCents: { increment: dto.amountCents },
           adjustmentCents: { increment: dto.amountCents },
         },
       })
+      if (guarded.count === 0) {
+        throw new BadRequestException('调整后可用余额不能为负')
+      }
+      const updated = await tx.prepaidAccount.findUniqueOrThrow({ where: { id: account.id } })
       await tx.prepaidLedger.create({
         data: {
           accountId: account.id,
@@ -292,19 +315,29 @@ export class PrepaidService {
     if (account.status === PrepaidAccountStatus.locked) {
       throw new ForbiddenException('预付款账户已锁定，采购入口不可用')
     }
-    if (account.availableCents < amountCents) {
-      const shortfall = amountCents - account.availableCents
-      throw new BadRequestException(
-        `预付款余额不足，差额 ${formatCents(shortfall)} 元，请先充值`,
-      )
-    }
-    const updated = await tx.prepaidAccount.update({
-      where: { id: account.id },
+    // 条件更新防止并发采购把可用余额扣成负数
+    const guarded = await tx.prepaidAccount.updateMany({
+      where: {
+        id: account.id,
+        status: PrepaidAccountStatus.active,
+        availableCents: { gte: amountCents },
+      },
       data: {
         availableCents: { decrement: amountCents },
         frozenCents: { increment: amountCents },
       },
     })
+    if (guarded.count === 0) {
+      const current = await tx.prepaidAccount.findUniqueOrThrow({ where: { id: account.id } })
+      if (current.status === PrepaidAccountStatus.locked) {
+        throw new ForbiddenException('预付款账户已锁定，采购入口不可用')
+      }
+      const shortfall = amountCents - current.availableCents
+      throw new BadRequestException(
+        `预付款余额不足，差额 ${formatCents(shortfall)} 元，请先充值`,
+      )
+    }
+    const updated = await tx.prepaidAccount.findUniqueOrThrow({ where: { id: account.id } })
     await tx.prepaidLedger.create({
       data: {
         accountId: account.id,
@@ -344,16 +377,18 @@ export class PrepaidService {
     if (!account) {
       throw new NotFoundException('预付款账户不存在')
     }
-    if (account.frozenCents < amountCents) {
-      throw new BadRequestException('冻结金额不足')
-    }
-    const updated = await tx.prepaidAccount.update({
-      where: { id: account.id },
+    // 条件更新防止并发操作把冻结金额扣成负数
+    const guarded = await tx.prepaidAccount.updateMany({
+      where: { id: account.id, frozenCents: { gte: amountCents } },
       data: {
         frozenCents: { decrement: amountCents },
         totalDeductedCents: { increment: amountCents },
       },
     })
+    if (guarded.count === 0) {
+      throw new BadRequestException('冻结金额不足')
+    }
+    const updated = await tx.prepaidAccount.findUniqueOrThrow({ where: { id: account.id } })
     await tx.prepaidLedger.create({
       data: {
         accountId: account.id,
@@ -393,16 +428,18 @@ export class PrepaidService {
     if (!account) {
       throw new NotFoundException('预付款账户不存在')
     }
-    if (account.frozenCents < amountCents) {
-      throw new BadRequestException('冻结金额不足')
-    }
-    const updated = await tx.prepaidAccount.update({
-      where: { id: account.id },
+    // 条件更新防止并发解冻超出冻结金额
+    const guarded = await tx.prepaidAccount.updateMany({
+      where: { id: account.id, frozenCents: { gte: amountCents } },
       data: {
         frozenCents: { decrement: amountCents },
         availableCents: { increment: amountCents },
       },
     })
+    if (guarded.count === 0) {
+      throw new BadRequestException('冻结金额不足')
+    }
+    const updated = await tx.prepaidAccount.findUniqueOrThrow({ where: { id: account.id } })
     await tx.prepaidLedger.create({
       data: {
         accountId: account.id,

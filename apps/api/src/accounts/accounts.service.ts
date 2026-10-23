@@ -147,6 +147,12 @@ export class AccountsService {
           data: { status: PrismaAccountStatus.active },
         })
       }
+      // 停用账号重新审批通过时，同步恢复其既有渠道（否则渠道仍为 inactive，
+      // 商家无法生成盒码），与 suspend() 的渠道停用逻辑对称
+      await tx.channelIdentity.updateMany({
+        where: { userId: id, status: 'inactive' },
+        data: { status: 'active' },
+      })
       for (const channel of pendingChannels) {
         await tx.channelIdentity.create({
           data: { type: channel.type, code: channel.code, userId: id },

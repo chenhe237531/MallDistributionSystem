@@ -428,6 +428,7 @@ model BoxCode {
 
   @@index([procurementOrderId])
   @@index([merchantId])
+  @@index([channelId])
 }
 
 enum SampleStatus {
