@@ -9,8 +9,8 @@ type LoginResponse = {
 }
 
 export default function Login() {
-  const [phone, setPhone] = useState('13900000001')
-  const [password, setPassword] = useState('Merchant@123')
+  const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -63,7 +63,6 @@ export default function Login() {
         <Button className="btn" loading={loading} onClick={submit}>
           登录
         </Button>
-        <Text className="muted">演示账号：13900000001 / Merchant@123</Text>
       </View>
     </View>
   )

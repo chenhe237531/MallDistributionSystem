@@ -142,6 +142,16 @@ export class ContractsService {
     return contract
   }
 
+  /**
+   * 对外（HTTP）查询合同详情：合同含模板正文与签署链接，
+   * 仅允许合同主体本人或平台查看，防止任意登录用户枚举他人合同。
+   */
+  async getOneForActor(id: string, actor: AuthUser) {
+    const contract = await this.getOne(id)
+    this.assertSubjectOrPlatform(contract, actor)
+    return contract
+  }
+
   async initiate(id: string, dto: InitiateContractDto, actor: AuthUser) {
     const contract = await this.getOne(id)
     this.assertSubjectOrPlatform(contract, actor)

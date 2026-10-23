@@ -79,7 +79,7 @@ export class ProductsService {
     })
   }
 
-  async getOne(id: string) {
+  async getOne(id: string, actor: AuthUser) {
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
@@ -91,7 +91,36 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException('商品不存在')
     }
-    return product
+    if (this.canSeeSupplySide(actor, product.supplierId)) {
+      return product
+    }
+    // 非平台/供货侧视角：未上架商品不可见，且不暴露供货价与费率等敏感字段
+    if (product.status !== PrismaProductStatus.active) {
+      throw new NotFoundException('商品不存在')
+    }
+    return {
+      id: product.id,
+      skuCode: product.skuCode,
+      name: product.name,
+      testItems: product.testItems,
+      sampleType: product.sampleType,
+      samplingMethod: product.samplingMethod,
+      storageCondition: product.storageCondition,
+      shelfLifeDays: product.shelfLifeDays,
+      questionnaireFields: product.questionnaireFields,
+      retailPriceCents: product.retailPriceCents,
+      distributable: product.distributable,
+      status: product.status,
+      supplier: product.supplier,
+      createdAt: product.createdAt,
+    }
+  }
+
+  private canSeeSupplySide(actor: AuthUser, supplierId: string): boolean {
+    if (actor.roles.includes(Role.PLATFORM)) {
+      return true
+    }
+    return actor.roles.includes(Role.SUPPLIER) && supplierId === actor.sub
   }
 
   async review(id: string, dto: ReviewProductDto) {
@@ -234,7 +263,34 @@ export class ProductsService {
     })
   }
 
-  async inventory(productId: string) {
+  async batches(id: string, actor: AuthUser) {
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      select: { supplierId: true },
+    })
+    if (!product) {
+      throw new NotFoundException('商品不存在')
+    }
+    if (!this.canSeeSupplySide(actor, product.supplierId)) {
+      throw new ForbiddenException('无权查看该商品批次')
+    }
+    return this.prisma.batch.findMany({
+      where: { productId: id },
+      orderBy: { expiresAt: 'asc' },
+    })
+  }
+
+  async inventory(productId: string, actor: AuthUser) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+      select: { supplierId: true },
+    })
+    if (!product) {
+      throw new NotFoundException('商品不存在')
+    }
+    if (!this.canSeeSupplySide(actor, product.supplierId)) {
+      throw new ForbiddenException('无权查看该商品库存')
+    }
     const now = new Date()
     const batches = await this.prisma.batch.findMany({
       where: { productId, remaining: { gt: 0 } },
@@ -256,7 +312,8 @@ export class ProductsService {
 
   /**
    * 按先进先出扣减批次库存，过期批次不参与分配。
-   * 供出库生成盒码时调用。
+   * 供出库生成盒码时调用。批次扣减使用条件更新（remaining >= take），
+   * 并发出库时不会把库存扣成负数。
    */
   async allocateStock(productId: string, quantity: number) {
     return this.prisma.$transaction((tx) =>
@@ -284,13 +341,25 @@ export class ProductsService {
       if (needed <= 0) {
         break
       }
-      const take = Math.min(needed, batch.remaining)
-      await tx.batch.update({
-        where: { id: batch.id },
-        data: { remaining: { decrement: take } },
-      })
-      allocations.push({ batchId: batch.id, batchNo: batch.batchNo, quantity: take })
-      needed -= take
+      let remaining = batch.remaining
+      while (needed > 0 && remaining > 0) {
+        const take = Math.min(needed, remaining)
+        const guarded = await tx.batch.updateMany({
+          where: { id: batch.id, remaining: { gte: take } },
+          data: { remaining: { decrement: take } },
+        })
+        if (guarded.count === 0) {
+          // 并发扣减导致快照过期：重读该批次剩余量后重试
+          const fresh = await tx.batch.findUnique({ where: { id: batch.id } })
+          remaining = fresh?.remaining ?? 0
+          continue
+        }
+        allocations.push({ batchId: batch.id, batchNo: batch.batchNo, quantity: take })
+        needed -= take
+      }
+    }
+    if (needed > 0) {
+      throw new BadRequestException('库存不足，无法出库')
     }
     return allocations
   }
