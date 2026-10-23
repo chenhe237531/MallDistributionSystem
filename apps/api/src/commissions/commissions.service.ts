@@ -302,21 +302,27 @@ export class CommissionsService {
     return { recomputed: true }
   }
 
+  /**
+   * refundedQuantity 为该订单项累计已退数量（含本次），
+   * 按累计数量计算目标冲销额，避免多次部分退款时按次舍入产生残留。
+   */
   async reverseForRefundInTransaction(
     tx: Prisma.TransactionClient,
     orderItemId: string,
-    refundQuantity: number,
+    refundedQuantity: number,
     itemQuantity: number,
   ) {
     const commissions = await tx.commission.findMany({
       where: { orderItemId, status: { not: CommissionStatus.invalid } },
     })
     for (const commission of commissions) {
-      const remaining = commission.amountCents - commission.reversedAmountCents
-      const proportional = Math.round(
-        (commission.amountCents * refundQuantity) / itemQuantity,
+      const targetReversed = Math.round(
+        (commission.amountCents * refundedQuantity) / itemQuantity,
       )
-      const reverse = Math.min(proportional, remaining)
+      const reverse = Math.min(
+        Math.max(targetReversed - commission.reversedAmountCents, 0),
+        commission.amountCents - commission.reversedAmountCents,
+      )
       if (reverse <= 0) {
         continue
       }

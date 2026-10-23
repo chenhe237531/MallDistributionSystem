@@ -10,7 +10,7 @@ import {
   Role as PrismaRole,
 } from '@prisma/client'
 import { randomBytes } from 'node:crypto'
-import { Role } from '@mall/shared'
+import { formatCents, Role } from '@mall/shared'
 import { BoxCodesService } from '../box-codes/box-codes.service'
 import { ContractsService } from '../contracts/contracts.service'
 import { NotificationsService } from '../notifications/notifications.service'
@@ -150,7 +150,7 @@ export class ProcurementService {
         subjectType: 'prepaid_account',
         subjectId: account.id,
         title: '预付款余额不足',
-        body: `当前可用余额 ${(account.availableCents / 100).toFixed(2)} 元，低于 1000 元，请及时充值以免影响采购。`,
+        body: `当前可用余额 ${formatCents(account.availableCents)} 元，低于 1000 元，请及时充值以免影响采购。`,
         templateCode: 'prepaid_low_balance',
         dedupeKey: `prepaid_low_balance:${account.id}:${new Date().toISOString().slice(0, 10)}`,
         payload: { availableCents: account.availableCents },

@@ -461,13 +461,13 @@ export class SalesOrdersService {
         await this.commissionsService.reverseForRefundInTransaction(
           tx,
           item.id,
-          input.quantity,
+          cumulativeQuantity,
           item.quantity,
         )
         await this.statementsService.addRefundAdjustmentInTransaction(
           tx,
           item.id,
-          input.quantity,
+          cumulativeQuantity,
           item.quantity,
         )
         refundedQuantityByItem.set(item.id, cumulativeQuantity)

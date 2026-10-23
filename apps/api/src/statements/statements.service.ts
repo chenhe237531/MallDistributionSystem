@@ -385,10 +385,14 @@ export class StatementsService {
     }
   }
 
+  /**
+   * refundedQuantity 为该订单项累计已退数量（含本次），
+   * 按累计数量计算目标冲回总额，再扣除已冲回部分，避免多次部分退款时按次舍入产生偏差。
+   */
   async addRefundAdjustmentInTransaction(
     tx: DbClient,
     orderItemId: string,
-    refundQuantity: number,
+    refundedQuantity: number,
     itemQuantity: number,
   ) {
     const commissions = await tx.commission.findMany({ where: { orderItemId } })
@@ -401,7 +405,16 @@ export class StatementsService {
         if (line.statement.status === PrismaStatementStatus.settled) {
           continue
         }
-        const amountCents = -Math.round((line.amountCents * refundQuantity) / itemQuantity)
+        const targetTotal = -Math.round((line.amountCents * refundedQuantity) / itemQuantity)
+        const prior = await tx.statementLine.aggregate({
+          where: {
+            statementId: line.statementId,
+            sourceType: 'refund_adjustment',
+            sourceId: commission.id,
+          },
+          _sum: { amountCents: true },
+        })
+        const amountCents = targetTotal - (prior._sum.amountCents ?? 0)
         if (amountCents === 0) {
           continue
         }
