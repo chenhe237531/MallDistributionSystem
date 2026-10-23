@@ -10,6 +10,12 @@ import { SamplesService } from './samples.service'
 export class BoxActivationController {
   constructor(private readonly samplesService: SamplesService) {}
 
+  @Get('preview/:code')
+  @Roles(Role.CUSTOMER)
+  preview(@Param('code') code: string) {
+    return this.samplesService.previewBoxCode(code)
+  }
+
   @Post('activate')
   @Roles(Role.CUSTOMER)
   activate(@CurrentUser() user: AuthUser, @Body() dto: ActivateBoxCodeDto) {

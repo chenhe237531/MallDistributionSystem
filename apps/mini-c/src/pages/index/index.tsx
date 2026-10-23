@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Taro from '@tarojs/taro'
-import { Button, Text, View } from '@tarojs/components'
+import { Text, View } from '@tarojs/components'
+import { Button as NutButton, Empty, Price, Tag } from '@nutui/nutui-react-taro'
 import { formatCents } from '@mall/shared'
 import { api, clearToken, getToken, go, routeParams } from '../../lib/api'
 
@@ -54,22 +55,23 @@ export default function Index() {
 
       <View className="section">
         <Text className="section-title">在售检测盒</Text>
-        {items.length === 0 ? <Text className="muted">暂无在售商品</Text> : null}
+        {items.length === 0 ? <Empty description="暂无在售商品" /> : null}
         {items.map((item) => (
           <View key={item.listingId} className="card">
             <View className="row">
-              <Text>{item.productName}</Text>
-              <Text className="tag">{item.merchantName}</Text>
+              <Text className="card-title">{item.productName}</Text>
+              <Tag plain type="primary">
+                {item.merchantName}
+              </Tag>
             </View>
             <Text className="muted">
               {item.skuCode} · 库存 {item.available} 盒
             </Text>
-            <View className="row">
-              <Text style={{ color: '#dc2626', fontWeight: 600 }}>
-                {formatCents(item.retailPriceCents)} 元
-              </Text>
-              <Button
-                className="btn"
+            <View className="price-row">
+              <Price price={formatCents(item.retailPriceCents)} symbol="¥" color="#dc2626" />
+              <NutButton
+                type="primary"
+                size="small"
                 onClick={() => {
                   if (!getToken()) {
                     go('/pages/login/index')
@@ -81,7 +83,7 @@ export default function Index() {
                 }}
               >
                 立即购买
-              </Button>
+              </NutButton>
             </View>
           </View>
         ))}
@@ -103,15 +105,17 @@ export default function Index() {
               }}
             >
               <Text>{entry.label}</Text>
-              <Text className="entry-tag">进入</Text>
+              <Text className="entry-tag">进入 →</Text>
             </View>
           ))}
         </View>
       </View>
 
+      <View className="action-gap" />
       {loggedIn ? (
-        <Button
-          className="btn-secondary"
+        <NutButton
+          block
+          fill="outline"
           onClick={() => {
             clearToken()
             setLoggedIn(false)
@@ -119,11 +123,11 @@ export default function Index() {
           }}
         >
           退出登录
-        </Button>
+        </NutButton>
       ) : (
-        <Button className="btn" onClick={() => go('/pages/login/index')}>
+        <NutButton block type="primary" onClick={() => go('/pages/login/index')}>
           登录 / 注册
-        </Button>
+        </NutButton>
       )}
 
       <View className="notice">

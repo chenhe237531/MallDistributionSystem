@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import Taro from '@tarojs/taro'
-import { Button, Input, Text, View } from '@tarojs/components'
+import { Text, View } from '@tarojs/components'
+import {
+  Button as NutButton,
+  Input as NutInput,
+  Price,
+  Tag,
+  Toast,
+} from '@nutui/nutui-react-taro'
 import { formatCents } from '@mall/shared'
 import { api, ensureLogin, routeParams } from '../../lib/api'
 
@@ -44,7 +51,7 @@ export default function Order() {
           },
         },
       )
-      void Taro.showToast({ title: '下单成功', icon: 'success' })
+      Toast.show('order-toast', { title: '下单成功', icon: 'success' })
       void Taro.redirectTo({
         url: `/pages/orders/index?highlight=${order.orderNo}`,
       })
@@ -57,48 +64,52 @@ export default function Order() {
 
   return (
     <View className="page">
+      <Toast id="order-toast" />
       <View className="card">
-        <Text className="section-title">{productName}</Text>
+        <Text className="card-title">{productName}</Text>
         <Text className="muted">{merchantName}</Text>
-        <Text style={{ marginTop: '12px', color: '#dc2626', fontWeight: 600, fontSize: '34px' }}>
-          {formatCents(price)} 元 / 盒
-        </Text>
-        {channelCode ? <Text className="muted">渠道码：{channelCode}</Text> : null}
+        <View className="price-row">
+          <Price price={formatCents(price)} symbol="¥" color="#dc2626" size="large" />
+          {channelCode ? <Tag plain type="info">渠道码 {channelCode}</Tag> : null}
+        </View>
       </View>
 
       <View className="card">
         <Text className="section-title">收货与联系信息</Text>
-        <Input
-          className="input"
+        <NutInput
           value={contactName}
           placeholder="联系人姓名"
-          onInput={(event) => setContactName(event.detail.value)}
+          clearable
+          onChange={(value) => setContactName(value)}
         />
-        <Input
-          className="input"
+        <View className="field-gap" />
+        <NutInput
           type="number"
-          maxlength={11}
+          maxLength={11}
           value={contactPhone}
           placeholder="联系人手机号"
-          onInput={(event) => setContactPhone(event.detail.value)}
+          clearable
+          onChange={(value) => setContactPhone(value)}
         />
-        <Input
-          className="input"
+        <View className="field-gap" />
+        <NutInput
           value={address}
           placeholder="收货地址（检测盒寄送）"
-          onInput={(event) => setAddress(event.detail.value)}
+          clearable
+          onChange={(value) => setAddress(value)}
         />
-        <Input
-          className="input"
+        <View className="field-gap" />
+        <NutInput
           type="number"
           value={quantity}
           placeholder="购买数量"
-          onInput={(event) => setQuantity(event.detail.value)}
+          onChange={(value) => setQuantity(value)}
         />
         {error ? <Text className="error">{error}</Text> : null}
-        <Button className="btn" loading={loading} onClick={() => void submit()}>
+        <View className="field-gap" />
+        <NutButton block type="primary" loading={loading} onClick={() => void submit()}>
           提交订单（{formatCents(price * (Number(quantity) || 0))} 元）
-        </Button>
+        </NutButton>
         <Text className="muted">
           支付由商家线下登记确认；检测盒寄出后请妥善保存，激活前请勿丢弃盒码。
         </Text>

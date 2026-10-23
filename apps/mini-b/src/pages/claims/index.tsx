@@ -1,7 +1,16 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
-import { Button, Input, Text, View } from '@tarojs/components'
+import { Text, View } from '@tarojs/components'
 import { api, ensureLogin } from '../../lib/api'
+import {
+  Button as NutButton,
+  Cell,
+  CellGroup,
+  Empty,
+  Input as NutInput,
+  Tag,
+  Toast,
+} from '@nutui/nutui-react-taro'
 
 type Me = { roles: string[] }
 type Claim = {
@@ -9,6 +18,9 @@ type Claim = {
   status: string
   customer: { name: string; phone: string } | null
 }
+
+const toast = (title: string, icon?: 'success' | 'fail') =>
+  Toast.show('b-toast', { title, icon })
 
 export default function Claims() {
   const [claims, setClaims] = useState<Claim[]>([])
@@ -38,11 +50,11 @@ export default function Claims() {
         method: 'POST',
         data: { customerPhone: phone },
       })
-      void Taro.showToast({ title: '认领申请已提交', icon: 'success' })
+      toast('认领申请已提交', 'success')
       setPhone('')
       await load()
     } catch (cause) {
-      void Taro.showToast({ title: cause instanceof Error ? cause.message : '提交失败', icon: 'none' })
+      toast(cause instanceof Error ? cause.message : '提交失败')
     } finally {
       setLoading(false)
     }
@@ -54,35 +66,43 @@ export default function Claims() {
         <View className="section">
           <Text className="section-title">申请认领客户</Text>
           <View className="card">
-            <Input
-              className="input"
-              type="number"
-              maxlength={11}
-              placeholder="客户手机号"
-              value={phone}
-              onInput={(event) => setPhone(event.detail.value)}
-            />
-            <Button className="btn" loading={loading} onClick={submit}>
+            <View className="form-field">
+              <Text className="form-label">客户手机号</Text>
+              <NutInput
+                type="number"
+                maxLength={11}
+                value={phone}
+                placeholder="请输入客户手机号"
+                onBlur={(value) => setPhone(value)}
+              />
+            </View>
+            <NutButton className="form-submit" block type="primary" loading={loading} onClick={submit}>
               提交申请
-            </Button>
-            <Text className="muted">需客户确认后生效，归属仍以盒码为准。</Text>
+            </NutButton>
+            <Text className="muted form-hint">需客户确认后生效，归属仍以盒码为准。</Text>
           </View>
         </View>
       ) : null}
 
       <View className="section">
         <Text className="section-title">认领记录</Text>
-        {claims.length === 0 ? <Text className="muted">暂无记录</Text> : null}
-        {claims.map((claim) => (
-          <View key={claim.id} className="card">
-            <View className="row">
-              <Text>{claim.customer?.name ?? '客户'}</Text>
-              <Text className="tag">{claim.status}</Text>
-            </View>
-            <Text className="muted">{claim.customer?.phone ?? ''}</Text>
-          </View>
-        ))}
+        {claims.length === 0 ? (
+          <Empty description="暂无记录" />
+        ) : (
+          <CellGroup>
+            {claims.map((claim) => (
+              <Cell
+                key={claim.id}
+                title={claim.customer?.name ?? '客户'}
+                description={<Text className="muted">{claim.customer?.phone ?? ''}</Text>}
+                extra={<Tag type="primary">{claim.status}</Tag>}
+              />
+            ))}
+          </CellGroup>
+        )}
       </View>
+
+      <Toast id="b-toast" />
     </View>
   )
 }

@@ -3,6 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import { Text, View } from '@tarojs/components'
 import { formatCents } from '@mall/shared'
 import { api, ensureLogin } from '../../lib/api'
+import { Cell, CellGroup, Empty, Tag } from '@nutui/nutui-react-taro'
 
 type Me = { roles: string[] }
 type CustomerRow = {
@@ -41,25 +42,33 @@ export default function Customers() {
     <View className="page">
       <View className="section">
         <Text className="section-title">{isSales ? '我负责的客户' : '本店客户'}</Text>
-        {customers.length === 0 ? <Text className="muted">暂无客户</Text> : null}
+        {customers.length === 0 ? <Empty description="暂无客户" /> : null}
         {customers.map((customer) => (
           <View key={customer.customerId} className="card">
             <View className="row">
-              <Text>{customer.name}</Text>
-              <Text className="tag">{customer.reportStatus ?? '无报告'}</Text>
+              <Text className="cust-name">{customer.name}</Text>
+              <Tag type="primary">{customer.reportStatus ?? '无报告'}</Tag>
             </View>
             <Text className="muted">{customer.phone}</Text>
-            <View className="row">
-              <Text className="row-label">成交 / 客单价</Text>
-              <Text>
-                {customer.orderCount} 单 ·{' '}
-                {customer.avgOrderCents === null ? '—' : `${formatCents(customer.avgOrderCents)} 元`}
-              </Text>
-            </View>
-            <View className="row">
-              <Text className="row-label">累计成交</Text>
-              <Text>{formatCents(customer.totalAmountCents)} 元</Text>
-            </View>
+            <CellGroup className="cust-stats">
+              <Cell
+                title="成交 / 客单价"
+                extra={
+                  <Text className="cust-stat">
+                    {customer.orderCount} 单 ·{' '}
+                    {customer.avgOrderCents === null
+                      ? '—'
+                      : `${formatCents(customer.avgOrderCents)} 元`}
+                  </Text>
+                }
+              />
+              <Cell
+                title="累计成交"
+                extra={
+                  <Text className="cust-stat">{formatCents(customer.totalAmountCents)} 元</Text>
+                }
+              />
+            </CellGroup>
             {customer.salesName ? (
               <Text className="muted">归属销售：{customer.salesName}</Text>
             ) : null}

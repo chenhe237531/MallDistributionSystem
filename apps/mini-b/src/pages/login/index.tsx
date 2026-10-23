@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import Taro from '@tarojs/taro'
-import { Button, Input, Text, View } from '@tarojs/components'
+import { Text, View } from '@tarojs/components'
+import {
+  Button as NutButton,
+  Input as NutInput,
+  Toast,
+} from '@nutui/nutui-react-taro'
 import { api, setToken } from '../../lib/api'
 
 type LoginResponse = {
@@ -27,6 +32,7 @@ export default function Login() {
         return
       }
       setToken(result.token)
+      Toast.show('b-toast', { title: '登录成功', icon: 'success' })
       void Taro.redirectTo({ url: '/pages/index/index' })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '登录失败')
@@ -36,35 +42,42 @@ export default function Login() {
   }
 
   return (
-    <View className="page">
+    <View className="page login-page">
       <View className="hero">
         <Text className="hero-role">商城-分销系统</Text>
         <Text className="hero-title">商家工作台</Text>
         <Text className="hero-status">采购、客户、报告与培训</Text>
       </View>
-      <View className="card">
-        <Text className="section-title">账号登录</Text>
-        <Input
-          className="input"
-          type="number"
-          maxlength={11}
-          value={phone}
-          placeholder="手机号"
-          onInput={(event) => setPhone(event.detail.value)}
-        />
-        <Input
-          className="input"
-          password
-          value={password}
-          placeholder="密码"
-          onInput={(event) => setPassword(event.detail.value)}
-        />
+
+      <View className="card login-card">
+        <Text className="login-title">账号登录</Text>
+        <View className="login-field">
+          <Text className="login-label">手机号</Text>
+          <NutInput
+            type="number"
+            maxLength={11}
+            value={phone}
+            placeholder="请输入手机号"
+            onBlur={(value) => setPhone(value)}
+          />
+        </View>
+        <View className="login-field">
+          <Text className="login-label">密码</Text>
+          <NutInput
+            type="password"
+            value={password}
+            placeholder="请输入密码"
+            onBlur={(value) => setPassword(value)}
+          />
+        </View>
         {error ? <Text className="error">{error}</Text> : null}
-        <Button className="btn" loading={loading} onClick={submit}>
+        <NutButton className="login-submit" block type="primary" loading={loading} onClick={submit}>
           登录
-        </Button>
-        <Text className="muted">演示账号：13900000001 / Merchant@123</Text>
+        </NutButton>
+        <Text className="muted login-demo">演示账号：13900000001 / Merchant@123</Text>
       </View>
+
+      <Toast id="b-toast" />
     </View>
   )
 }

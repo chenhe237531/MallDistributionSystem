@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import Taro from '@tarojs/taro'
-import { Button, Input, Switch, Text, View } from '@tarojs/components'
+import { Text, View } from '@tarojs/components'
+import {
+  Button as NutButton,
+  Input as NutInput,
+  Switch as NutSwitch,
+  Tag,
+} from '@nutui/nutui-react-taro'
 import { api, clearToken, ensureLogin, go } from '../../lib/api'
 
 type Me = {
@@ -92,83 +98,95 @@ export default function Profile() {
       {error ? <Text className="error">{error}</Text> : null}
       {message ? <Text className="muted">{message}</Text> : null}
 
-      <View className="card">
+      <View className="section">
         <Text className="section-title">实名认证</Text>
-        <Text className="muted">激活检测盒前必须完成实名认证，信息仅用于检测服务与合规留痕。</Text>
-        <Input
-          className="input"
-          value={realName}
-          placeholder="真实姓名"
-          onInput={(event) => setRealName(event.detail.value)}
-        />
-        <Input
-          className="input"
-          value={idCardNo}
-          maxlength={18}
-          placeholder="身份证号"
-          onInput={(event) => setIdCardNo(event.detail.value)}
-        />
-        <Input
-          className="input"
-          value={gender}
-          placeholder="性别 male / female"
-          onInput={(event) => setGender(event.detail.value)}
-        />
-        <Button className="btn" onClick={() => void saveRealName()}>
-          保存实名信息
-        </Button>
-      </View>
-
-      <View className="card">
-        <Text className="section-title">报告授权</Text>
-        <Text className="muted">
-          关闭后，商家与渠道仅能看到报告状态，无法查看指标与解读内容。
-        </Text>
-        <View className="row">
-          <Text>允许渠道查看报告</Text>
-          <Switch
-            checked={ownership?.consent?.reportAuthorization ?? false}
-            onChange={(event) => void toggleAuthorization(event.detail.value)}
+        <View className="card">
+          <Text className="muted">激活检测盒前必须完成实名认证，信息仅用于检测服务与合规留痕。</Text>
+          <View className="field-gap" />
+          <NutInput
+            value={realName}
+            placeholder="真实姓名"
+            clearable
+            onChange={(value) => setRealName(value)}
           />
+          <View className="field-gap" />
+          <NutInput
+            value={idCardNo}
+            maxLength={18}
+            placeholder="身份证号"
+            clearable
+            onChange={(value) => setIdCardNo(value)}
+          />
+          <View className="field-gap" />
+          <NutInput
+            value={gender}
+            placeholder="性别 male / female"
+            clearable
+            onChange={(value) => setGender(value)}
+          />
+          <View className="field-gap" />
+          <NutButton block type="primary" onClick={() => void saveRealName()}>
+            保存实名信息
+          </NutButton>
         </View>
-        <Text className="muted">
-          同意书版本：v{ownership?.consent?.templateVersion ?? '—'} · 签署时间：
-          {ownership?.consent?.agreedAt
-            ? new Date(ownership.consent.agreedAt).toLocaleString('zh-CN')
-            : '—'}
-        </Text>
       </View>
 
-      <View className="card">
-        <Text className="section-title">我的样本</Text>
-        {ownership?.ownership ? (
+      <View className="section">
+        <Text className="section-title">报告授权</Text>
+        <View className="card">
           <Text className="muted">
-            归属渠道：{ownership.ownership.channelType} · 来源盒码：
-            {ownership.ownership.sourceBoxCode}
+            关闭后，商家与渠道仅能看到报告状态，无法查看指标与解读内容。
           </Text>
-        ) : (
-          <Text className="muted">尚未建立归属，激活检测盒后生成。</Text>
-        )}
-        {(ownership?.samples ?? []).map((sample) => (
-          <View key={sample.id} className="row" style={{ marginTop: '12px' }}>
-            <Text>{sample.sampleNo}</Text>
-            <Text className="tag">{sample.status}</Text>
+          <View className="row" style={{ marginTop: '8px' }}>
+            <Text>允许渠道查看报告</Text>
+            <NutSwitch
+              checked={ownership?.consent?.reportAuthorization ?? false}
+              onChange={(value) => void toggleAuthorization(value)}
+            />
           </View>
-        ))}
+          <Text className="muted">
+            同意书版本：v{ownership?.consent?.templateVersion ?? '—'} · 签署时间：
+            {ownership?.consent?.agreedAt
+              ? new Date(ownership.consent.agreedAt).toLocaleString('zh-CN')
+              : '—'}
+          </Text>
+        </View>
       </View>
 
-      <Button className="btn-secondary" onClick={() => go('/pages/notifications/index')}>
+      <View className="section">
+        <Text className="section-title">我的样本</Text>
+        <View className="card">
+          {ownership?.ownership ? (
+            <Text className="muted">
+              归属渠道：{ownership.ownership.channelType} · 来源盒码：
+              {ownership.ownership.sourceBoxCode}
+            </Text>
+          ) : (
+            <Text className="muted">尚未建立归属，激活检测盒后生成。</Text>
+          )}
+          {(ownership?.samples ?? []).map((sample) => (
+            <View key={sample.id} className="row" style={{ marginTop: '6px' }}>
+              <Text>{sample.sampleNo}</Text>
+              <Tag type="info">{sample.status}</Tag>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <NutButton block fill="outline" onClick={() => go('/pages/notifications/index')}>
         消息中心
-      </Button>
-      <Button
-        className="btn-secondary"
+      </NutButton>
+      <View className="action-gap" />
+      <NutButton
+        block
+        fill="outline"
         onClick={() => {
           clearToken()
           void Taro.reLaunch({ url: '/pages/index/index' })
         }}
       >
         退出登录
-      </Button>
+      </NutButton>
     </View>
   )
 }

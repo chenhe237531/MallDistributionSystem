@@ -1,3 +1,27 @@
+/*
+ * C 端检测商城 · 全局样式（375 设计稿基准）
+ * 主色：天蓝 #0ea5e9；白色圆角卡片 + 浅灰背景
+ */
+
+/* ===== NutUI 主题覆盖（品牌色 → 天蓝） ===== */
+:root,
+page {
+  --nutui-brand-1: #e0f2fe;
+  --nutui-brand-6: #0ea5e9;
+  --nutui-brand-stop-1: #38bdf8;
+  --nutui-brand-stop-2: #0284c7;
+  --nutui-color-primary: #0ea5e9;
+  --nutui-color-primary-stop-1: #38bdf8;
+  --nutui-color-primary-stop-2: #0284c7;
+  --nutui-color-primary-text: #ffffff;
+  --nutui-color-primary-pressed: #0284c7;
+  --nutui-color-primary-disabled-special: #7dd3fc;
+  --nutui-color-primary-light: #e0f2fe;
+  --nutui-color-primary-light-pressed: #bae6fd;
+  --nutui-button-border-radius: 10px;
+  --nutui-color-border: #e2e8f0;
+}
+
 page {
   background: #f8fafc;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -6,45 +30,47 @@ page {
 
 .page {
   min-height: 100vh;
-  padding: 24px;
+  padding: 12px;
   box-sizing: border-box;
 }
 
+/* ===== 渐变头卡 ===== */
 .hero {
   display: flex;
   flex-direction: column;
-  padding: 32px;
-  border-radius: 24px;
+  padding: 16px;
+  border-radius: 12px;
   background: linear-gradient(135deg, #0ea5e9, #0369a1);
   color: #fff;
 }
 
 .hero-role {
-  font-size: 24px;
+  font-size: 12px;
   opacity: 0.85;
 }
 
 .hero-title {
-  margin-top: 12px;
-  font-size: 40px;
+  margin-top: 6px;
+  font-size: 20px;
   font-weight: 600;
 }
 
 .hero-status {
-  margin-top: 12px;
-  font-size: 22px;
+  margin-top: 6px;
+  font-size: 11px;
   opacity: 0.9;
   line-height: 1.5;
 }
 
+/* ===== 分区与卡片 ===== */
 .section {
-  margin-top: 28px;
+  margin-top: 14px;
 }
 
 .section-title {
   display: block;
-  margin-bottom: 16px;
-  font-size: 28px;
+  margin-bottom: 8px;
+  font-size: 14px;
   font-weight: 600;
   color: #0f172a;
 }
@@ -52,108 +78,147 @@ page {
 .card {
   display: flex;
   flex-direction: column;
-  margin-bottom: 16px;
-  padding: 24px;
-  border-radius: 18px;
+  margin-bottom: 8px;
+  padding: 12px;
+  border-radius: 10px;
   background: #fff;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
-  font-size: 26px;
+  box-shadow: 0 1px 5px rgba(15, 23, 42, 0.04);
+  font-size: 13px;
   line-height: 1.6;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.entry-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.entry-item {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: calc(50% - 8px);
-  box-sizing: border-box;
-  min-height: 140px;
-  padding: 24px;
-  border-radius: 20px;
-  background: #fff;
-  font-size: 26px;
-}
-
-.entry-tag {
-  margin-top: 24px;
-  font-size: 20px;
-  color: #0ea5e9;
-}
-
-.input {
-  margin-bottom: 16px;
-  padding: 18px 20px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #fff;
-  font-size: 26px;
-}
-
-.btn {
-  margin-top: 8px;
-  border-radius: 14px;
-  background: #0ea5e9;
-  color: #fff;
-  font-size: 26px;
-}
-
-.btn-secondary {
-  margin-top: 20px;
-  border-radius: 14px;
-  background: #e2e8f0;
-  color: #0f172a;
-  font-size: 24px;
-}
-
-.tag {
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: #e0f2fe;
-  color: #0369a1;
-  font-size: 20px;
+  margin-bottom: 4px;
 }
 
 .muted {
-  margin-top: 8px;
-  font-size: 22px;
+  margin-top: 4px;
+  font-size: 11px;
   color: #64748b;
   line-height: 1.6;
 }
 
 .error {
   display: block;
-  margin: 12px 0;
-  font-size: 22px;
+  margin: 6px 0;
+  font-size: 11px;
   color: #dc2626;
 }
 
+.notice {
+  margin-top: 14px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #fffbeb;
+  font-size: 10px;
+  line-height: 1.6;
+  color: #92400e;
+}
+
+/* ===== 首页服务入口 ===== */
+.entry-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.entry-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: calc(50% - 4px);
+  box-sizing: border-box;
+  min-height: 70px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 5px rgba(15, 23, 42, 0.04);
+  font-size: 13px;
+}
+
+.entry-tag {
+  margin-top: 12px;
+  font-size: 10px;
+  color: #0ea5e9;
+}
+
+/* ===== 价格行 ===== */
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+/* ===== 报告解读 ===== */
 .interpretation-block {
   display: flex;
   flex-direction: column;
-  margin-top: 16px;
-  font-size: 24px;
+  margin-top: 8px;
+  font-size: 12px;
   line-height: 1.7;
 }
 
-.notice {
-  margin-top: 28px;
-  padding: 20px;
-  border-radius: 16px;
-  background: #fffbeb;
-  font-size: 20px;
-  line-height: 1.6;
-  color: #92400e;
+/* ===== 报告动态水印（查看人 + 时间，防截图外传） ===== */
+.watermark-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.watermark-item {
+  position: absolute;
+  font-size: 12px;
+  color: #64748b;
+  opacity: 0.08;
+  white-space: nowrap;
+  transform: rotate(-20deg);
+}
+
+/* ===== 激活页盒码预览与必填标记 ===== */
+.preview-box {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  font-size: 11px;
+  line-height: 1.8;
+  color: #475569;
+}
+
+.required-star {
+  margin-right: 2px;
+  color: #dc2626;
+}
+
+/* ===== 表单辅助 ===== */
+.form-label {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.field-gap {
+  height: 8px;
+}
+
+.action-gap {
+  height: 10px;
 }

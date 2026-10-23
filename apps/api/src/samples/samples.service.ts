@@ -46,6 +46,28 @@ export class SamplesService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
+  /**
+   * 激活前预览盒码：返回盒码状态与商品配置的动态问卷字段（FR-01/05：字段随项目配置，不硬编码）。
+   */
+  async previewBoxCode(code: string) {
+    const normalized = code.trim().toUpperCase()
+    const box = await this.prisma.boxCode.findUnique({ where: { code: normalized } })
+    if (!box) {
+      throw new NotFoundException('盒码不存在')
+    }
+    const product = await this.prisma.product.findUnique({
+      where: { id: box.productId },
+      select: { name: true, skuCode: true, sampleType: true, questionnaireFields: true },
+    })
+    return {
+      boxCode: box.code,
+      status: box.status,
+      activatedAt: box.activatedAt,
+      productName: box.productName,
+      product,
+    }
+  }
+
   async activate(actor: AuthUser, dto: ActivateBoxCodeDto) {
     if (!actor.roles.includes(Role.CUSTOMER)) {
       throw new ForbiddenException('只有 C 端用户可以激活盒码')

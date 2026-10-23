@@ -1,10 +1,27 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
-import { Button, Input, Text, View } from '@tarojs/components'
+import { Text, View } from '@tarojs/components'
 import { formatCents, parseYuanToCents } from '@mall/shared'
 import { api, ensureLogin } from '../../lib/api'
+import {
+  Button as NutButton,
+  Cell,
+  CellGroup,
+  Empty,
+  Input as NutInput,
+  Tag,
+  Toast,
+} from '@nutui/nutui-react-taro'
 
-type Entry = { id: string; type: string; amountCents: number; createdAt: string }
+type Entry = {
+  id: string
+  type: string
+  amountCents: number
+  balanceAfterCents: number
+  relatedId?: string | null
+  operatorId?: string | null
+  createdAt: string
+}
 type Recharge = { id: string; rechargeNo: string; amountCents: number; status: string }
 type Prepaid = {
   account: { availableCents: number; frozenCents: number }
@@ -12,11 +29,55 @@ type Prepaid = {
   recharges: Recharge[]
 }
 
+const toast = (title: string, icon?: 'success' | 'fail') =>
+  Toast.show('b-toast', { title, icon })
+
+const ENTRY_TYPE_LABELS: Record<string, string> = {
+  recharge: '充值入账',
+  freeze: '冻结',
+  deduct: '扣款',
+  unfreeze: '解冻',
+  refund: '退款',
+  adjust: '调整',
+}
+
+const pad2 = (value: number) => String(value).padStart(2, '0')
+
+const toDateText = (date: Date) =>
+  `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+
+const formatDateTime = (iso: string) => {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) {
+    return iso
+  }
+  return `${toDateText(date)} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`
+}
+
+/** CSV 单元格转义：包含逗号、引号或换行时用引号包裹 */
+const csvCell = (value: string) =>
+  /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
+
+const buildCsv = (entries: Entry[]) => {
+  const header = ['时间', '类型', '金额（元）', '关联单号', '变更前余额', '变更后余额', '操作人']
+  const rows = entries.map((entry) => [
+    formatDateTime(entry.createdAt),
+    ENTRY_TYPE_LABELS[entry.type] ?? entry.type,
+    formatCents(entry.amountCents),
+    entry.relatedId ?? '',
+    formatCents(entry.balanceAfterCents - entry.amountCents),
+    formatCents(entry.balanceAfterCents),
+    entry.operatorId ?? '系统',
+  ])
+  return `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(',')).join('\n')}`
+}
+
 export default function Prepaid() {
   const [data, setData] = useState<Prepaid | null>(null)
   const [amount, setAmount] = useState('')
   const [voucher, setVoucher] = useState('')
   const [loading, setLoading] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   const load = async () => {
     setData(await api<Prepaid>('/prepaid/me'))
@@ -34,7 +95,7 @@ export default function Prepaid() {
   const submit = async () => {
     const cents = parseYuanToCents(amount)
     if (!cents || cents <= 0) {
-      void Taro.showToast({ title: '请输入正确金额', icon: 'none' })
+      toast('请输入正确金额')
       return
     }
     setLoading(true)
@@ -47,16 +108,49 @@ export default function Prepaid() {
           voucherUrl: voucher || undefined,
         },
       })
-      void Taro.showToast({ title: '充值申请已提交', icon: 'success' })
+      toast('充值申请已提交', 'success')
       setAmount('')
       setVoucher('')
       await load()
     } catch (cause) {
-      void Taro.showToast({ title: cause instanceof Error ? cause.message : '提交失败', icon: 'none' })
+      toast(cause instanceof Error ? cause.message : '提交失败')
     } finally {
       setLoading(false)
     }
   }
+
+  const exportEntries = async () => {
+    if (!data || data.entries.length === 0) {
+      toast('暂无流水可导出')
+      return
+    }
+    setExporting(true)
+    try {
+      const entries = await api<Entry[]>('/prepaid/entries')
+      if (entries.length === 0) {
+        toast('暂无流水可导出')
+        return
+      }
+      if (Taro.getEnv() !== Taro.ENV_TYPE.WEB) {
+        toast('请在 H5 端使用导出功能')
+        return
+      }
+      const blob = new Blob([buildCsv(entries)], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `prepaid-entries-${toDateText(new Date())}.csv`
+      link.click()
+      URL.revokeObjectURL(url)
+      toast('导出成功', 'success')
+    } catch (cause) {
+      toast(cause instanceof Error ? cause.message : '导出失败')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const hasEntries = Boolean(data && data.entries.length > 0)
 
   return (
     <View className="page">
@@ -73,50 +167,89 @@ export default function Prepaid() {
       <View className="section">
         <Text className="section-title">发起充值</Text>
         <View className="card">
-          <Input
-            className="input"
-            placeholder="充值金额（元）"
-            value={amount}
-            onInput={(event) => setAmount(event.detail.value)}
-          />
-          <Input
-            className="input"
-            placeholder="打款凭证地址（选填）"
-            value={voucher}
-            onInput={(event) => setVoucher(event.detail.value)}
-          />
-          <Button className="btn" loading={loading} onClick={submit}>
+          <View className="form-field">
+            <Text className="form-label">充值金额（元）</Text>
+            <NutInput
+              type="digit"
+              value={amount}
+              placeholder="请输入充值金额"
+              onBlur={(value) => setAmount(value)}
+            />
+          </View>
+          <View className="form-field">
+            <Text className="form-label">打款凭证地址（选填）</Text>
+            <NutInput
+              value={voucher}
+              placeholder="请输入打款凭证地址"
+              onBlur={(value) => setVoucher(value)}
+            />
+          </View>
+          <NutButton className="form-submit" block type="primary" loading={loading} onClick={submit}>
             提交充值申请
-          </Button>
-          <Text className="muted">线下打款后由平台财务入账，系统不发起支付。</Text>
+          </NutButton>
+          <Text className="muted form-hint">线下打款后由平台财务入账，系统不发起支付。</Text>
         </View>
       </View>
 
       <View className="section">
-        <Text className="section-title">流水</Text>
-        {data?.entries.map((entry) => (
-          <View key={entry.id} className="card">
-            <View className="row">
-              <Text>{entry.type}</Text>
-              <Text>{formatCents(entry.amountCents)} 元</Text>
-            </View>
-            <Text className="muted">{entry.createdAt}</Text>
-          </View>
-        ))}
+        <View className="prepaid-section-head">
+          <Text className="section-title">流水</Text>
+          <NutButton
+            className="prepaid-export"
+            size="small"
+            type="primary"
+            fill="outline"
+            loading={exporting}
+            disabled={!hasEntries}
+            onClick={exportEntries}
+          >
+            导出流水
+          </NutButton>
+        </View>
+        {hasEntries ? (
+          <CellGroup>
+            {data!.entries.map((entry) => (
+              <Cell
+                key={entry.id}
+                title={ENTRY_TYPE_LABELS[entry.type] ?? entry.type}
+                description={<Text className="muted">{formatDateTime(entry.createdAt)}</Text>}
+                extra={
+                  <Text className={entry.amountCents >= 0 ? 'biz-amount' : 'biz-amount-negative'}>
+                    {formatCents(entry.amountCents)} 元
+                  </Text>
+                }
+              />
+            ))}
+          </CellGroup>
+        ) : (
+          <Empty description="暂无流水" />
+        )}
+        {hasEntries ? (
+          <Text className="muted form-hint">导出为 CSV 文件，最多包含最近 100 条流水。</Text>
+        ) : null}
       </View>
 
       <View className="section">
         <Text className="section-title">充值单</Text>
-        {data?.recharges.map((recharge) => (
-          <View key={recharge.id} className="card">
-            <View className="row">
-              <Text>{recharge.rechargeNo}</Text>
-              <Text className="tag">{recharge.status}</Text>
-            </View>
-            <Text className="muted">{formatCents(recharge.amountCents)} 元</Text>
-          </View>
-        ))}
+        {data && data.recharges.length > 0 ? (
+          <CellGroup>
+            {data.recharges.map((recharge) => (
+              <Cell
+                key={recharge.id}
+                title={recharge.rechargeNo}
+                description={
+                  <Text className="biz-amount">{formatCents(recharge.amountCents)} 元</Text>
+                }
+                extra={<Tag type="primary">{recharge.status}</Tag>}
+              />
+            ))}
+          </CellGroup>
+        ) : (
+          <Empty description="暂无充值单" />
+        )}
       </View>
+
+      <Toast id="b-toast" />
     </View>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Taro from '@tarojs/taro'
-import { Button, Input, Text, View } from '@tarojs/components'
+import { Text, View } from '@tarojs/components'
+import { Button as NutButton, Input as NutInput } from '@nutui/nutui-react-taro'
 import { api, setToken } from '../../lib/api'
 
 type AuthResponse = {
@@ -57,44 +58,48 @@ export default function Login() {
         <Text className="hero-title">检测商城</Text>
         <Text className="hero-status">居家采样、扫码激活、查看报告与解读</Text>
       </View>
-      <View className="card" style={{ marginTop: '24px' }}>
+      <View className="card" style={{ marginTop: '12px' }}>
         <Text className="section-title">{mode === 'login' ? '登录' : '注册'}</Text>
         {mode === 'register' ? (
-          <Input
-            className="input"
+          <NutInput
             value={name}
             placeholder="姓名"
-            onInput={(event) => setName(event.detail.value)}
+            clearable
+            onChange={(value) => setName(value)}
           />
         ) : null}
-        <Input
-          className="input"
+        {mode === 'register' ? <View className="field-gap" /> : null}
+        <NutInput
           type="number"
-          maxlength={11}
+          maxLength={11}
           value={phone}
           placeholder="手机号"
-          onInput={(event) => setPhone(event.detail.value)}
+          clearable
+          onChange={(value) => setPhone(value)}
         />
-        <Input
-          className="input"
-          password
+        <View className="field-gap" />
+        <NutInput
+          type="password"
           value={password}
           placeholder="密码（至少 6 位）"
-          onInput={(event) => setPassword(event.detail.value)}
+          onChange={(value) => setPassword(value)}
         />
         {error ? <Text className="error">{error}</Text> : null}
-        <Button className="btn" loading={loading} onClick={() => void submit()}>
+        <View className="field-gap" />
+        <NutButton block type="primary" loading={loading} onClick={() => void submit()}>
           {mode === 'login' ? '登录' : '注册并登录'}
-        </Button>
-        <Button
-          className="btn-secondary"
+        </NutButton>
+        <View className="action-gap" />
+        <NutButton
+          block
+          fill="outline"
           onClick={() => {
             setError('')
             setMode(mode === 'login' ? 'register' : 'login')
           }}
         >
           {mode === 'login' ? '没有账号，去注册' : '已有账号，去登录'}
-        </Button>
+        </NutButton>
       </View>
       <View className="notice">
         <Text>本报告仅用于健康风险提示，不作为临床诊断依据。</Text>

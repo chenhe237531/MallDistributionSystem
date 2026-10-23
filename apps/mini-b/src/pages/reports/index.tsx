@@ -1,7 +1,17 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
-import { Button, Input, Text, View } from '@tarojs/components'
+import { Text, View } from '@tarojs/components'
 import { api, ensureLogin } from '../../lib/api'
+import {
+  Button as NutButton,
+  Cell,
+  CellGroup,
+  Divider,
+  Empty,
+  Input as NutInput,
+  Tag,
+  Toast,
+} from '@nutui/nutui-react-taro'
 
 type Report = {
   id: string
@@ -94,36 +104,43 @@ export default function Reports() {
     <View className="page">
       <View className="section">
         <Text className="section-title">本店报告</Text>
-        {reports.length === 0 ? <Text className="muted">暂无报告</Text> : null}
-        {reports.map((report) => (
-          <View key={report.id} className="card" onClick={() => void open(report.id)}>
-            <View className="row">
-              <Text>
-                {report.reportNo} · v{report.version}
-              </Text>
-              <Text className="tag">{report.status}</Text>
-            </View>
-            {report.missingItems.length > 0 ? (
-              <Text className="muted">缺项：{report.missingItems.join('、')}</Text>
-            ) : null}
-            <Text className="muted">点击查看报告与解读</Text>
-          </View>
-        ))}
+        {reports.length === 0 ? <Empty description="暂无报告" /> : null}
+        {reports.length > 0 ? (
+          <CellGroup>
+            {reports.map((report) => (
+              <Cell
+                key={report.id}
+                clickable
+                onClick={() => void open(report.id)}
+                title={`${report.reportNo} · v${report.version}`}
+                description={
+                  report.missingItems.length > 0 ? (
+                    <Text className="muted">缺项：{report.missingItems.join('、')}</Text>
+                  ) : (
+                    <Text className="muted">点击查看报告与解读</Text>
+                  )
+                }
+                extra={<Tag type="primary">{report.status}</Tag>}
+              />
+            ))}
+          </CellGroup>
+        ) : null}
       </View>
 
-      {message ? <Text className="error">{message}</Text> : null}
+      {message ? <Text className="error report-error">{message}</Text> : null}
+
       {selected ? (
         <View className="section">
           <Text className="section-title">报告详情</Text>
           <View className="card">
             <View className="row">
-              <Text>{selected.reportNo}</Text>
-              <Text className="tag">{selected.status}</Text>
+              <Text className="rep-no">{selected.reportNo}</Text>
+              <Tag type="primary">{selected.status}</Tag>
             </View>
             {selected.contentHidden ? (
               <Text className="muted">客户已关闭报告授权，仅显示报告状态。</Text>
             ) : (
-              <Text>{selected.summary ?? '报告已生成，请结合指标查看。'}</Text>
+              <Text className="rep-summary">{selected.summary ?? '报告已生成，请结合指标查看。'}</Text>
             )}
             <Text className="muted">
               {selected.disclaimer ?? '本报告仅用于健康风险提示，不作为临床诊断依据'}
@@ -141,8 +158,8 @@ export default function Reports() {
               {SECTION_LABELS.map(([key, label]) =>
                 interpretation.sections?.[key] ? (
                   <View key={key} className="interpretation-block">
-                    <Text className="tag">{label}</Text>
-                    <Text>{interpretation.sections[key]}</Text>
+                    <Tag type="success">{label}</Tag>
+                    <Text className="interpretation-text">{interpretation.sections[key]}</Text>
                   </View>
                 ) : null,
               )}
@@ -155,18 +172,31 @@ export default function Reports() {
             <Text className="muted">
               仅订单客户本人登录后可打开；通知与卡片不包含指标数值、异常项或结论。
             </Text>
-            <Input
-              className="input"
-              type="number"
-              maxlength={11}
-              value={receiverPhone}
-              placeholder="客户手机号"
-              onInput={(event) => setReceiverPhone(event.detail.value)}
-            />
-            <Button className="btn" loading={forwarding} onClick={() => void forward()}>
+            <View className="form-field">
+              <Text className="form-label">客户手机号</Text>
+              <NutInput
+                type="number"
+                maxLength={11}
+                value={receiverPhone}
+                placeholder="请输入客户手机号"
+                onBlur={(value) => setReceiverPhone(value)}
+              />
+            </View>
+            <NutButton
+              className="form-submit"
+              block
+              type="primary"
+              loading={forwarding}
+              onClick={() => void forward()}
+            >
               生成转发卡片
-            </Button>
-            {notice ? <Text className="muted">{notice}</Text> : null}
+            </NutButton>
+            {notice ? (
+              <View>
+                <Divider contentPosition="left">转发结果</Divider>
+                <Text className="muted">{notice}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
       ) : null}

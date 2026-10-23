@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Button, Text, View } from '@tarojs/components'
+import { Text, View } from '@tarojs/components'
+import { Button as NutButton, Tag } from '@nutui/nutui-react-taro'
 import { api, ensureLogin, go, routeParams } from '../../lib/api'
 
 type ShareResult = {
@@ -14,10 +15,24 @@ type ShareResult = {
   entry: string
 }
 
+const WATERMARK_ROWS = 7
+const WATERMARK_COLS = 2
+
+function formatStamp(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 export default function Share() {
   const token = routeParams().token ?? ''
   const [result, setResult] = useState<ShareResult | null>(null)
+  const [stamp, setStamp] = useState(() => formatStamp(new Date()))
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const timer = setInterval(() => setStamp(formatStamp(new Date())), 30_000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     if (!ensureLogin()) {
@@ -34,6 +49,20 @@ export default function Share() {
 
   return (
     <View className="page">
+      <View className="watermark-layer">
+        {Array.from({ length: WATERMARK_ROWS * WATERMARK_COLS }, (_, index) => (
+          <Text
+            key={index}
+            className="watermark-item"
+            style={{
+              left: `${(index % WATERMARK_COLS) * 50 + 8}%`,
+              top: `${Math.floor(index / WATERMARK_COLS) * 110 - 40}px`,
+            }}
+          >
+            授权访客 · {stamp}
+          </Text>
+        ))}
+      </View>
       <View className="hero">
         <Text className="hero-role">报告卡片</Text>
         <Text className="hero-title">报告已生成</Text>
@@ -43,10 +72,12 @@ export default function Share() {
       {error ? <Text className="error">{error}</Text> : null}
 
       {result ? (
-        <View className="card">
+        <View className="card" style={{ marginTop: '12px' }}>
           <View className="row">
-            <Text>{result.report.reportNo}</Text>
-            <Text className="tag">v{result.report.version}</Text>
+            <Text className="card-title">{result.report.reportNo}</Text>
+            <Tag plain type="primary">
+              v{result.report.version}
+            </Tag>
           </View>
           <Text className="muted">
             发布时间：
@@ -54,9 +85,10 @@ export default function Share() {
               ? new Date(result.report.publishedAt).toLocaleString('zh-CN')
               : '—'}
           </Text>
-          <Button className="btn" onClick={() => go(result.entry)}>
+          <View className="field-gap" />
+          <NutButton block type="primary" onClick={() => go(result.entry)}>
             查看报告与解读
-          </Button>
+          </NutButton>
         </View>
       ) : null}
 
