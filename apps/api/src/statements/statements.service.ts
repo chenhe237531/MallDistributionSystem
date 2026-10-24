@@ -170,9 +170,9 @@ export class StatementsService {
       throw new ConflictException('该票证号码已登记')
     }
 
-    const remaining = statement.totalPayableCents - statement.voucherRegisteredCents
-    const overAmount = dto.amountCents - remaining
     const updated = await this.prisma.$transaction(async (tx) => {
+      await this.lockStatementForUpdate(tx, id)
+      const locked = await tx.statement.findUniqueOrThrow({ where: { id } })
       await tx.statementVoucher.create({
         data: {
           statementId: id,
@@ -185,6 +185,8 @@ export class StatementsService {
           registeredBy: actor.sub,
         },
       })
+      const remaining = locked.totalPayableCents - locked.voucherRegisteredCents
+      const overAmount = dto.amountCents - remaining
       let difference = overAmount
       if (overAmount > 0) {
         await tx.statementDifference.create({
@@ -197,12 +199,12 @@ export class StatementsService {
         })
         difference = overAmount
       }
-      const voucherRegisteredCents = statement.voucherRegisteredCents + dto.amountCents
+      const voucherRegisteredCents = locked.voucherRegisteredCents + dto.amountCents
       const voucherMissingCents = Math.max(
-        statement.totalPayableCents - voucherRegisteredCents,
+        locked.totalPayableCents - voucherRegisteredCents,
         0,
       )
-      const differenceCents = statement.totalPayableCents - voucherRegisteredCents
+      const differenceCents = locked.totalPayableCents - voucherRegisteredCents
       return tx.statement.update({
         where: { id },
         data: {
@@ -212,9 +214,9 @@ export class StatementsService {
           status:
             overAmount > 0
               ? PrismaStatementStatus.disputed
-              : statement.status === PrismaStatementStatus.disputed && voucherMissingCents === 0
+              : locked.status === PrismaStatementStatus.disputed && voucherMissingCents === 0
                 ? PrismaStatementStatus.reconciled
-                : statement.status,
+                : locked.status,
         },
         include: { lines: true, vouchers: true, differences: true },
       })
@@ -240,9 +242,11 @@ export class StatementsService {
       throw new BadRequestException('已结清账单不能直接调整，请先反结清')
     }
     return this.prisma.$transaction(async (tx) => {
-      const adjustmentCents = statement.adjustmentCents + dto.amountCents
+      await this.lockStatementForUpdate(tx, id)
+      const locked = await tx.statement.findUniqueOrThrow({ where: { id } })
+      const adjustmentCents = locked.adjustmentCents + dto.amountCents
       const totalPayableCents =
-        statement.openingUnsettledCents + statement.newPayableCents + adjustmentCents
+        locked.openingUnsettledCents + locked.newPayableCents + adjustmentCents
       await tx.statementLine.create({
         data: {
           statementId: id,
@@ -258,8 +262,8 @@ export class StatementsService {
         data: {
           adjustmentCents,
           totalPayableCents,
-          voucherMissingCents: Math.max(totalPayableCents - statement.voucherRegisteredCents, 0),
-          differenceCents: totalPayableCents - statement.voucherRegisteredCents,
+          voucherMissingCents: Math.max(totalPayableCents - locked.voucherRegisteredCents, 0),
+          differenceCents: totalPayableCents - locked.voucherRegisteredCents,
         },
         include: { lines: true, vouchers: true, differences: true },
       })
@@ -386,6 +390,39 @@ export class StatementsService {
   }
 
   /**
+   * 对 statement 汇总字段做读改写前加行锁，防止并发退款冲回/票证登记丢失更新。
+   */
+  private async lockStatementForUpdate(tx: DbClient, statementId: string): Promise<void> {
+    await tx.$queryRaw`SELECT id FROM "Statement" WHERE id = ${statementId} FOR UPDATE`
+  }
+
+  /**
+   * 在持锁状态下把一笔调整额落到对账单汇总字段（调整行由调用方创建）。
+   */
+  private async applyAdjustmentToStatement(
+    tx: DbClient,
+    statementId: string,
+    amountCents: number,
+  ) {
+    const statement = await tx.statement.findUnique({ where: { id: statementId } })
+    if (!statement) {
+      return
+    }
+    const adjustmentCents = statement.adjustmentCents + amountCents
+    const totalPayableCents =
+      statement.openingUnsettledCents + statement.newPayableCents + adjustmentCents
+    await tx.statement.update({
+      where: { id: statementId },
+      data: {
+        adjustmentCents,
+        totalPayableCents,
+        voucherMissingCents: Math.max(totalPayableCents - statement.voucherRegisteredCents, 0),
+        differenceCents: totalPayableCents - statement.voucherRegisteredCents,
+      },
+    })
+  }
+
+  /**
    * refundedQuantity 为该订单项累计已退数量（含本次），
    * 按累计数量计算目标冲回总额，再扣除已冲回部分，避免多次部分退款时按次舍入产生偏差。
    */
@@ -405,6 +442,7 @@ export class StatementsService {
         if (line.statement.status === PrismaStatementStatus.settled) {
           continue
         }
+        await this.lockStatementForUpdate(tx, line.statementId)
         const targetTotal = -Math.round((line.amountCents * refundedQuantity) / itemQuantity)
         const prior = await tx.statementLine.aggregate({
           where: {
@@ -428,24 +466,57 @@ export class StatementsService {
             amountCents,
           },
         })
-        const adjustmentCents = line.statement.adjustmentCents + amountCents
-        const totalPayableCents =
-          line.statement.openingUnsettledCents +
-          line.statement.newPayableCents +
-          adjustmentCents
-        await tx.statement.update({
-          where: { id: line.statementId },
-          data: {
-            adjustmentCents,
-            totalPayableCents,
-            voucherMissingCents: Math.max(
-              totalPayableCents - line.statement.voucherRegisteredCents,
-              0,
-            ),
-            differenceCents: totalPayableCents - line.statement.voucherRegisteredCents,
-          },
-        })
+        await this.applyAdjustmentToStatement(tx, line.statementId, amountCents)
       }
+    }
+  }
+
+  /**
+   * 退款后商家收入行（order_settlement）冲回：currentIncome 为重算后的当前商家收入净额。
+   * 行金额（income0）在入账时快照，累计冲回目标 = -(income0 - currentIncome)，
+   * 本次冲回 = 累计目标 - 已冲回累计，与佣金冲回一致防重入、防多次部分退款舍入残留。
+   */
+  async addSettlementRefundAdjustmentInTransaction(
+    tx: DbClient,
+    settlementId: string | null,
+    currentIncomeCents: number,
+  ) {
+    if (!settlementId) {
+      return
+    }
+    const lines = await tx.statementLine.findMany({
+      where: { sourceType: 'order_settlement', sourceId: settlementId },
+      include: { statement: true },
+    })
+    for (const line of lines) {
+      if (line.statement.status === PrismaStatementStatus.settled) {
+        continue
+      }
+      await this.lockStatementForUpdate(tx, line.statementId)
+      const targetTotal = -(line.amountCents - currentIncomeCents)
+      const prior = await tx.statementLine.aggregate({
+        where: {
+          statementId: line.statementId,
+          sourceType: 'refund_adjustment',
+          sourceId: settlementId,
+        },
+        _sum: { amountCents: true },
+      })
+      const amountCents = targetTotal - (prior._sum.amountCents ?? 0)
+      if (amountCents === 0) {
+        continue
+      }
+      await tx.statementLine.create({
+        data: {
+          statementId: line.statementId,
+          sourceType: 'refund_adjustment',
+          sourceId: settlementId,
+          description: '退款冲回 · 商家收入',
+          baseAmountCents: 0,
+          amountCents,
+        },
+      })
+      await this.applyAdjustmentToStatement(tx, line.statementId, amountCents)
     }
   }
 

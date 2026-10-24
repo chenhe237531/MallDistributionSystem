@@ -79,6 +79,17 @@ check('B3 佣金超上限被拒绝（商品 cap 1000bps 内校验）', s >= 400,
 # ---------- C. 采购链路与预付款冻结/扣减 ----------
 s, prepaid0 = req('GET', '/prepaid/me', MT)
 bal0 = prepaid0['account']['availableCents']; fro0 = prepaid0['account']['frozenCents']
+# 预存不足时平台先调账充值，保证采购可执行（多次重跑脚本不因余额耗尽而中断）
+if bal0 < 200000:
+    s_merchant, m_body = req('GET', '/auth/me', MT)
+    MID = m_body.get('sub') or m_body.get('id') if isinstance(m_body, dict) else None
+    if not MID:
+        accs = req('GET', '/accounts', PT)[1]
+        MID = next((a['id'] for a in accs if a.get('phone') == '13900000001'), None)
+    s, b = req('POST', '/prepaid/adjust', PT, {'merchantId': MID, 'amountCents': 1000000, 'note': 'E2E 测试充值'})
+    check('C0 预存余额不足自动充值', s in (200, 201), f'bal={bal0} status={s} {str(b)[:120]}')
+    s, prepaid0 = req('GET', '/prepaid/me', MT)
+    bal0 = prepaid0['account']['availableCents']; fro0 = prepaid0['account']['frozenCents']
 s, po = req('POST', '/procurement-orders', MT, {'items': [{'productId': PID, 'quantity': 2}]})
 POID = po.get('id') if isinstance(po, dict) else None
 check('C1 商家创建采购单', s in (200, 201) and bool(POID), str(po)[:150])
