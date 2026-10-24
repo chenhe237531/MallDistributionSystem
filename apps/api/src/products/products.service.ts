@@ -18,6 +18,7 @@ import { CreateListingDto } from './dto/create-listing.dto'
 import { CreateProductDto } from './dto/create-product.dto'
 import { ReviewProductDto } from './dto/review-product.dto'
 import { UpdateListingDto } from './dto/update-listing.dto'
+import { UpdateProductContentDto } from './dto/update-product-content.dto'
 import type { AuthUser } from '../auth/auth-user.type'
 
 @Injectable()
@@ -86,12 +87,85 @@ export class ProductsService {
         supplier: { select: { id: true, name: true, organization: true } },
         batches: { orderBy: { expiresAt: 'asc' } },
         listings: true,
+        relatedLinks: {
+          orderBy: { sort: 'asc' },
+          select: { related: { select: { id: true, name: true, skuCode: true } } },
+        },
+        courseBindings: {
+          select: { course: { select: { id: true, name: true, category: true } } },
+        },
       },
     })
     if (!product) {
       throw new NotFoundException('商品不存在')
     }
-    return product
+    return {
+      ...product,
+      relatedProducts: product.relatedLinks.map((link) => link.related),
+      boundCourses: product.courseBindings.map((binding) => binding.course),
+    }
+  }
+
+  /**
+   * 平台运营配置商品内容：视频/介绍文案 + 关联商品与绑定课程（全量替换语义）。
+   */
+  async updateContent(id: string, dto: UpdateProductContentDto) {
+    const product = await this.prisma.product.findUnique({ where: { id } })
+    if (!product) {
+      throw new NotFoundException('商品不存在')
+    }
+    const relatedProductIds = dto.relatedProductIds ?? []
+    if (relatedProductIds.includes(id)) {
+      throw new BadRequestException('商品不能关联自身')
+    }
+    if (relatedProductIds.length > 0) {
+      const relatedCount = await this.prisma.product.count({
+        where: { id: { in: relatedProductIds } },
+      })
+      if (relatedCount !== relatedProductIds.length) {
+        throw new BadRequestException('存在无效的关联商品')
+      }
+    }
+    const boundCourseIds = dto.boundCourseIds ?? []
+    if (boundCourseIds.length > 0) {
+      const courseCount = await this.prisma.course.count({
+        where: { id: { in: boundCourseIds } },
+      })
+      if (courseCount !== boundCourseIds.length) {
+        throw new BadRequestException('存在无效的绑定课程')
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.product.update({
+        where: { id },
+        data: {
+          guideVideoUrl: dto.guideVideoUrl,
+          intro: dto.intro,
+        },
+      })
+      if (dto.relatedProductIds !== undefined) {
+        await tx.productRelated.deleteMany({ where: { productId: id } })
+        if (relatedProductIds.length > 0) {
+          await tx.productRelated.createMany({
+            data: relatedProductIds.map((relatedProductId, index) => ({
+              productId: id,
+              relatedProductId,
+              sort: index,
+            })),
+          })
+        }
+      }
+      if (dto.boundCourseIds !== undefined) {
+        await tx.productCourse.deleteMany({ where: { productId: id } })
+        if (boundCourseIds.length > 0) {
+          await tx.productCourse.createMany({
+            data: boundCourseIds.map((courseId) => ({ productId: id, courseId })),
+          })
+        }
+      }
+      return updated
+    })
   }
 
   async review(id: string, dto: ReviewProductDto) {

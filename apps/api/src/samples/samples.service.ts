@@ -57,7 +57,14 @@ export class SamplesService {
     }
     const product = await this.prisma.product.findUnique({
       where: { id: box.productId },
-      select: { name: true, skuCode: true, sampleType: true, questionnaireFields: true },
+      select: {
+        name: true,
+        skuCode: true,
+        sampleType: true,
+        questionnaireFields: true,
+        guideVideoUrl: true,
+        intro: true,
+      },
     })
     return {
       boxCode: box.code,
