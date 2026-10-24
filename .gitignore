@@ -13,3 +13,12 @@ apps/*/.swc/
 apps/*/.env
 apps/*/dist/
 packages/*/dist/
+
+# 原始归档资料（客户文件，禁止入库上传）
+docs/归档.zip
+docs/归档/
+docs/归档-资料库/
+
+# IDE / 工具本地产物
+.trae/
+.trae-html-share-packages/

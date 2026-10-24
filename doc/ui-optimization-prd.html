@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小程序与后台管理系统 UI 界面优化 PRD</title>
+<style>
+  :root {
+    --primary: #1677ff;
+    --text: #1f2329;
+    --text-2: #646a73;
+    --border: #e5e6eb;
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --success: #00b42a;
+    --warning: #ff7d00;
+    --danger: #f53f3f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    color: var(--text); background: var(--bg); line-height: 1.7;
+  }
+  .layout { display: flex; max-width: 1280px; margin: 0 auto; }
+  nav.toc {
+    position: sticky; top: 0; align-self: flex-start;
+    width: 240px; height: 100vh; overflow-y: auto;
+    padding: 32px 16px; font-size: 13px; flex-shrink: 0;
+  }
+  nav.toc .toc-title { font-weight: 600; margin-bottom: 12px; color: var(--text-2); }
+  nav.toc a { display: block; color: var(--text-2); text-decoration: none; padding: 4px 8px; border-radius: 6px; }
+  nav.toc a:hover { color: var(--primary); background: #eaf2ff; }
+  nav.toc a.l2 { padding-left: 24px; }
+  main { flex: 1; min-width: 0; padding: 40px 48px 120px; }
+  header.doc-head { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 32px; }
+  header.doc-head h1 { margin: 0 0 12px; font-size: 28px; }
+  .meta { font-size: 13px; color: var(--text-2); display: flex; gap: 24px; flex-wrap: wrap; }
+  .meta b { color: var(--text); font-weight: 600; }
+  h2 { font-size: 22px; margin: 56px 0 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  h2:first-of-type { border-top: none; }
+  h3 { font-size: 17px; margin: 32px 0 12px; }
+  h4 { font-size: 15px; margin: 20px 0 8px; }
+  p { margin: 8px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; background: var(--card); }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: #f2f3f5; font-weight: 600; white-space: nowrap; }
+  code { background: #f2f3f5; padding: 1px 6px; border-radius: 4px; font-size: 13px; font-family: "SF Mono", Menlo, Consolas, monospace; }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+  .tag-p0 { background: #ffece8; color: var(--danger); }
+  .tag-p1 { background: #fff7e8; color: var(--warning); }
+  .tag-p2 { background: #e8f7ff; color: var(--primary); }
+  .tag-p3 { background: #f2f3f5; color: var(--text-2); }
+  .callout { background: #fff7e8; border-left: 3px solid var(--warning); padding: 12px 16px; margin: 16px 0; border-radius: 0 6px 6px 0; font-size: 14px; }
+  .callout.info { background: #e8f7ff; border-left-color: var(--primary); }
+  .fr-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+  .fr-card h3 { margin-top: 0; }
+  .fr-id { font-family: "SF Mono", Menlo, monospace; color: var(--primary); font-weight: 600; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  .demo { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 16px 0; }
+  .demo-title { font-size: 13px; color: var(--text-2); margin-bottom: 16px; }
+  .token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .token-swatch { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-size: 12px; }
+  .token-swatch .color { height: 48px; }
+  .token-swatch .label { padding: 6px 10px; background: var(--card); }
+  .token-swatch .label code { background: none; padding: 0; }
+  .flow-steps { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+  .flow-step { background: #eaf2ff; color: var(--primary); padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 500; }
+  .flow-arrow { color: var(--text-2); }
+  .confirm-demo { max-width: 420px; margin: 0 auto; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.06); }
+  .confirm-demo .cd-head { padding: 14px 20px; font-weight: 600; border-bottom: 1px solid var(--border); }
+  .confirm-demo .cd-body { padding: 20px; font-size: 14px; }
+  .confirm-demo .cd-row { display: flex; justify-content: space-between; padding: 6px 0; }
+  .confirm-demo .cd-row .k { color: var(--text-2); }
+  .confirm-demo .cd-row .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .confirm-demo .cd-warn { background: #fff7e8; color: var(--warning); font-size: 13px; padding: 8px 12px; border-radius: 6px; margin-top: 12px; }
+  .confirm-demo .cd-foot { display: flex; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--border); }
+  .btn { flex: 1; padding: 8px 0; border-radius: 6px; border: 1px solid var(--border); background: var(--card); cursor: pointer; font-size: 14px; }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn:active { opacity: .8; }
+  .cd-result { display: none; padding: 20px; text-align: center; }
+  .cd-result .ok { color: var(--success); font-size: 32px; }
+  @media (max-width: 900px) { nav.toc { display: none; } main { padding: 24px; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">目录</div>
+    <a href="#s1">1. 背景与目标</a>
+    <a href="#s2">2. 范围</a>
+    <a href="#s3">3. 角色与产品模型</a>
+    <a href="#s4">4. 功能需求</a>
+    <a class="l2" href="#fr-ds">FR-DS 设计令牌与主题</a>
+    <a class="l2" href="#fr-a1">FR-A1 后台布局与导航</a>
+    <a class="l2" href="#fr-a2">FR-A2 金融操作链路</a>
+    <a class="l2" href="#fr-a3">FR-A3 高频列表页</a>
+    <a class="l2" href="#fr-c1">FR-C1 C 端下单链路</a>
+    <a class="l2" href="#fr-c2">FR-C2 解读报告与订单状态</a>
+    <a class="l2" href="#fr-b1">FR-B1 商家看板与管理</a>
+    <a class="l2" href="#fr-x">FR-X 空态 / 异常态 / 反馈</a>
+    <a href="#s5">5. 共享规则</a>
+    <a href="#s6">6. 开放问题</a>
+    <a href="#s7">7. 里程碑与分工</a>
+    <a href="#s8">8. 风险与应对</a>
+  </nav>
+  <main>
+    <header class="doc-head">
+      <h1>小程序与后台管理系统 UI 界面优化 PRD</h1>
+      <div class="meta">
+        <span>版本：<b>v1.0（待评审）</b></span>
+        <span>日期：<b>2026-10-24</b></span>
+        <span>涉及端：<b>apps/admin、apps/mini-b、apps/mini-c</b></span>
+        <span>关联文档：<b>doc/mall-distribution-prd.html</b></span>
+      </div>
+    </header>
+
+    <h2 id="s1">1. 背景与目标</h2>
+    <h3>1.1 背景与问题</h3>
+    <p>商城分销系统已完成核心业务闭环（商品、订单、盒码渠道、佣金、对账、结清），三端 UI 已分别基于 antd 5 + ProComponents（admin）与 NutUI React Taro 4.0.0-beta.9（mini-b / mini-c）搭建。当前存在以下已确认问题：</p>
+    <table>
+      <tr><th>端</th><th>已确认问题</th><th>影响</th></tr>
+      <tr>
+        <td>三端共性</td>
+        <td>无主品牌色与统一设计令牌；admin 使用 antd 默认主题，小程序仅靠零散 CSS 变量覆盖</td>
+        <td>三端视觉割裂，新增页面样式靠复制，无法统一演进</td>
+      </tr>
+      <tr>
+        <td>admin</td>
+        <td>金融类操作（登记支付、票证登记、结清、调整）弹窗交互不统一，部分缺二次确认与操作结果反馈</td>
+        <td>资金相关误操作风险高（资金安全审计已收敛后端校验，前端确认层未统一）</td>
+      </tr>
+      <tr>
+        <td>admin</td>
+        <td>列表页 API 直接返回全量数组、前端无分页/虚拟滚动策略</td>
+        <td>订单、佣金流水等数据量增长后存在渲染性能隐患</td>
+      </tr>
+      <tr>
+        <td>admin</td>
+        <td>金额 / 费率格式化在各页面调用时机不统一（<code>formatCents</code>）</td>
+        <td>存在展示口径不一致风险</td>
+      </tr>
+      <tr>
+        <td>mini-b / mini-c</td>
+        <td>NutUI beta.9 <code>Input</code> 组件输入过程不触发 onChange（仅 onBlur 派发），现以 <code>value + onBlur</code> 变通</td>
+        <td>受控输入无法实时校验，体验受损（依赖官方正式版修复，见 §6）</td>
+      </tr>
+      <tr>
+        <td>mini-b / mini-c</td>
+        <td><code>Toast.show</code> 依赖页面挂载 <code>&lt;Toast id&gt;</code>，漏挂页面反馈静默丢失</td>
+        <td>用户操作无反馈，疑似 bug</td>
+      </tr>
+      <tr>
+        <td>mini-c</td>
+        <td>解读报告未复核（contentHidden）状态仅纯文案提示；订单状态无可视化</td>
+        <td>C 端用户不理解「解读尚未发布」的等待语义</td>
+      </tr>
+    </table>
+
+    <h3>1.2 优化目标（可观察结果）</h3>
+    <ul>
+      <li>三端颜色、字号、间距、圆角由同一份设计令牌定义，新增页面不引入令牌之外的色值与字号。</li>
+      <li>平台运营在 admin 执行任何资金类写操作前，看到操作对象、金额与后果说明，并必须显式确认；操作成功后看到结果摘要。</li>
+      <li>C 端用户从首页到支付完成的路径中，每个页面有明确主行动按钮与价格展示；解读未发布时看到明确的等待态说明。</li>
+      <li>商家在 mini-b 首页可一眼看到当日关键经营指标。</li>
+      <li>所有操作反馈（成功 / 失败 / 加载）在三端以统一组件呈现，不存在静默失败。</li>
+    </ul>
+
+    <h2 id="s2">2. 范围</h2>
+    <p>本期为 UI / 交互优化迭代，不改业务规则、不改 API 契约（列表分页除外，见 §6 开放问题）。</p>
+    <table>
+      <tr><th>优先级</th><th>范围项</th><th>说明</th></tr>
+      <tr><td><span class="tag tag-p0">P0</span></td><td>设计令牌 + 三端主题落地（FR-DS）</td><td>一切页面改造的地基</td></tr>
+      <tr><td><span class="tag tag-p0">P0</span></td><td>admin 金融操作链路确认与反馈（FR-A2）</td><td>资金安全相关</td></tr>
+      <tr><td><span class="tag tag-p1">P1</span></td><td>admin 布局导航重组（FR-A1）、高频列表页（FR-A3）</td><td>平台运营日常主路径</td></tr>
+      <tr><td><span class="tag tag-p1">P1</span></td><td>mini-c 下单链路（FR-C1）</td><td>直接关联转化</td></tr>
+      <tr><td><span class="tag tag-p2">P2</span></td><td>mini-b 看板与商品管理（FR-B1）、mini-c 解读报告与订单状态（FR-C2）</td><td>体验优化</td></tr>
+      <tr><td><span class="tag tag-p3">P3</span></td><td>三端空态 / 异常态 / 反馈统一（FR-X）</td><td>收尾打磨</td></tr>
+    </table>
+    <h3>2.1 明确不做（本期范围外）</h3>
+    <ul>
+      <li>FR-12 考试切屏作弊检测——已决策不做（2026-10-23）。</li>
+      <li>FR-16 微信订阅消息真实推送——依赖真实小程序 AppID 与消息模板，维持 H5 站内通知兜底。</li>
+      <li>NutUI beta → 正式版升级及输入组件方案回滚——依赖官方发版，列入 §6 开放问题。</li>
+      <li>后端 API 分页改造——列入技术债，见 §6。</li>
+      <li>FR-02 商品配置建议课程、FR-11 结清协议未登记强拦截——PRD 遗留项，另行立项。</li>
+    </ul>
+
+    <h2 id="s3">3. 角色与产品模型</h2>
+    <table>
+      <tr><th>角色</th><th>使用端</th><th>本期相关的核心任务</th></tr>
+      <tr><td>平台运营</td><td>admin</td><td>订单处理、登记支付、对账、票证登记、结清、佣金调整</td></tr>
+      <tr><td>商家</td><td>mini-b</td><td>查看经营看板、管理商品与盒码</td></tr>
+      <tr><td>C 端用户</td><td>mini-c</td><td>浏览商品、下单支付、查看订单与解读报告</td></tr>
+    </table>
+    <p>本期引入的共享对象：<b>设计令牌（Design Token）</b>——三端颜色 / 字号 / 间距 / 圆角的唯一来源，在 <code>packages/shared</code> 维护一份常量，admin 通过 antd <code>ConfigProvider</code> theme 落地，小程序通过 NutUI CSS 变量覆盖落地。任何令牌变更三端同步评审。</p>
+
+    <h2 id="s4">4. 功能需求</h2>
+
+    <div class="fr-card" id="fr-ds">
+      <h3><span class="fr-id">FR-DS</span> 设计令牌与三端主题 <span class="tag tag-p0">P0</span></h3>
+      <h4>目的</h4>
+      <p>建立三端统一的视觉语言，消除逐页面手写色值 / 字号的做法。</p>
+      <h4>处理规则</h4>
+      <ul>
+        <li>令牌分层：基础令牌（色板、字号阶梯、4px 基数间距阶梯、圆角）→ 语义令牌（主色、成功 / 警告 / 错误、文本一级 / 二级、边框、背景）。</li>
+        <li>admin：语义令牌映射到 antd theme token；禁止组件内联 <code>style</code> 中出现令牌外色值（图表等特例除外）。</li>
+        <li>小程序：语义令牌映射到 NutUI CSS 变量（变量名以 NutUI dist 样式表实际定义为准）+ 全局样式文件；单个页面不得覆写语义色。</li>
+        <li>设计稿（Figma）与代码令牌同名，一一对应。</li>
+      </ul>
+      <h4>结果与状态</h4>
+      <p>三端核心页面切换为新主题后，走查清单中不存在令牌外色值 / 字号；后续新增页面默认继承主题。</p>
+      <div class="demo">
+        <div class="demo-title">示例：语义令牌（示意色值，最终以设计稿冻结版本为准 [TBD]）</div>
+        <div class="token-grid">
+          <div class="token-swatch"><div class="color" style="background:#1677ff"></div><div class="label"><code>colorPrimary</code> 主色</div></div>
+          <div class="token-swatch"><div class="color" style="background:#00b42a"></div><div class="label"><code>colorSuccess</code> 成功</div></div>
+          <div class="token-swatch"><div class="color" style="background:#ff7d00"></div><div class="label"><code>colorWarning</code> 警告</div></div>
+          <div class="token-swatch"><div class="color" style="background:#f53f3f"></div><div class="label"><code>colorError</code> 错误</div></div>
+          <div class="token-swatch"><div class="color" style="background:#1f2329"></div><div class="label"><code>colorText</code> 文本一级</div></div>
+          <div class="token-swatch"><div class="color" style="background:#646a73"></div><div class="label"><code>colorTextSecondary</code> 文本二级</div></div>
+          <div class="token-swatch"><div class="color" style="background:#e5e6eb"></div><div class="label"><code>colorBorder</code> 边框</div></div>
+          <div class="token-swatch"><div class="color" style="background:#f7f8fa"></div><div class="label"><code>colorBgLayout</code> 布局背景</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fr-card" id="fr-a1">
+      <h3><span class="fr-id">FR-A1</span> admin 布局与导航重组 <span class="tag tag-p1">P1</span></h3>
+      <h4>目的</h4>
+      <p>21 个页面按业务域分组，缩短平台运营定位目标页面的路径。</p>
+      <h4>处理规则</h4>
+      <ul>
+        <li>侧边菜单按业务域分组：商品 / 订单 / 渠道（商家、销售、盒码）/ 资金（对账单、结清、票证）/ 系统（用户、设置）。具体分组命名以设计稿为准 [TBD]。</li>
+        <li>菜单导航沿用 ProLayout 官方规范模式（<code>menuItemRender</code> + <code>Link</code>），禁止自定义 <code>&lt;a onClick&gt;</code> 跳转（已知静默失效问题）。</li>
+        <li>页面框架统一 PageContainer + 面包屑；列表页默认 ProTable，表单弹窗默认 ModalForm。</li>
+      </ul>
+      <h4>异常</h4>
+      <p>无权限菜单不渲染（沿用现有 <code>@Roles</code> 对应的前端路由过滤）；直接访问无权限 URL 时显示 403 空态页（复用 FR-X 组件）。</p>
+    </div>
+
+    <div class="fr-card" id="fr-a2">
+      <h3><span class="fr-id">FR-A2</span> admin 金融操作链路：确认与结果反馈 <span class="tag tag-p0">P0</span></h3>
+      <h4>目的</h4>
+      <p>资金类写操作（登记支付、票证登记、对账调整、结清 / 重开）在前端形成统一的「确认 → 执行 → 结果摘要」闭环，防止误操作。</p>
+      <h4>触发</h4>
+      <p>平台运营角色在对账单详情、订单详情等页面点击对应操作按钮。</p>
+      <h4>处理规则</h4>
+      <ul>
+        <li>所有资金类操作弹窗采用统一结构：操作对象摘要（单号 / 周期）→ 关键金额（表格化展示，金额展示遵循 §5.1）→ 后果说明（如「结清后不可撤销，需重开才能调整」）→ 确认按钮。</li>
+        <li>登记支付固定按订单应付全额登记（不提供金额输入），与后端「支付金额必须等于订单应付」校验口径一致。<b>此为 2026-10-24 金融安全审计已收紧落地的既有行为，本次仅统一弹窗结构与结果反馈规范，不改登记逻辑。</b></li>
+        <li>确认按钮文案写明动作（如「确认结清」），危险操作（结清、重开、调整冲回）使用主色 + 二次确认，不用红色误导师文化歧义——红色仅用于错误反馈。</li>
+        <li>执行中按钮 loading 且防重复提交；后端返回成功后展示结果摘要（本次变动金额、变动后状态），失败时展示后端错误文案并保留弹窗内容不清空。</li>
+      </ul>
+      <div class="demo">
+        <div class="demo-title">交互示意：对账单结清确认（点击「确认结清」查看结果态；示意数据）</div>
+        <div class="confirm-demo" id="settleDemo">
+          <div class="cd-head">结清确认</div>
+          <div class="cd-body" id="cdBody">
+            <div class="cd-row"><span class="k">对账单</span><span class="v">ST-2026-10-001</span></div>
+            <div class="cd-row"><span class="k">结算周期</span><span class="v">2026-10-01 ~ 2026-10-15</span></div>
+            <div class="cd-row"><span class="k">应付金额</span><span class="v">¥12,680.00</span></div>
+            <div class="cd-row"><span class="k">已登记票证</span><span class="v">¥12,680.00</span></div>
+            <div class="cd-warn">结清后该对账单不可再调整；如需变更须先执行「重开」。</div>
+          </div>
+          <div class="cd-result" id="cdResult">
+            <div class="ok">✓</div>
+            <p><b>结清完成</b></p>
+            <p style="color:#646a73;font-size:13px">实结金额 ¥12,680.00<br>对账单状态：已结清</p>
+          </div>
+          <div class="cd-foot">
+            <button class="btn" onclick="document.getElementById('cdBody').style.display='block';document.getElementById('cdResult').style.display='none'">取消</button>
+            <button class="btn primary" onclick="document.getElementById('cdBody').style.display='none';document.getElementById('cdResult').style.display='block'">确认结清</button>
+          </div>
+        </div>
+      </div>
+      <h4>权限</h4>
+      <p>与后端一致：对账类操作仅平台角色可见可操作；其他角色不渲染入口。</p>
+      <h4>异常</h4>
+      <ul>
+        <li>应付为 0 且无票证：结清按钮禁用并说明原因（对应后端 D5 规则）。</li>
+        <li>提交时网络失败 / 超时：保留弹窗与已填内容，允许重试；不自动重复提交。</li>
+        <li>状态已被他人变更（如已结清）：以后端错误提示为准刷新页面状态。</li>
+      </ul>
+    </div>
+
+    <div class="fr-card" id="fr-a3">
+      <h3><span class="fr-id">FR-A3</span> admin 高频列表页性能与批量操作 <span class="tag tag-p1">P1</span></h3>
+      <h4>目的</h4>
+      <p>订单、佣金流水、对账单等列表在数据量增长后保持可用；高频批量动作减少重复进出详情页。</p>
+      <h4>处理规则</h4>
+      <ul>
+        <li>在 API 分页改造完成前（见 §6），列表页统一采用前端分页 + 大数据量时开启虚拟滚动；单页渲染行数设上限 [Assumption, TBD：默认 200 行]。超出上限时不截断数据（虚拟滚动仍渲染全部），仅在列表顶部显示警告条：「数据量超过 200 条，建议使用筛选条件缩小范围」，避免用户误以为数据丢失。</li>
+        <li>列表支持列宽调整与列显示记忆（localStorage 按页面 key 存储）。</li>
+        <li>批量操作工具栏在勾选行后出现，仅暴露当前状态下合法的批量动作；批量动作遵循 FR-A2 的确认与结果反馈规范。</li>
+        <li>筛选项与列表刷新遵循 ProTable 默认交互；刷新后保留筛选与分页。</li>
+      </ul>
+      <h4>异常</h4>
+      <p>空结果显示统一空态（FR-X）；接口失败显示错误态并提供重试按钮。</p>
+    </div>
+
+    <div class="fr-card" id="fr-c1">
+      <h3><span class="fr-id">FR-C1</span> mini-c 下单链路视觉与交互升级 <span class="tag tag-p1">P1</span></h3>
+      <h4>目的</h4>
+      <p>首页 → 商品详情 → 确认订单 → 支付结果四个页面形成清晰转化路径，每页有唯一主行动按钮。</p>
+      <h4>核心流程</h4>
+      <div class="flow-steps">
+        <span class="flow-step">首页浏览</span><span class="flow-arrow">→</span>
+        <span class="flow-step">商品详情</span><span class="flow-arrow">→</span>
+        <span class="flow-step">确认订单</span><span class="flow-arrow">→</span>
+        <span class="flow-step">支付结果</span><span class="flow-arrow">→</span>
+        <span class="flow-step">查看订单 / 解读进度</span>
+      </div>
+      <h4>处理规则</h4>
+      <ul>
+        <li>价格展示遵循 §5.1 金额规范，主价格使用主色 + 大号字，单位「¥」与金额同基线。</li>
+        <li>主行动按钮（立即购买 / 提交订单 / 完成）固定在底部安全区上方，宽度通栏。</li>
+        <li>确认订单页展示渠道归属信息（若有 channelCode / 盒码归属）的只读摘要，不改变现有归属判定逻辑。</li>
+        <li>支付结果页区分成功 / 失败 / 处理中三态；失败态提供「重新支付」与「查看订单」两个出口。</li>
+        <li>输入类交互维持现有 <code>value + onBlur</code> 变通方案，待 NutUI 正式版升级后回滚（见 §6）。</li>
+      </ul>
+      <h4>异常</h4>
+      <p>商品已下架 / 库存不足：详情页主按钮置灰并说明；下单接口返回业务错误时以统一 Toast（§5.2）提示并返回上一页保留选择。</p>
+    </div>
+
+    <div class="fr-card" id="fr-c2">
+      <h3><span class="fr-id">FR-C2</span> mini-c 解读报告与订单状态可视化 <span class="tag tag-p2">P2</span></h3>
+      <h4>处理规则</h4>
+      <ul>
+        <li>解读报告未发布（contentHidden）时，页面展示明确的等待态：说明「解读尚未发布」、预期等待语义与咨询入口 [TBD：是否展示预计发布时间需业务确认]。</li>
+        <li>订单详情增加状态步骤条，节点与现有订单状态机一致（待支付 → 已支付 → 履约中 → 已完成 / 已退款），当前节点高亮；退款 / 售后状态以分支标签呈现，不挤占主步骤条。步骤条节点命名与代码状态枚举（OrderStatus）一一映射，以代码枚举为准，设计稿不得自造状态名。</li>
+      </ul>
+    </div>
+
+    <div class="fr-card" id="fr-b1">
+      <h3><span class="fr-id">FR-B1</span> mini-b 经营看板与商品管理 <span class="tag tag-p2">P2</span></h3>
+      <h4>处理规则</h4>
+      <ul>
+        <li>首页看板以卡片呈现关键指标（今日订单、今日收入、待处理事项），指标金额遵循 §5.1；数据为现有接口聚合，不新增统计口径 [Assumption, TBD：指标清单需与商家角色确认]。「待处理事项」暂无明确口径与数据来源 [TBD：需确认是否存在待发货 / 待审核等业务态，若现有接口无法支撑则替换为「本月累计收入」等已有指标]。</li>
+        <li>商品 / 盒码列表支持滑动操作（编辑 / 上下架）与批量选择；批量操作遵循 §5.3 确认规范。</li>
+        <li>表单页维持现有组件与 onBlur 变通，仅做布局与视觉对齐。</li>
+      </ul>
+    </div>
+
+    <div class="fr-card" id="fr-x">
+      <h3><span class="fr-id">FR-X</span> 三端空态 / 异常态 / 反馈统一 <span class="tag tag-p3">P3</span></h3>
+      <h4>处理规则</h4>
+      <ul>
+        <li>建立三端各自的统一组件：空态（Empty）、页面级错误态（含重试）、加载骨架屏；各页面不得自行实现一次性空态。</li>
+        <li>小程序端全局封装 Toast 调用，页面无需手动挂载 <code>&lt;Toast id&gt;</code>（封装层保证挂载），消灭反馈静默丢失。</li>
+        <li>token 失效 / 账号不存在（如 seed 重跑后旧 token）：统一跳转登录页并提示重新登录，不留白屏。</li>
+      </ul>
+    </div>
+
+    <h2 id="s5">5. 共享规则</h2>
+    <h3>5.1 金额与费率展示</h3>
+    <ul>
+      <li>所有金额以后端「分（*Cents）」字段为准，展示层统一经 <code>formatCents</code>（@mall/shared）格式化；禁止页面内自行除以 100 或拼接。</li>
+      <li>费率字段（*Bps）展示为百分比，保留规则与现有页面一致；表格金额列右对齐、等宽数字。</li>
+    </ul>
+    <h3>5.2 反馈规范</h3>
+    <ul>
+      <li>操作成功：轻提示（Toast / message）；涉及资金或状态不可逆变更的操作：结果摘要（FR-A2）。</li>
+      <li>操作失败：展示后端返回的错误文案，不包装、不吞错；表单类失败保留用户已填内容。</li>
+      <li>加载超过 300ms 显示加载态；按钮提交期间防重复点击。</li>
+    </ul>
+    <h3>5.3 确认规范</h3>
+    <ul>
+      <li>资金类、状态不可逆、批量影响勾选行数 ≥ 2 的操作，必须二次确认，确认弹窗包含操作对象与后果说明。计数口径按用户勾选行数判定；单条详情内的操作无论涉及多少子明细（如对账单内多条佣金）均视为单行操作，按其自身性质判断是否需确认。</li>
+      <li>普通可逆操作（编辑、筛选）不弹确认，避免确认疲劳。</li>
+    </ul>
+    <h3>5.4 权限</h3>
+    <ul>
+      <li>前端入口显隐与后端 <code>@Roles</code> 保持一致：无权限即不渲染入口，直接访问路由显示 403 空态。</li>
+      <li>前端显隐仅为体验优化，不替代后端鉴权。</li>
+    </ul>
+
+    <h2 id="s6">6. 开放问题</h2>
+    <table>
+      <tr><th>问题</th><th>影响</th><th>当前处理</th></tr>
+      <tr>
+        <td>NutUI 正式版发布时间未定，beta.9 Input onChange 缺陷无法根治 [TBD]</td>
+        <td>FR-C1 / FR-B1 输入类表单无法实时校验</td>
+        <td>本期维持 <code>value + onBlur</code> 变通；正式版发布后回滚为 onChange 并回归输入类页面</td>
+      </tr>
+      <tr>
+        <td>列表 API 无分页，前端分页为过渡方案 [TBD]</td>
+        <td>FR-A3 性能目标受数据量上限约束</td>
+        <td>本期前端分页 + 虚拟滚动；后端分页改造另行立项评估</td>
+      </tr>
+      <tr>
+        <td>解读未发布态是否展示预计发布时间 [TBD]</td>
+        <td>FR-C2 等待态信息架构</td>
+        <td>需业务确认解读 SLA 后冻结设计稿</td>
+      </tr>
+      <tr>
+        <td>mini-b 看板指标清单 [Assumption, TBD]</td>
+        <td>FR-B1 卡片内容</td>
+        <td>默认今日订单 / 今日收入 / 待处理事项，评审时与商家角色确认</td>
+      </tr>
+      <tr>
+        <td>固定佣金语义是否需在 admin 界面体现配置入口或说明文案 [TBD]</td>
+        <td>FR-A2 / FR-A3 中佣金展示与调整交互的文案、校验提示</td>
+        <td>评审时与业务确认；若确认需要，补充相关界面需求后再排期</td>
+      </tr>
+    </table>
+
+    <h2 id="s7">7. 里程碑与分工</h2>
+    <p class="callout info">本章为项目计划信息（用户要求保留），非产品行为定义；评审重点是 §4 功能需求与 §5 共享规则。</p>
+    <table>
+      <tr><th>阶段</th><th>周期</th><th>内容</th><th>里程碑</th></tr>
+      <tr><td>1</td><td>第 1–2 周</td><td>设计令牌规范 + Figma 组件库 + 三端主题落地（FR-DS）</td><td><b>M1</b> 三端主题演示通过，核心页面走查无令牌外色值</td></tr>
+      <tr><td>2</td><td>第 3–4 周</td><td>admin 金融链路 + 列表页 + 布局导航（FR-A1 / A2 / A3）</td><td><b>M2</b> admin P0/P1 页面改造完成并通过视觉走查</td></tr>
+      <tr><td>3</td><td>第 5–6 周</td><td>mini-c 下单链路 + 解读报告 + 订单步骤条（FR-C1 / C2）</td><td><b>M3</b> 下单全链路 UI 走查通过，e2e 回归全绿</td></tr>
+      <tr><td>4</td><td>第 7–8 周</td><td>mini-b（FR-B1）+ FR-X 收尾 + NutUI 升级评估</td><td><b>M4</b> 全部范围交付，达到上线标准</td></tr>
+    </table>
+    <h3>7.1 分工</h3>
+    <table>
+      <tr><th>角色</th><th>职责</th></tr>
+      <tr><td>产品</td><td>需求确认、优先级仲裁、里程碑验收</td></tr>
+      <tr><td>UI / 交互设计</td><td>令牌与组件库、页面稿、核心链路交互稿、走查</td></tr>
+      <tr><td>前端（admin）</td><td>阶段 1 令牌接入、阶段 2 全部改造</td></tr>
+      <tr><td>前端（小程序）</td><td>阶段 3 / 4 改造、NutUI 升级评估</td></tr>
+      <tr><td>后端</td><td>配合接口微调（原则不动 API 契约）、分页评估</td></tr>
+      <tr><td>测试</td><td>测试计划、e2e 脚本扩充、视觉回归</td></tr>
+    </table>
+    <h3>7.2 协作机制</h3>
+    <ul>
+      <li>设计稿在对应阶段启动前 1 周冻结；每周三设计走查会。</li>
+      <li>令牌变更必须三端同步评审。</li>
+      <li>每个里程碑执行验证三件套：<code>pnpm -r typecheck</code> → <code>pnpm build</code> → <code>scripts/e2e-flow.py</code> + <code>scripts/finance-probe.py</code> 回归 + 浏览器实测关键链路。</li>
+    </ul>
+
+    <h2 id="s8">8. 风险与应对</h2>
+    <table>
+      <tr><th>风险</th><th>等级</th><th>应对</th></tr>
+      <tr><td>NutUI 正式版未发布，输入缺陷修复依赖官方</td><td>高</td><td>本期绕开输入交互改造；阶段 4 评估升级，未发布则维持变通方案</td></tr>
+      <tr><td>金融操作 UI 变更引入误操作</td><td>高</td><td>阶段 2 完成后 finance-probe 全量回归；二次确认强制保留</td></tr>
+      <tr><td>令牌改造牵连面广、回归遗漏</td><td>中</td><td>阶段 1 独立走查；关键页面改造前后截图对比存档</td></tr>
+      <tr><td>改造期业务插单冲突</td><td>中</td><td>每阶段预留 20% buffer；P3 项可裁剪</td></tr>
+      <tr><td>小程序 dev / build 互相覆盖产物导致误判</td><td>低</td><td>构建验证只用 typecheck，dev 运行时不跑 build:h5（踩坑记录 #5）</td></tr>
+      <tr><td>seed 重跑后旧 token 导致验证误判</td><td>低</td><td>浏览器验证前先 localStorage.clear() 重登（踩坑记录 #6）</td></tr>
+    </table>
+  </main>
+</div>
+</body>
+</html>
