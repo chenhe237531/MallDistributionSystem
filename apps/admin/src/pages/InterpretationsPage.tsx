@@ -269,7 +269,7 @@ export default function InterpretationsPage() {
                   </a>
                   <a onClick={() => setEditOpen(true)}>编辑</a>
                   <a onClick={() => setAnnotateOpen(true)}>批注</a>
-                  <a onClick={() => setRejectOpen(true)} style={{ color: '#d46b08' }}>
+                  <a onClick={() => setRejectOpen(true)} style={{ color: 'var(--ant-color-warning)' }}>
                     驳回
                   </a>
                   <Popconfirm
@@ -446,13 +446,13 @@ export default function InterpretationsPage() {
           <Space direction="vertical" size={16} style={{ display: 'flex' }}>
             <div>
               <Text strong>膳食安排（meals）</Text>
-              <pre style={{ background: '#f5f5f5', padding: 12, borderRadius: 8, fontSize: 12 }}>
+              <pre style={{ background: 'var(--ant-color-bg-layout)', padding: 12, borderRadius: 8, fontSize: 12 }}>
                 {JSON.stringify(planDetail.meals, null, 2)}
               </pre>
             </div>
             <div>
               <Text strong>随访节点（followUpNodes）</Text>
-              <pre style={{ background: '#f5f5f5', padding: 12, borderRadius: 8, fontSize: 12 }}>
+              <pre style={{ background: 'var(--ant-color-bg-layout)', padding: 12, borderRadius: 8, fontSize: 12 }}>
                 {JSON.stringify(planDetail.followUpNodes, null, 2)}
               </pre>
             </div>

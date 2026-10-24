@@ -14,7 +14,7 @@ export default defineAppConfig({
   ],
   window: {
     backgroundTextStyle: 'light',
-    navigationBarBackgroundColor: '#0f766e',
+    navigationBarBackgroundColor: '#1677ff',
     navigationBarTitleText: '商家工作台',
     navigationBarTextStyle: 'white',
   },

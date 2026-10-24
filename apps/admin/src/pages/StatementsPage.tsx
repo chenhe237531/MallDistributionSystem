@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Card, Col, Descriptions, Drawer, Popconfirm, Row, Space, Statistic, Tag, Typography, message } from 'antd'
+import { Alert, Button, Card, Col, Descriptions, Drawer, Row, Space, Statistic, Tag, Typography, message } from 'antd'
 import type { ActionType, ProColumns } from '@ant-design/pro-components'
 import {
   ModalForm,
@@ -13,6 +13,10 @@ import {
 } from '@ant-design/pro-components'
 import { formatCents } from '@mall/shared'
 import { api, getToken } from '../lib/api'
+import FinanceActionModal from '../components/FinanceActionModal'
+import type { FinanceResult } from '../components/FinanceActionModal'
+import { moneyRow } from '../components/FinanceActionModal'
+import { listTableProps, shouldVirtual, virtualTableProps, VolumeAlert } from '../components/list'
 
 const { Text } = Typography
 
@@ -112,6 +116,13 @@ export default function StatementsPage() {
   const [adjustOpen, setAdjustOpen] = useState(false)
   const [differenceOpen, setDifferenceOpen] = useState(false)
   const [resolveTarget, setResolveTarget] = useState<StatementDifference | null>(null)
+  const [settleTarget, setSettleTarget] = useState<Statement | null>(null)
+  const [settleResult, setSettleResult] = useState<FinanceResult | null>(null)
+  const [reopenTarget, setReopenTarget] = useState<Statement | null>(null)
+  const [reopenResult, setReopenResult] = useState<FinanceResult | null>(null)
+  const [reconcileTarget, setReconcileTarget] = useState<Statement | null>(null)
+  const [reconcileResult, setReconcileResult] = useState<FinanceResult | null>(null)
+  const [listVolume, setListVolume] = useState(0)
 
   const reload = () => actionRef.current?.reload()
 
@@ -139,25 +150,6 @@ export default function StatementsPage() {
     setDetail(null)
     await refreshDetail(id)
   }
-
-  const runStatementAction = async (
-    action: () => Promise<unknown>,
-    successText: string,
-    id?: string,
-  ) => {
-    try {
-      await action()
-      message.success(successText)
-      reload()
-      void refreshOverview()
-      if (id) await refreshDetail(id)
-    } catch (cause) {
-      message.error(cause instanceof Error ? cause.message : '操作失败')
-    }
-  }
-
-  const simpleStatementAction = (id: string, path: string, successText: string) => () =>
-    runStatementAction(() => api(`/statements/${id}/${path}`, { method: 'POST' }), successText, id)
 
   const downloadExport = async (id: string, format: 'xlsx' | 'pdf') => {
     try {
@@ -250,6 +242,7 @@ export default function StatementsPage() {
       header={{ title: '对账中心', subTitle: '对账、票证、差异与结算' }}
       content="按周期生成主体对账单，登记票证与调整，处理差异并完成结算，支持导出 Excel / PDF。"
     >
+      <VolumeAlert total={listVolume} />
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col span={5}>
           <Card size="small">
@@ -265,7 +258,7 @@ export default function StatementsPage() {
             <Statistic
               title="未取得票证"
               value={overview ? formatCents(overview.missingVoucherCents) : '—'}
-              valueStyle={{ fontSize: 20, color: (overview?.missingVoucherCents ?? 0) > 0 ? '#d46b08' : undefined }}
+              valueStyle={{ fontSize: 20, color: (overview?.missingVoucherCents ?? 0) > 0 ? 'var(--ant-color-warning)' : undefined }}
             />
           </Card>
         </Col>
@@ -274,7 +267,7 @@ export default function StatementsPage() {
             <Statistic
               title="差异金额"
               value={overview ? formatCents(overview.differenceCents) : '—'}
-              valueStyle={{ fontSize: 20, color: (overview?.differenceCents ?? 0) > 0 ? '#cf1322' : undefined }}
+              valueStyle={{ fontSize: 20, color: (overview?.differenceCents ?? 0) > 0 ? 'var(--ant-color-error)' : undefined }}
             />
           </Card>
         </Col>
@@ -289,7 +282,7 @@ export default function StatementsPage() {
               title="有差异"
               value={overview?.disputedCount ?? 0}
               suffix="单"
-              valueStyle={{ fontSize: 20, color: (overview?.disputedCount ?? 0) > 0 ? '#cf1322' : undefined }}
+              valueStyle={{ fontSize: 20, color: (overview?.disputedCount ?? 0) > 0 ? 'var(--ant-color-error)' : undefined }}
             />
           </Card>
         </Col>
@@ -353,9 +346,10 @@ export default function StatementsPage() {
           </ModalForm>
         }
         options={{ reload: true, density: true, setting: true }}
-        pagination={{ pageSize: 10 }}
+        {...(shouldVirtual(listVolume) ? virtualTableProps() : listTableProps('statements'))}
         request={async () => {
           const data = await api<Statement[]>('/statements')
+          setListVolume(data.length)
           return { data, success: true }
         }}
       />
@@ -403,29 +397,35 @@ export default function StatementsPage() {
               <Button danger onClick={() => setDifferenceOpen(true)}>
                 登记差异
               </Button>
-              <Popconfirm
-                title="确认完成对账？"
+              <Button
                 disabled={settled}
-                onConfirm={() => simpleStatementAction(detail.id, 'reconcile', '已标记为已对账')()}
+                onClick={() => {
+                  setReconcileTarget(detail)
+                  setReconcileResult(null)
+                }}
               >
-                <Button disabled={settled}>对账</Button>
-              </Popconfirm>
-              <Popconfirm
-                title="确认结清该账单？"
+                对账
+              </Button>
+              <Button
+                type="primary"
+                ghost
                 disabled={detail.status !== 'reconciled'}
-                onConfirm={() => simpleStatementAction(detail.id, 'settle', '已结清')()}
+                onClick={() => {
+                  setSettleTarget(detail)
+                  setSettleResult(null)
+                }}
               >
-                <Button type="primary" ghost disabled={detail.status !== 'reconciled'}>
-                  结算
-                </Button>
-              </Popconfirm>
-              <Popconfirm
-                title="确认反结清（重开）该账单？"
+                结算
+              </Button>
+              <Button
                 disabled={!settled}
-                onConfirm={() => simpleStatementAction(detail.id, 'reopen', '已重开')()}
+                onClick={() => {
+                  setReopenTarget(detail)
+                  setReopenResult(null)
+                }}
               >
-                <Button disabled={!settled}>重开</Button>
-              </Popconfirm>
+                重开
+              </Button>
               <Button onClick={() => void downloadExport(detail.id, 'xlsx')}>导出 Excel</Button>
               <Button onClick={() => void downloadExport(detail.id, 'pdf')}>导出 PDF</Button>
             </Space>
@@ -560,6 +560,7 @@ export default function StatementsPage() {
           }>
             title={`登记凭证 · ${detail.statementNo}`}
             width={520}
+            submitter={{ searchConfig: { submitText: '确认登记凭证' } }}
             open={voucherOpen}
             modalProps={{ onCancel: () => setVoucherOpen(false) }}
             onOpenChange={setVoucherOpen}
@@ -605,7 +606,7 @@ export default function StatementsPage() {
               min={0.01}
               fieldProps={{ precision: 2 }}
               rules={[{ required: true, message: '请输入凭证金额' }]}
-              extra={`剩余未取得票证 ${formatCents(detail.voucherMissingCents)}`}
+              extra={`剩余未取得票证 ${formatCents(detail.voucherMissingCents)} · 本期应付 ${formatCents(detail.totalPayableCents)}`}
             />
             <ProFormDatePicker
               name="issuedAt"
@@ -614,11 +615,18 @@ export default function StatementsPage() {
               fieldProps={{ format: 'YYYY-MM-DD' }}
             />
             <ProFormText name="imageUrl" label="凭证图片地址" placeholder="选填" />
+            <Alert
+              type="warning"
+              showIcon
+              style={{ fontSize: 13 }}
+              message="凭证登记后计入「已登记票证」金额，直接影响结清校验；请确认凭证真实有效。"
+            />
           </ModalForm>
 
           <ModalForm<{ amountYuan: number; reason: string }>
             title={`调整金额 · ${detail.statementNo}`}
             width={440}
+            submitter={{ searchConfig: { submitText: '确认调整' } }}
             open={adjustOpen}
             modalProps={{ onCancel: () => setAdjustOpen(false) }}
             onOpenChange={setAdjustOpen}
@@ -648,18 +656,25 @@ export default function StatementsPage() {
               label="调整金额（元）"
               fieldProps={{ precision: 2 }}
               rules={[{ required: true, message: '请输入调整金额' }]}
-              extra="正数调增应付，负数调减应付"
+              extra={`正数调增应付、负数调减应付 · 当前本期应付 ${formatCents(detail.totalPayableCents)}`}
             />
             <ProFormTextArea
               name="reason"
               label="调整原因"
               rules={[{ required: true, message: '请输入调整原因' }]}
             />
+            <Alert
+              type="warning"
+              showIcon
+              style={{ fontSize: 13 }}
+              message="调整将立即变更「本期应付合计」并记录操作人与原因留痕；结清后须先重开才能调整。"
+            />
           </ModalForm>
 
           <ModalForm<{ amountYuan: number; reason: string }>
             title={`登记差异 · ${detail.statementNo}`}
             width={440}
+            submitter={{ searchConfig: { submitText: '确认登记差异' } }}
             open={differenceOpen}
             modalProps={{ onCancel: () => setDifferenceOpen(false) }}
             onOpenChange={setDifferenceOpen}
@@ -694,6 +709,12 @@ export default function StatementsPage() {
               name="reason"
               label="差异原因"
               rules={[{ required: true, message: '请输入差异原因' }]}
+            />
+            <Alert
+              type="warning"
+              showIcon
+              style={{ fontSize: 13 }}
+              message="登记差异后账单转为「有差异」，需解决全部差异后才能继续结清流程。"
             />
           </ModalForm>
 
@@ -731,6 +752,135 @@ export default function StatementsPage() {
               extra={resolveTarget ? `差异金额 ${formatCents(resolveTarget.amountCents)} · ${resolveTarget.reason}` : undefined}
             />
           </ModalForm>
+          <FinanceActionModal
+            title="对账确认"
+            open={Boolean(reconcileTarget)}
+            confirmText="确认完成对账"
+            objectRows={[
+              { label: '对账单', value: reconcileTarget?.statementNo ?? '—', strong: true },
+              { label: '结算周期', value: reconcileTarget?.period ?? '—' },
+              {
+                label: '主体',
+                value: reconcileTarget
+                  ? `${SUBJECT_TYPE_LABELS[reconcileTarget.subjectType] ?? reconcileTarget.subjectType} · ${reconcileTarget.subjectId.slice(0, 16)}…`
+                  : '—',
+              },
+            ]}
+            amountRows={[moneyRow('本期应付合计', reconcileTarget?.totalPayableCents ?? 0, { strong: true })]}
+            consequence="对账表示确认本期应付金额核对无误；如后续需要调整，可登记调整项或差异。"
+            onConfirm={async () => {
+              if (!reconcileTarget) {
+                return
+              }
+              const updated = await api<Statement>(`/statements/${reconcileTarget.id}/reconcile`, {
+                method: 'POST',
+              })
+              reload()
+              void refreshOverview()
+              await refreshDetail(reconcileTarget.id)
+              setReconcileResult({
+                title: '对账完成',
+                rows: [
+                  { label: '对账单', value: updated.statementNo },
+                  { label: '状态', value: STATUS_META[updated.status]?.label ?? updated.status, strong: true },
+                ],
+              })
+            }}
+            result={reconcileResult}
+            onClose={() => {
+              setReconcileTarget(null)
+              setReconcileResult(null)
+            }}
+          />
+
+          <FinanceActionModal
+            title="结清确认"
+            open={Boolean(settleTarget)}
+            confirmText="确认结清"
+            objectRows={[
+              { label: '对账单', value: settleTarget?.statementNo ?? '—', strong: true },
+              { label: '结算周期', value: settleTarget?.period ?? '—' },
+              {
+                label: '主体',
+                value: settleTarget
+                  ? `${SUBJECT_TYPE_LABELS[settleTarget.subjectType] ?? settleTarget.subjectType} · ${settleTarget.subjectId.slice(0, 16)}…`
+                  : '—',
+              },
+            ]}
+            amountRows={[
+              moneyRow('应付金额', settleTarget?.totalPayableCents ?? 0, { strong: true }),
+              moneyRow('已登记票证', settleTarget?.voucherRegisteredCents ?? 0),
+              moneyRow('未取得票证', settleTarget?.voucherMissingCents ?? 0, {
+                danger: (settleTarget?.voucherMissingCents ?? 0) > 0,
+              }),
+            ]}
+            consequence="结清后该对账单不可再调整；如需变更须先执行「重开」。"
+            disabledReason={
+              settleTarget && settleTarget.totalPayableCents === 0 && settleTarget.vouchers.length === 0
+                ? '应付为 0 且无已登记票证，无可结清内容，不可结清。'
+                : undefined
+            }
+            onConfirm={async () => {
+              if (!settleTarget) {
+                return
+              }
+              const updated = await api<Statement>(`/statements/${settleTarget.id}/settle`, {
+                method: 'POST',
+              })
+              reload()
+              void refreshOverview()
+              await refreshDetail(settleTarget.id)
+              setSettleResult({
+                title: '结清完成',
+                rows: [
+                  moneyRow('实结金额', updated.totalPayableCents, { strong: true }),
+                  { label: '对账单状态', value: STATUS_META[updated.status]?.label ?? updated.status, strong: true },
+                ],
+              })
+            }}
+            result={settleResult}
+            onClose={() => {
+              setSettleTarget(null)
+              setSettleResult(null)
+            }}
+          />
+
+          <FinanceActionModal
+            title="重开确认"
+            open={Boolean(reopenTarget)}
+            confirmText="确认重开"
+            objectRows={[
+              { label: '对账单', value: reopenTarget?.statementNo ?? '—', strong: true },
+              { label: '结算周期', value: reopenTarget?.period ?? '—' },
+            ]}
+            amountRows={[
+              moneyRow('已结清金额', reopenTarget?.totalPayableCents ?? 0, { strong: true }),
+            ]}
+            consequence="重开（反结清）后账单回到「已对账」状态，可继续登记票证与调整；已生成的账单明细不回滚。"
+            onConfirm={async () => {
+              if (!reopenTarget) {
+                return
+              }
+              const updated = await api<Statement>(`/statements/${reopenTarget.id}/reopen`, {
+                method: 'POST',
+              })
+              reload()
+              void refreshOverview()
+              await refreshDetail(reopenTarget.id)
+              setReopenResult({
+                title: '重开完成',
+                rows: [
+                  { label: '对账单', value: updated.statementNo },
+                  { label: '状态', value: STATUS_META[updated.status]?.label ?? updated.status, strong: true },
+                ],
+              })
+            }}
+            result={reopenResult}
+            onClose={() => {
+              setReopenTarget(null)
+              setReopenResult(null)
+            }}
+          />
         </>
       ) : null}
     </PageContainer>

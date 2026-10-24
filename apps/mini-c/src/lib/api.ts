@@ -1,4 +1,5 @@
 import Taro from '@tarojs/taro'
+import { handleAuthExpired } from '../components/feedback'
 
 const BASE = 'http://localhost:3000/api'
 const TOKEN_KEY = 'mall_c_token'
@@ -37,7 +38,12 @@ export async function api<T>(
   })
   if (response.statusCode >= 400) {
     const message = response.data?.message
-    throw new Error(Array.isArray(message) ? message.join('；') : message ?? '请求失败')
+    const text = Array.isArray(message) ? message.join('；') : message ?? '请求失败'
+    // FR-X：登录失效 / 账号不存在时统一提示并跳登录页，不留白屏
+    if (response.statusCode === 401 || response.statusCode === 404) {
+      handleAuthExpired(text)
+    }
+    throw new Error(text)
   }
   return response.data as T
 }

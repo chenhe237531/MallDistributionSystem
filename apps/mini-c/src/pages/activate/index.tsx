@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Taro from '@tarojs/taro'
-import { Text, View } from '@tarojs/components'
+import { Text, Video, View } from '@tarojs/components'
 import {
   Button as NutButton,
   Input as NutInput,
@@ -25,6 +25,8 @@ type BoxPreview = {
     name: string
     skuCode: string
     sampleType: string
+    guideVideoUrl: string | null
+    intro: string | null
     questionnaireFields: Array<{ key: string; label?: string; required?: boolean }> | null
   }
 }
@@ -181,6 +183,20 @@ export default function Activate() {
             </Text>
             {boxUnavailable ? (
               <Text className="error">该盒已激活或已作废</Text>
+            ) : null}
+          </View>
+        ) : null}
+        {preview?.product.guideVideoUrl ? (
+          <View className="guide-video-block">
+            <Text className="guide-video-title">采样指导视频（建议观看后再取样）</Text>
+            <Video
+              src={preview.product.guideVideoUrl}
+              controls
+              showCenterPlayBtn
+              objectFit="contain"
+            />
+            {preview.product.intro ? (
+              <Text className="guide-video-intro">{preview.product.intro}</Text>
             ) : null}
           </View>
         ) : null}

@@ -94,7 +94,7 @@ export default function RemindersPage() {
         const urgent = days <= 7
         return (
           <Space direction="vertical" size={0}>
-            <Text style={urgent ? { color: '#cf1322' } : undefined}>
+            <Text style={urgent ? { color: 'var(--ant-color-error)' } : undefined}>
               {entity.dueAt.slice(0, 10)}
             </Text>
             <Text type="secondary" style={{ fontSize: 12 }}>
@@ -111,6 +111,8 @@ export default function RemindersPage() {
       render: (_, entity) =>
         entity.status === 'pending' ? (
           <Tag color="gold">待处理</Tag>
+        ) : entity.status === 'passed' ? (
+          <Tag color="green">已发提醒</Tag>
         ) : (
           <Tag>{entity.status}</Tag>
         ),

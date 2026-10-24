@@ -1,9 +1,13 @@
 import { useRef, useState } from 'react'
-import { Popconfirm, Select, Space, Tag, Typography, message } from 'antd'
+import { Popconfirm, Select, Space, Tag, Typography, Input, message } from 'antd'
 import type { ActionType, ProColumns } from '@ant-design/pro-components'
-import { ModalForm, PageContainer, ProFormDigit, ProFormTextArea, ProTable } from '@ant-design/pro-components'
+import { PageContainer, ProTable } from '@ant-design/pro-components'
 import { formatCents } from '@mall/shared'
 import { api } from '../lib/api'
+import FinanceActionModal from '../components/FinanceActionModal'
+import type { FinanceResult } from '../components/FinanceActionModal'
+import { moneyRow } from '../components/FinanceActionModal'
+import { listTableProps, shouldVirtual, virtualTableProps, VolumeAlert } from '../components/list'
 
 const { Text } = Typography
 
@@ -61,7 +65,11 @@ export default function OrdersPage() {
   const actionRef = useRef<ActionType>()
   const [statusFilter, setStatusFilter] = useState<string | undefined>()
   const [payTarget, setPayTarget] = useState<SalesOrder | null>(null)
+  const [payResult, setPayResult] = useState<FinanceResult | null>(null)
   const [refundTarget, setRefundTarget] = useState<SalesOrder | null>(null)
+  const [refundResult, setRefundResult] = useState<FinanceResult | null>(null)
+  const [refundReason, setRefundReason] = useState('')
+  const [listVolume, setListVolume] = useState(0)
 
   const reload = () => actionRef.current?.reload()
 
@@ -150,7 +158,7 @@ export default function OrdersPage() {
         const actions: React.ReactNode[] = []
         if (entity.status === 'pending_payment') {
           actions.push(
-            <a key="pay" onClick={() => setPayTarget(entity)}>
+            <a key="pay" onClick={() => { setPayTarget(entity); setPayResult(null) }}>
               登记支付
             </a>,
             <Popconfirm
@@ -226,7 +234,7 @@ export default function OrdersPage() {
         }
         if (!['pending_payment', 'cancelled', 'refunded'].includes(entity.status)) {
           actions.push(
-            <a key="refund" onClick={() => setRefundTarget(entity)}>
+            <a key="refund" onClick={() => { setRefundTarget(entity); setRefundResult(null); setRefundReason('') }}>
               退款
             </a>,
           )
@@ -241,12 +249,14 @@ export default function OrdersPage() {
       header={{ title: '销售订单', subTitle: '订单全生命周期管理' }}
       content="跟进支付、发货、检测与售后各环节，处理超时未付订单与退款。"
     >
+      <VolumeAlert total={listVolume} />
       <ProTable<SalesOrder>
         rowKey="id"
         actionRef={actionRef}
         columns={columns}
         search={false}
         params={{ status: statusFilter }}
+        {...(shouldVirtual(listVolume) ? virtualTableProps() : listTableProps('orders'))}
         headerTitle={
           <Select
             allowClear
@@ -258,87 +268,111 @@ export default function OrdersPage() {
           />
         }
         options={{ reload: true, density: true, setting: true }}
-        pagination={{ pageSize: 10 }}
         request={async (params) => {
           const data = await api<SalesOrder[]>('/sales-orders')
+          setListVolume(data.length)
           const status = (params as { status?: string }).status
           return { data: status ? data.filter((item) => item.status === status) : data, success: true }
         }}
       />
 
-      <ModalForm<{ paidAmountYuan?: number }>
+      <FinanceActionModal
         title={`登记支付 · ${payTarget?.orderNo ?? ''}`}
-        width={420}
         open={Boolean(payTarget)}
-        modalProps={{ onCancel: () => setPayTarget(null) }}
-        onOpenChange={(open) => {
-          if (!open) setPayTarget(null)
-        }}
-        onFinish={async (values) => {
-          if (!payTarget) return false
-          try {
-            await api(`/sales-orders/${payTarget.id}/register-payment`, {
-              method: 'POST',
-              body: JSON.stringify({
-                paidAmountCents:
-                  values.paidAmountYuan !== undefined && values.paidAmountYuan !== null
-                    ? Math.round(values.paidAmountYuan * 100)
-                    : undefined,
-              }),
-            })
-            message.success('支付已登记')
-            setPayTarget(null)
-            reload()
-            return true
-          } catch (cause) {
-            message.error(cause instanceof Error ? cause.message : '操作失败')
-            return false
+        confirmText="确认登记支付"
+        objectRows={[
+          { label: '订单号', value: payTarget?.orderNo ?? '—', strong: true },
+          { label: '客户', value: payTarget ? `${payTarget.contactName} ${payTarget.contactPhone}` : '—' },
+          {
+            label: '商品',
+            value: payTarget
+              ? payTarget.items.map((item) => `${item.productName} × ${item.quantity}`).join('；')
+              : '—',
+          },
+        ]}
+        amountRows={[
+          moneyRow('订单应付（将按全额登记实付）', payTarget?.totalAmountCents ?? 0, { strong: true }),
+        ]}
+        consequence="登记后订单状态变更为「已支付」，并在事务内生成预估佣金流水；如需变更须走退款流程。"
+        onConfirm={async () => {
+          if (!payTarget) {
+            return
           }
+          const order = await api<SalesOrder>(`/sales-orders/${payTarget.id}/register-payment`, {
+            method: 'POST',
+            body: JSON.stringify({}),
+          })
+          reload()
+          setPayResult({
+            title: '支付登记完成',
+            rows: [
+              moneyRow('实付金额', order.paidAmountCents ?? order.totalAmountCents, { strong: true }),
+              { label: '订单状态', value: STATUS_META[order.status]?.label ?? order.status },
+              { label: '佣金流水', value: '已按订单金额生成（预估，售后期后入账）' },
+            ],
+          })
         }}
-      >
-        <ProFormDigit
-          name="paidAmountYuan"
-          label="实付金额（元）"
-          min={0.01}
-          extra={`不填默认按订单全额 ${payTarget ? formatCents(payTarget.totalAmountCents) : '—'} 登记`}
-        />
-      </ModalForm>
+        result={payResult}
+        onClose={() => {
+          setPayTarget(null)
+          setPayResult(null)
+        }}
+      />
 
-      <ModalForm<{ reason?: string }>
+      <FinanceActionModal
         title={`订单退款 · ${refundTarget?.orderNo ?? ''}`}
-        width={440}
         open={Boolean(refundTarget)}
-        modalProps={{ onCancel: () => setRefundTarget(null) }}
-        onOpenChange={(open) => {
-          if (!open) setRefundTarget(null)
-        }}
-        onFinish={async (values) => {
-          if (!refundTarget) return false
-          try {
-            await api(`/sales-orders/${refundTarget.id}/refund`, {
-              method: 'POST',
-              body: JSON.stringify({ reason: values.reason || undefined }),
-            })
-            message.success('退款已提交')
-            setRefundTarget(null)
-            reload()
-            return true
-          } catch (cause) {
-            message.error(cause instanceof Error ? cause.message : '操作失败')
-            return false
+        confirmText="确认退款"
+        objectRows={[
+          { label: '订单号', value: refundTarget?.orderNo ?? '—', strong: true },
+          { label: '客户', value: refundTarget ? `${refundTarget.contactName} ${refundTarget.contactPhone}` : '—' },
+        ]}
+        amountRows={[
+          moneyRow('订单金额', refundTarget?.totalAmountCents ?? 0),
+          moneyRow('已累计退款', refundTarget?.refundedAmountCents ?? 0),
+          moneyRow(
+            '本次预计退回（整单剩余）',
+            (refundTarget?.totalAmountCents ?? 0) - (refundTarget?.refundedAmountCents ?? 0),
+            { strong: true },
+          ),
+        ]}
+        consequence="退款将按各商品剩余可退数量整单退回，并同步冲销对应佣金与商家结算行，操作后不可自动恢复。"
+        onConfirm={async () => {
+          if (!refundTarget) {
+            return
           }
+          const order = await api<SalesOrder>(`/sales-orders/${refundTarget.id}/refund`, {
+            method: 'POST',
+            body: JSON.stringify({ reason: refundReason || undefined }),
+          })
+          reload()
+          setRefundResult({
+            title: '退款已提交',
+            rows: [
+              moneyRow('累计退款金额', order.refundedAmountCents, { strong: true }),
+              { label: '订单状态', value: STATUS_META[order.status]?.label ?? order.status },
+            ],
+          })
+        }}
+        result={refundResult}
+        onClose={() => {
+          setRefundTarget(null)
+          setRefundResult(null)
         }}
       >
-        <ProFormTextArea
-          name="reason"
-          label="退款原因"
-          placeholder="选填"
-          extra="默认按各商品剩余可退数量整单退款"
-        />
-        {refundTarget && refundTarget.refundedAmountCents > 0 ? (
-          <Text type="secondary">已累计退款 {formatCents(refundTarget.refundedAmountCents)}</Text>
-        ) : null}
-      </ModalForm>
+        <div>
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            退款原因（选填）
+          </Text>
+          <Input.TextArea
+            value={refundReason}
+            onChange={(event) => setRefundReason(event.target.value)}
+            placeholder="选填，将随退款单留痕"
+            autoSize={{ minRows: 2, maxRows: 4 }}
+            style={{ marginTop: 4 }}
+          />
+        </div>
+      </FinanceActionModal>
     </PageContainer>
   )
 }

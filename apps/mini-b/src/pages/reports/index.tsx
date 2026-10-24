@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { Text, View } from '@tarojs/components'
+import { REPORT_STATUS_LABELS, REPORT_STATUS_TONES, statusLabel } from '@mall/shared'
 import { api, ensureLogin } from '../../lib/api'
 import {
   Button as NutButton,
@@ -120,7 +121,11 @@ export default function Reports() {
                     <Text className="muted">点击查看报告与解读</Text>
                   )
                 }
-                extra={<Tag type="primary">{report.status}</Tag>}
+                extra={
+                  <Tag type={REPORT_STATUS_TONES[report.status] ?? 'default'}>
+                    {statusLabel(REPORT_STATUS_LABELS, report.status)}
+                  </Tag>
+                }
               />
             ))}
           </CellGroup>
@@ -135,7 +140,9 @@ export default function Reports() {
           <View className="card">
             <View className="row">
               <Text className="rep-no">{selected.reportNo}</Text>
-              <Tag type="primary">{selected.status}</Tag>
+              <Tag type={REPORT_STATUS_TONES[selected.status] ?? 'default'}>
+                {statusLabel(REPORT_STATUS_LABELS, selected.status)}
+              </Tag>
             </View>
             {selected.contentHidden ? (
               <Text className="muted">客户已关闭报告授权，仅显示报告状态。</Text>

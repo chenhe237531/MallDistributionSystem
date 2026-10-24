@@ -299,7 +299,7 @@ export default function ContractsPage() {
             description="解除后将同步停用该主体的渠道身份"
             onConfirm={() => void terminate(entity)}
           >
-            <a style={{ color: '#cf1322' }}>解除</a>
+            <a style={{ color: 'var(--ant-color-error)' }}>解除</a>
           </Popconfirm>
         ) : null,
       ],

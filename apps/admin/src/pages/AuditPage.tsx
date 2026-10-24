@@ -259,7 +259,7 @@ export default function AuditPage() {
                     style={{
                       margin: 0,
                       whiteSpace: 'pre-wrap',
-                      background: '#fafafa',
+                      background: 'var(--ant-color-bg-layout)',
                       padding: 8,
                       borderRadius: 6,
                     }}

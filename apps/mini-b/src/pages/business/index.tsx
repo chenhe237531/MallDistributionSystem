@@ -1,7 +1,16 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { Picker, Text, View } from '@tarojs/components'
-import { formatCents } from '@mall/shared'
+import {
+  COMMISSION_STATUS_LABELS,
+  COMMISSION_STATUS_TONES,
+  SALES_ORDER_STATUS_LABELS,
+  SALES_ORDER_STATUS_TONES,
+  STATEMENT_STATUS_LABELS,
+  STATEMENT_STATUS_TONES,
+  formatCents,
+  statusLabel,
+} from '@mall/shared'
 import { api, ensureLogin } from '../../lib/api'
 import {
   Cell,
@@ -244,7 +253,11 @@ export default function Business() {
                   description={
                     <Text className="biz-amount">{formatCents(order.totalAmountCents)} 元</Text>
                   }
-                  extra={<Tag type="primary">{order.status}</Tag>}
+                  extra={
+                    <Tag type={SALES_ORDER_STATUS_TONES[order.status] ?? 'default'}>
+                      {statusLabel(SALES_ORDER_STATUS_LABELS, order.status)}
+                    </Tag>
+                  }
                 />
               ))}
             </CellGroup>
@@ -263,7 +276,7 @@ export default function Business() {
                 <Cell
                   key={commission.id}
                   title={`${commission.level} 级佣金`}
-                  description={<Text className="muted">{commission.status}</Text>}
+                  description={<Text className="muted">{statusLabel(COMMISSION_STATUS_LABELS, commission.status)}</Text>}
                   extra={
                     <Text className="biz-amount">{formatCents(commission.amountCents)} 元</Text>
                   }
@@ -288,7 +301,11 @@ export default function Business() {
                   description={
                     <Text className="biz-amount">{formatCents(statement.totalPayableCents)} 元</Text>
                   }
-                  extra={<Tag type="primary">{statement.status}</Tag>}
+                  extra={
+                    <Tag type={STATEMENT_STATUS_TONES[statement.status] ?? 'default'}>
+                      {statusLabel(STATEMENT_STATUS_LABELS, statement.status)}
+                    </Tag>
+                  }
                 />
               ))}
             </CellGroup>

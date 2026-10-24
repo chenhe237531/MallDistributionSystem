@@ -1,7 +1,12 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { Text, View } from '@tarojs/components'
-import { formatCents } from '@mall/shared'
+import {
+  PROCUREMENT_STATUS_LABELS,
+  PROCUREMENT_STATUS_TONES,
+  formatCents,
+  statusLabel,
+} from '@mall/shared'
 import { api, ensureLogin } from '../../lib/api'
 import {
   Button as NutButton,
@@ -128,7 +133,11 @@ export default function Procurement() {
                     <Text className="biz-amount">{formatCents(order.totalAmountCents)} 元</Text>
                   </View>
                 }
-                extra={<Tag type="primary">{order.status}</Tag>}
+                extra={
+                  <Tag type={PROCUREMENT_STATUS_TONES[order.status] ?? 'default'}>
+                    {statusLabel(PROCUREMENT_STATUS_LABELS, order.status)}
+                  </Tag>
+                }
               />
             ))}
           </CellGroup>

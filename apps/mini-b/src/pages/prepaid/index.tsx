@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { Text, View } from '@tarojs/components'
-import { formatCents, parseYuanToCents } from '@mall/shared'
+import { RECHARGE_STATUS_LABELS, RECHARGE_STATUS_TONES, formatCents, parseYuanToCents, statusLabel } from '@mall/shared'
 import { api, ensureLogin } from '../../lib/api'
 import {
   Button as NutButton,
@@ -240,7 +240,11 @@ export default function Prepaid() {
                 description={
                   <Text className="biz-amount">{formatCents(recharge.amountCents)} 元</Text>
                 }
-                extra={<Tag type="primary">{recharge.status}</Tag>}
+                extra={
+                  <Tag type={RECHARGE_STATUS_TONES[recharge.status] ?? 'default'}>
+                    {statusLabel(RECHARGE_STATUS_LABELS, recharge.status)}
+                  </Tag>
+                }
               />
             ))}
           </CellGroup>

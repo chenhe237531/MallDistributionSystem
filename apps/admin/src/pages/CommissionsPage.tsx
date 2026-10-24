@@ -14,6 +14,7 @@ import {
 } from '@ant-design/pro-components'
 import { formatCents } from '@mall/shared'
 import { api } from '../lib/api'
+import { listTableProps } from '../components/list'
 
 const { Text } = Typography
 
@@ -237,6 +238,8 @@ export default function CommissionsPage() {
                   <Space>
                     <Popconfirm
                       title="确认将过保订单的预估佣金批量转为待对账？"
+                      description="该操作影响全部售后期已结束的预估佣金，转入待对账后进入对账流程。"
+                      okText="确认入账"
                       onConfirm={() => {
                         void (async () => {
                           try {
@@ -280,7 +283,7 @@ export default function CommissionsPage() {
                   </Space>
                 }
                 options={{ reload: true, density: true, setting: true }}
-                pagination={{ pageSize: 10 }}
+                {...listTableProps('commissions')}
                 request={async () => {
                   const data = await api<CommissionRecord[]>('/commissions')
                   return { data, success: true }

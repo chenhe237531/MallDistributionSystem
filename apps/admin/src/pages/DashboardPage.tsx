@@ -84,7 +84,7 @@ export default function DashboardPage() {
               title="待审核账号"
               value={stats?.accountsPending ?? 0}
               suffix="个"
-              valueStyle={{ color: (stats?.accountsPending ?? 0) > 0 ? '#d46b08' : undefined }}
+              valueStyle={{ color: (stats?.accountsPending ?? 0) > 0 ? 'var(--ant-color-warning)' : undefined }}
             />
             <Button type="link" size="small" style={{ padding: 0 }} onClick={() => go('/accounts')}>
               前往审核 →
@@ -105,7 +105,7 @@ export default function DashboardPage() {
               title="待转发报告"
               value={stats?.tasksOpen ?? 0}
               suffix="单"
-              valueStyle={{ color: (stats?.tasksOpen ?? 0) > 0 ? '#d46b08' : undefined }}
+              valueStyle={{ color: (stats?.tasksOpen ?? 0) > 0 ? 'var(--ant-color-warning)' : undefined }}
             />
             <Button type="link" size="small" style={{ padding: 0 }} onClick={() => go('/operations')}>
               前往转发 →
@@ -118,7 +118,7 @@ export default function DashboardPage() {
               title="未处理告警"
               value={stats?.alertsOpen ?? 0}
               suffix="条"
-              valueStyle={{ color: (stats?.alertsOpen ?? 0) > 0 ? '#cf1322' : undefined }}
+              valueStyle={{ color: (stats?.alertsOpen ?? 0) > 0 ? 'var(--ant-color-error)' : undefined }}
             />
             <Button type="link" size="small" style={{ padding: 0 }} onClick={() => go('/alerts')}>
               前往处理 →

@@ -95,7 +95,7 @@ export default function AccountsPage() {
       render: (_, entity) => (
         <Space direction="vertical" size={0}>
           <span>{entity.name}</span>
-          <span style={{ color: '#94a3b8', fontSize: 12 }}>{entity.phone}</span>
+          <span style={{ color: 'var(--ant-color-text-tertiary)', fontSize: 12 }}>{entity.phone}</span>
         </Space>
       ),
     },
@@ -153,7 +153,7 @@ export default function AccountsPage() {
               title="确认拒绝该账号？"
               onConfirm={() => void act(entity.id, 'reject')}
             >
-              <a style={{ color: '#cf1322' }}>拒绝</a>
+              <a style={{ color: 'var(--ant-color-error)' }}>拒绝</a>
             </Popconfirm>,
           ]
         }
@@ -164,7 +164,7 @@ export default function AccountsPage() {
               title="停用后渠道码与未激活盒码将失效，确认？"
               onConfirm={() => void act(entity.id, 'suspend')}
             >
-              <a style={{ color: '#cf1322' }}>停用</a>
+              <a style={{ color: 'var(--ant-color-error)' }}>停用</a>
             </Popconfirm>,
           ]
         }

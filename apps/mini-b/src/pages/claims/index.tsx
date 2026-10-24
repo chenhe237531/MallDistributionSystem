@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { Text, View } from '@tarojs/components'
+import { CLAIM_STATUS_LABELS, CLAIM_STATUS_TONES, statusLabel } from '@mall/shared'
 import { api, ensureLogin } from '../../lib/api'
 import {
   Button as NutButton,
@@ -95,7 +96,11 @@ export default function Claims() {
                 key={claim.id}
                 title={claim.customer?.name ?? '客户'}
                 description={<Text className="muted">{claim.customer?.phone ?? ''}</Text>}
-                extra={<Tag type="primary">{claim.status}</Tag>}
+                extra={
+                  <Tag type={CLAIM_STATUS_TONES[claim.status] ?? 'default'}>
+                    {statusLabel(CLAIM_STATUS_LABELS, claim.status)}
+                  </Tag>
+                }
               />
             ))}
           </CellGroup>

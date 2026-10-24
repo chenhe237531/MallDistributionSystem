@@ -173,7 +173,7 @@ export default function SamplesPage() {
             description="作废后不可恢复，请谨慎操作"
             onConfirm={() => void voidSample(entity)}
           >
-            <a style={{ color: '#cf1322' }}>作废</a>
+            <a style={{ color: 'var(--ant-color-error)' }}>作废</a>
           </Popconfirm>
         ) : null,
       ],

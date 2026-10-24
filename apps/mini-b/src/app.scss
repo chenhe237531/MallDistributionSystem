@@ -1,22 +1,44 @@
-/* ===== NutUI 主题覆盖：品牌青绿 #0f766e ===== */
+/* ===== 设计令牌 → CSS 变量（FR-DS，值与 @mall/shared designTokens 同步，主色 #1677ff） ===== */
 :root,
 page {
-  --nutui-color-primary: #0f766e;
-  --nutui-color-primary-pressed: #115e59;
-  --nutui-color-primary-light: #ccfbf1;
-  --nutui-color-primary-light-pressed: #99f6e4;
-  --nutui-color-primary-disabled: #5eead4;
-  --nutui-color-primary-disabled-special: #99f6e4;
-  --nutui-color-primary-text: #ffffff;
-  --nutui-color-title: #0f172a;
-  --nutui-color-text: #334155;
-  --nutui-color-text-help: #64748b;
-  --nutui-color-background: #f1f5f9;
+  --mall-primary: #1677ff;
+  --mall-primary-hover: #4096ff;
+  --mall-primary-pressed: #0958d9;
+  --mall-primary-light: #e6f4ff;
+  --mall-primary-light-pressed: #bae0ff;
+  --mall-success: #00b42a;
+  --mall-success-light: #e8ffea;
+  --mall-warning: #ff7d00;
+  --mall-warning-light: #fff7e8;
+  --mall-danger: #f53f3f;
+  --mall-danger-light: #ffece8;
+  --mall-text: #1f2329;
+  --mall-text-secondary: #646a73;
+  --mall-text-tertiary: #8f959e;
+  --mall-border: #e5e6eb;
+  --mall-border-light: #f2f3f5;
+  --mall-bg: #f7f8fa;
+  --mall-card: #ffffff;
+  --mall-brand-dark: #0f2540;
+
+  /* ===== NutUI 主题覆盖（品牌色 → 设计令牌，变量名以 NutUI dist/style.css 为准） ===== */
+  --nutui-color-primary: var(--mall-primary);
+  --nutui-color-primary-pressed: var(--mall-primary-pressed);
+  --nutui-color-primary-light: var(--mall-primary-light);
+  --nutui-color-primary-light-pressed: var(--mall-primary-light-pressed);
+  --nutui-color-primary-disabled: var(--mall-primary-light-pressed);
+  --nutui-color-primary-disabled-special: var(--mall-primary-light-pressed);
+  --nutui-color-primary-text: var(--mall-card);
+  --nutui-color-title: var(--mall-text);
+  --nutui-color-text: var(--mall-text-secondary);
+  --nutui-color-text-help: var(--mall-text-tertiary);
+  --nutui-color-border: var(--mall-border);
+  --nutui-color-background: var(--mall-bg);
 }
 
 page {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--mall-bg);
+  color: var(--mall-text);
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
 }
@@ -26,7 +48,7 @@ page {
   min-height: 100vh;
   padding: 12px;
   box-sizing: border-box;
-  background: #f1f5f9;
+  background: var(--mall-bg);
 }
 
 /* 青绿渐变头卡 */
@@ -35,9 +57,9 @@ page {
   flex-direction: column;
   padding: 18px 16px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #0f766e, #134e4a);
+  background: linear-gradient(135deg, var(--mall-primary), var(--mall-brand-dark));
   color: #fff;
-  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.24);
+  box-shadow: 0 6px 16px rgba(22, 119, 255, 0.24);
 }
 
 .hero-role {
@@ -74,7 +96,7 @@ page {
   align-items: center;
   font-size: 15px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mall-text);
 
   &::before {
     content: '';
@@ -82,7 +104,7 @@ page {
     height: 14px;
     margin-right: 6px;
     border-radius: 2px;
-    background: linear-gradient(180deg, #14b8a6, #0f766e);
+    background: linear-gradient(180deg, var(--mall-primary-hover), var(--mall-primary));
   }
 }
 
@@ -90,8 +112,8 @@ page {
   margin-top: 8px;
   padding: 12px;
   border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  background: var(--mall-card);
+  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.05);
 }
 
 .row {
@@ -100,22 +122,22 @@ page {
   justify-content: space-between;
   padding: 5px 0;
   font-size: 13px;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .row-label {
-  color: #64748b;
+  color: var(--mall-text-secondary);
 }
 
 .muted {
-  color: #64748b;
+  color: var(--mall-text-secondary);
   font-size: 11px;
   line-height: 1.6;
 }
 
 .error {
   margin-top: 6px;
-  color: #dc2626;
+  color: var(--mall-danger);
   font-size: 12px;
 }
 
@@ -124,8 +146,8 @@ page {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 4px;
-  background: #ccfbf1;
-  color: #0f766e;
+  background: var(--mall-primary-light);
+  color: var(--mall-primary);
   font-size: 10px;
   line-height: 1.5;
 }
@@ -134,7 +156,7 @@ page {
 .nut-cell {
   border-radius: 10px;
   margin-top: 8px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.05);
 }
 
 .nut-cell-group {
@@ -160,42 +182,125 @@ page {
 .nut-empty__description {
   margin-top: 8px;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--mall-text-tertiary);
 }
 
 /* ===== 首页 ===== */
+/* FR-B1：今日经营指标卡 */
+.metric-row {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.metric-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.metric-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mall-primary);
+  white-space: nowrap;
+}
+
+.metric-label {
+  font-size: 10px;
+  color: var(--mall-text-tertiary);
+}
+
+.metric-divider {
+  width: 1px;
+  height: 26px;
+  background: var(--mall-border-light);
+}
+
 .index-grid-card {
-  padding: 6px;
+  padding: 14px 8px;
+}
+
+/* 3 列图标宫格（flex 自绘，避免 NutUI Grid 单元格不撑满导致的大片留白） */
+.index-grid {
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .index-entry {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 14px 4px;
-  border-radius: 8px;
-  background: #f8fafc;
+  gap: 6px;
+  width: 33.33%;
+  box-sizing: border-box;
+  padding: 10px 4px;
+  border-radius: 10px;
 
   &:active {
-    background: #ccfbf1;
+    background: var(--mall-bg);
   }
+}
+
+.index-entry-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+}
+
+.index-entry-emoji {
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* 图标底色：仅引用语义令牌的浅色层 */
+.tone-primary {
+  background: var(--mall-primary-light);
+}
+
+.tone-success {
+  background: var(--mall-success-light);
+}
+
+.tone-warning {
+  background: var(--mall-warning-light);
+}
+
+.tone-danger {
+  background: var(--mall-danger-light);
 }
 
 .index-entry-name {
   font-size: 12px;
   font-weight: 500;
-  color: #0f172a;
-}
-
-.index-entry-hint {
-  font-size: 10px;
-  color: #94a3b8;
+  color: var(--mall-text);
+  white-space: nowrap;
 }
 
 .index-todo-card {
   padding: 4px 12px;
+}
+
+.index-todo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: 10px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.index-todo-emoji {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .index-todo-row {
@@ -208,7 +313,7 @@ page {
     display: block;
     height: 1px;
     margin-top: 12px;
-    background: #f1f5f9;
+    background: var(--mall-bg);
     transform: translateY(12px);
   }
 
@@ -228,25 +333,25 @@ page {
 .index-todo-label {
   font-size: 14px;
   font-weight: 500;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .index-todo-hint {
   font-size: 11px;
-  color: #d97706;
+  color: var(--mall-warning);
 }
 
 .index-todo-value {
   margin-left: 10px;
   font-size: 14px;
   font-weight: 600;
-  color: #0f766e;
+  color: var(--mall-primary);
 }
 
 .index-todo-arrow {
   margin-left: 8px;
   font-size: 16px;
-  color: #cbd5e1;
+  color: var(--mall-border);
 }
 
 .index-logout {
@@ -269,7 +374,7 @@ page {
 .login-title {
   font-size: 15px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .login-field {
@@ -278,14 +383,14 @@ page {
   .nut-input {
     margin-top: 4px;
     padding: 10px 0;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--mall-border);
     background: transparent;
   }
 }
 
 .login-label {
   font-size: 12px;
-  color: #64748b;
+  color: var(--mall-text-secondary);
 }
 
 .login-submit {
@@ -305,14 +410,14 @@ page {
   .nut-input {
     margin-top: 4px;
     padding: 9px 0;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--mall-border);
     background: transparent;
   }
 }
 
 .form-label {
   font-size: 12px;
-  color: #64748b;
+  color: var(--mall-text-secondary);
 }
 
 .form-submit {
@@ -328,13 +433,13 @@ page {
 .biz-amount {
   font-size: 13px;
   font-weight: 600;
-  color: #0f766e;
+  color: var(--mall-primary);
 }
 
 .biz-amount-negative {
   font-size: 13px;
   font-weight: 600;
-  color: #dc2626;
+  color: var(--mall-danger);
 }
 
 /* ===== 业绩区间切换 ===== */
@@ -351,20 +456,20 @@ page {
 
 .biz-range-chip {
   padding: 5px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--mall-border);
   border-radius: 999px;
-  background: #f8fafc;
+  background: var(--mall-bg);
   font-size: 12px;
-  color: #475569;
+  color: var(--mall-text-secondary);
 
   &:active {
-    background: #ccfbf1;
+    background: var(--mall-primary-light);
   }
 }
 
 .biz-range-chip-active {
-  border-color: #0f766e;
-  background: #0f766e;
+  border-color: var(--mall-primary);
+  background: var(--mall-primary);
   color: #fff;
 }
 
@@ -381,32 +486,32 @@ page {
   align-items: center;
   justify-content: space-between;
   padding: 8px 10px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--mall-border);
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--mall-bg);
 }
 
 .biz-range-picker-label {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--mall-text-tertiary);
 }
 
 .biz-range-picker-value {
   font-size: 12px;
   font-weight: 500;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .biz-range-sep {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--mall-text-tertiary);
 }
 
 .biz-range-caption {
   display: block;
   margin-top: 10px;
   font-size: 11px;
-  color: #64748b;
+  color: var(--mall-text-secondary);
 }
 
 /* ===== 预付款 ===== */
@@ -425,7 +530,7 @@ page {
 .proc-name {
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .proc-actions {
@@ -440,9 +545,9 @@ page {
 
   .nut-input {
     padding: 6px 10px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--mall-border);
     border-radius: 8px;
-    background: #f8fafc;
+    background: var(--mall-bg);
   }
 }
 
@@ -454,14 +559,14 @@ page {
 .cust-name {
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .cust-stats {
   margin-top: 6px;
 
   .nut-cell {
-    background: #f8fafc;
+    background: var(--mall-bg);
     border-radius: 8px !important;
     margin-top: 6px;
     box-shadow: none;
@@ -471,14 +576,14 @@ page {
 .cust-stat {
   font-size: 12px;
   font-weight: 600;
-  color: #0f766e;
+  color: var(--mall-primary);
 }
 
 /* ===== 素材页 ===== */
 .mat-name {
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .mat-generate {
@@ -489,7 +594,7 @@ page {
 .train-name {
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .train-progress {
@@ -508,7 +613,7 @@ page {
 .rep-no {
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .rep-summary {
@@ -516,7 +621,7 @@ page {
   margin: 6px 0;
   font-size: 13px;
   line-height: 1.7;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .interpretation-block {
@@ -531,7 +636,7 @@ page {
   display: block;
   font-size: 12px;
   line-height: 1.7;
-  color: #334155;
+  color: var(--mall-text-secondary);
 }
 
 /* ===== 消息页 ===== */
@@ -544,5 +649,5 @@ page {
 .notif-body {
   font-size: 12px;
   line-height: 1.6;
-  color: #334155;
+  color: var(--mall-text-secondary);
 }

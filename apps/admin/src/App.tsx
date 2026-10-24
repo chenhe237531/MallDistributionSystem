@@ -2,12 +2,11 @@ import { useState } from 'react'
 import {
   BrowserRouter,
   Link,
-  Navigate,
   Route,
   Routes,
   useLocation,
 } from 'react-router-dom'
-import { Button, Space } from 'antd'
+import { Button, Result, Space } from 'antd'
 import {
   AuditOutlined,
   BankOutlined,
@@ -32,6 +31,7 @@ import {
 import { ProLayout } from '@ant-design/pro-components'
 import type { ProLayoutProps } from '@ant-design/pro-components'
 import { clearToken, getToken } from './lib/api'
+import { proLayoutToken } from './theme'
 import AccountsPage from './pages/AccountsPage'
 import AlertsPage from './pages/AlertsPage'
 import AuditPage from './pages/AuditPage'
@@ -115,6 +115,27 @@ const MENU_ROUTE: ProLayoutProps['route'] = {
   ],
 }
 
+/** FR-A1 / FR-X：直接访问不存在或无权限的 URL 时显示 403 空态，不静默跳转。 */
+function ForbiddenPage() {
+  return (
+    <Result
+      status="403"
+      title="403"
+      subTitle="抱歉，该页面不存在或当前账号无权访问。"
+      extra={
+        <Space>
+          <Button type="primary" onClick={() => window.history.back()}>
+            返回上一页
+          </Button>
+          <Link to="/">
+            <Button>回到总览</Button>
+          </Link>
+        </Space>
+      }
+    />
+  )
+}
+
 function Shell() {
   const [token, setTokenState] = useState(getToken())
   const location = useLocation()
@@ -156,16 +177,7 @@ function Shell() {
           </Space>
         ),
       }}
-      token={{
-        header: {
-          colorBgHeader: '#0f172a',
-          colorTextRightActionsItem: '#e2e8f0',
-        },
-        sider: {
-          colorTextMenuSelected: '#0f766e',
-          colorBgMenuItemSelected: '#e6fffb',
-        },
-      }}
+      token={proLayoutToken}
     >
       <Routes>
         <Route path="/" element={<DashboardPage />} />
@@ -188,7 +200,7 @@ function Shell() {
         <Route path="/materials" element={<MaterialsPage />} />
         <Route path="/training" element={<TrainingPage />} />
         <Route path="/reminders" element={<RemindersPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<ForbiddenPage />} />
       </Routes>
     </ProLayout>
   )

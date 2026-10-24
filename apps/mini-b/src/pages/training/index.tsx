@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { Text, View } from '@tarojs/components'
+import { TRAINING_STATUS_LABELS, TRAINING_STATUS_TONES, statusLabel } from '@mall/shared'
 import { api, ensureLogin } from '../../lib/api'
 import {
   Button as NutButton,
@@ -71,13 +72,15 @@ export default function Training() {
           <View key={record.id} className="card">
             <View className="row">
               <Text className="train-name">{record.course.name}</Text>
-              <Tag type={record.status === 'passed' ? 'success' : 'primary'}>{record.status}</Tag>
+              <Tag type={TRAINING_STATUS_TONES[record.status] ?? 'default'}>
+                {statusLabel(TRAINING_STATUS_LABELS, record.status)}
+              </Tag>
             </View>
             <View className="train-progress">
               <Progress
                 percent={Math.max(0, Math.min(100, record.progress))}
                 showText
-                color="#0f766e"
+                color="#1677ff"
               />
             </View>
             <Text className="muted">

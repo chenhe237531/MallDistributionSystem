@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, Popconfirm, Space, Tabs, Tag, Typography, message } from 'antd'
+import { Alert, Button, Popconfirm, Space, Tabs, Tag, Typography, message } from 'antd'
 import type { ProColumns } from '@ant-design/pro-components'
 import {
   ModalForm,
@@ -12,6 +12,7 @@ import {
 } from '@ant-design/pro-components'
 import { formatCents } from '@mall/shared'
 import { api } from '../lib/api'
+import { listTableProps } from '../components/list'
 
 const { Text } = Typography
 
@@ -250,7 +251,9 @@ export default function PrepaidPage() {
         return [
           <Popconfirm
             key="credit"
-            title="确认审核通过并入账？"
+            title={`确认入账该充值？`}
+            description={`商家 ${merchantName(entity.merchant)} · 金额 ${formatCents(entity.amountCents)} 元，入账后可用余额同步增加，操作不可自动撤销。`}
+            okText="确认入账"
             onConfirm={() => {
               void (async () => {
                 try {
@@ -295,7 +298,7 @@ export default function PrepaidPage() {
                 dataSource={accounts}
                 loading={!loaded}
                 options={{ reload: () => void loadAll(), density: true, setting: true }}
-                pagination={{ pageSize: 10 }}
+                {...listTableProps('prepaid-accounts')}
               />
             ),
           },
@@ -310,7 +313,7 @@ export default function PrepaidPage() {
                 dataSource={recharges}
                 loading={!loaded}
                 options={{ reload: () => void loadAll(), density: true, setting: true }}
-                pagination={{ pageSize: 10 }}
+                {...listTableProps('prepaid-recharges')}
               />
             ),
           },
@@ -320,6 +323,7 @@ export default function PrepaidPage() {
       <ModalForm<{ amountYuan: number; note: string }>
         title={`调整预付款 · ${merchantName(adjustTarget?.merchant)}`}
         width={440}
+        submitter={{ searchConfig: { submitText: '确认调整' } }}
         open={Boolean(adjustTarget)}
         modalProps={{ onCancel: () => setAdjustTarget(null) }}
         onOpenChange={(open) => {
@@ -357,6 +361,12 @@ export default function PrepaidPage() {
           name="note"
           label="调整原因"
           rules={[{ required: true, message: '请输入调整原因' }]}
+        />
+        <Alert
+          type="warning"
+          showIcon
+          style={{ fontSize: 13 }}
+          message="调整将立即变更商家可用余额并留痕；调减不允许超过当前可用余额。"
         />
       </ModalForm>
 

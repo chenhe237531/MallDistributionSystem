@@ -5,9 +5,14 @@ import {
   Divider,
   Empty,
   Tag,
-  Toast,
 } from '@nutui/nutui-react-taro'
+import {
+  REPORT_STATUS_LABELS,
+  REPORT_STATUS_TONES,
+  statusLabel,
+} from '@mall/shared'
 import { api, ensureLogin, go } from '../../lib/api'
+import { PageToast, toast } from '../../components/feedback'
 
 type Report = {
   id: string
@@ -97,14 +102,12 @@ export default function Reports() {
       const fileUrl = data.url ?? data.pdfUrl ?? data.fileUrl
       if (fileUrl) {
         window.open(fileUrl, '_blank')
-        Toast.show('report-toast', { title: '已开始下载报告 PDF', icon: 'success' })
+        toast('已开始下载报告 PDF', 'success')
       } else {
-        Toast.show('report-toast', { title: '报告文件尚未生成' })
+        toast('报告文件尚未生成')
       }
     } catch (cause) {
-      Toast.show('report-toast', {
-        title: cause instanceof Error ? cause.message : '下载失败',
-      })
+      toast(cause instanceof Error ? cause.message : '下载失败', 'fail')
     } finally {
       setDownloading(false)
     }
@@ -126,10 +129,26 @@ export default function Reports() {
           </Text>
         ))}
       </View>
-      <Toast id="report-toast" />
+      <PageToast />
       <View className="section">
         <Text className="section-title">我的报告</Text>
-        {error ? <Text className="error">{error}</Text> : null}
+        {error ? (
+          <View className="card">
+            <Text className="error">{error}</Text>
+            <NutButton
+              size="small"
+              fill="outline"
+              onClick={() => {
+                setError('')
+                void api<Report[]>('/reports')
+                  .then(setReports)
+                  .catch((cause) => setError(cause instanceof Error ? cause.message : '加载失败'))
+              }}
+            >
+              重试
+            </NutButton>
+          </View>
+        ) : null}
         {reports.length === 0 ? (
           <Empty description="暂无报告，激活检测盒后实验室会生成报告" />
         ) : null}
@@ -139,7 +158,9 @@ export default function Reports() {
               <Text className="card-title">
                 {report.reportNo} · v{report.version}
               </Text>
-              <Tag type="primary">{report.status}</Tag>
+              <Tag type={REPORT_STATUS_TONES[report.status] ?? 'default'}>
+                {statusLabel(REPORT_STATUS_LABELS, report.status)}
+              </Tag>
             </View>
             {report.missingItems.length > 0 ? (
               <Text className="muted">缺项：{report.missingItems.join('、')}</Text>
@@ -155,7 +176,9 @@ export default function Reports() {
           <View className="card">
             <View className="row">
               <Text className="card-title">{selected.reportNo}</Text>
-              <Tag type="primary">{selected.status}</Tag>
+              <Tag type={REPORT_STATUS_TONES[selected.status] ?? 'default'}>
+                {statusLabel(REPORT_STATUS_LABELS, selected.status)}
+              </Tag>
             </View>
             <Text>{selected.summary ?? '报告已生成。'}</Text>
             <Divider contentPosition="left" />
@@ -176,8 +199,21 @@ export default function Reports() {
           </View>
 
           {interpretation?.contentHidden ? (
-            <View className="card">
-              <Text className="muted">解读尚未发布，请稍后查看。</Text>
+            <View className="waiting-card">
+              <Text className="waiting-icon">⏳</Text>
+              <Text className="waiting-title">AI 解读尚未发布</Text>
+              <Text className="waiting-desc">
+                {'解读由 AI 生成并经过复核后才会向您展示，通常在报告发布后尽快完成。发布后可回到本页查看，无需重复操作。'}
+              </Text>
+              <View className="field-gap" />
+              <NutButton
+                size="small"
+                type="primary"
+                fill="outline"
+                onClick={() => go('/pages/index/index')}
+              >
+                咨询服务商家
+              </NutButton>
             </View>
           ) : null}
           {interpretation?.sections ? (
@@ -196,6 +232,22 @@ export default function Reports() {
               <Text className="muted">{interpretation.disclaimer ?? ''}</Text>
             </View>
           ) : null}
+
+          <View className="consult-card">
+            <Text className="consult-title">移植与营养咨询</Text>
+            <Text className="consult-text">
+              报告与解读完成后，如需了解菌群移植（FMT）、精准营养干预等后续服务，请联系您的服务商家获取专业方案。相关服务须在执业医师指导下进行。
+            </Text>
+            <View className="field-gap" />
+            <NutButton
+              size="small"
+              type="primary"
+              fill="outline"
+              onClick={() => go('/pages/index/index')}
+            >
+              返回商城了解更多
+            </NutButton>
+          </View>
 
           <View className="card">
             <Text className="section-title">隐私与授权</Text>

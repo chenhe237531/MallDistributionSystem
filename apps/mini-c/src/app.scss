@@ -1,31 +1,56 @@
 /*
  * C 端检测商城 · 全局样式（375 设计稿基准）
- * 主色：天蓝 #0ea5e9；白色圆角卡片 + 浅灰背景
+ * 颜色一律引用 --mall-* 语义令牌，与 packages/shared/src/tokens.ts 保持同步（FR-DS，主色 #1677ff）
  */
 
-/* ===== NutUI 主题覆盖（品牌色 → 天蓝） ===== */
+/* ===== 设计令牌 → CSS 变量（FR-DS，值与 @mall/shared designTokens 同步） ===== */
 :root,
 page {
-  --nutui-brand-1: #e0f2fe;
-  --nutui-brand-6: #0ea5e9;
-  --nutui-brand-stop-1: #38bdf8;
-  --nutui-brand-stop-2: #0284c7;
-  --nutui-color-primary: #0ea5e9;
-  --nutui-color-primary-stop-1: #38bdf8;
-  --nutui-color-primary-stop-2: #0284c7;
-  --nutui-color-primary-text: #ffffff;
-  --nutui-color-primary-pressed: #0284c7;
-  --nutui-color-primary-disabled-special: #7dd3fc;
-  --nutui-color-primary-light: #e0f2fe;
-  --nutui-color-primary-light-pressed: #bae6fd;
-  --nutui-button-border-radius: 10px;
-  --nutui-color-border: #e2e8f0;
+  --mall-primary: #1677ff;
+  --mall-primary-hover: #4096ff;
+  --mall-primary-pressed: #0958d9;
+  --mall-primary-light: #e6f4ff;
+  --mall-primary-light-pressed: #bae0ff;
+  --mall-success: #00b42a;
+  --mall-success-light: #e8ffea;
+  --mall-warning: #ff7d00;
+  --mall-warning-light: #fff7e8;
+  --mall-danger: #f53f3f;
+  --mall-danger-light: #ffece8;
+  --mall-text: #1f2329;
+  --mall-text-secondary: #646a73;
+  --mall-text-tertiary: #8f959e;
+  --mall-border: #e5e6eb;
+  --mall-border-light: #f2f3f5;
+  --mall-bg: #f7f8fa;
+  --mall-card: #ffffff;
+  --mall-brand-dark: #0f2540;
+
+  /* ===== NutUI 主题覆盖（品牌色 → 设计令牌，变量名以 NutUI dist/style.css 为准） ===== */
+  --nutui-brand-1: var(--mall-primary-light);
+  --nutui-brand-6: var(--mall-primary);
+  --nutui-brand-stop-1: var(--mall-primary-hover);
+  --nutui-brand-stop-2: var(--mall-primary-pressed);
+  --nutui-color-primary: var(--mall-primary);
+  --nutui-color-primary-stop-1: var(--mall-primary-hover);
+  --nutui-color-primary-stop-2: var(--mall-primary-pressed);
+  --nutui-color-primary-text: var(--mall-card);
+  --nutui-color-primary-pressed: var(--mall-primary-pressed);
+  --nutui-color-primary-disabled-special: var(--mall-primary-light-pressed);
+  --nutui-color-primary-light: var(--mall-primary-light);
+  --nutui-color-primary-light-pressed: var(--mall-primary-light-pressed);
+  --nutui-button-border-radius: 8px;
+  --nutui-color-title: var(--mall-text);
+  --nutui-color-text: var(--mall-text-secondary);
+  --nutui-color-text-help: var(--mall-text-tertiary);
+  --nutui-color-border: var(--mall-border);
+  --nutui-color-background: var(--mall-bg);
 }
 
 page {
-  background: #f8fafc;
+  background: var(--mall-bg);
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .page {
@@ -40,7 +65,7 @@ page {
   flex-direction: column;
   padding: 16px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #0ea5e9, #0369a1);
+  background: linear-gradient(135deg, var(--mall-primary), var(--mall-primary-pressed));
   color: #fff;
 }
 
@@ -72,7 +97,7 @@ page {
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .card {
@@ -81,8 +106,8 @@ page {
   margin-bottom: 8px;
   padding: 12px;
   border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 1px 5px rgba(15, 23, 42, 0.04);
+  background: var(--mall-card);
+  box-shadow: 0 1px 5px rgba(31, 35, 41, 0.04);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -90,7 +115,7 @@ page {
 .card-title {
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mall-text);
 }
 
 .row {
@@ -103,7 +128,7 @@ page {
 .muted {
   margin-top: 4px;
   font-size: 11px;
-  color: #64748b;
+  color: var(--mall-text-secondary);
   line-height: 1.6;
 }
 
@@ -111,44 +136,77 @@ page {
   display: block;
   margin: 6px 0;
   font-size: 11px;
-  color: #dc2626;
+  color: var(--mall-danger);
 }
 
 .notice {
   margin-top: 14px;
   padding: 10px;
   border-radius: 8px;
-  background: #fffbeb;
+  background: var(--mall-warning-light);
   font-size: 10px;
   line-height: 1.6;
-  color: #92400e;
+  color: var(--mall-warning);
 }
 
-/* ===== 首页服务入口 ===== */
+/* ===== 首页服务入口（图标宫格，与 mini-b 快捷入口同款） ===== */
 .entry-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  padding: 4px 0;
 }
 
 .entry-item {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  width: calc(50% - 4px);
+  align-items: center;
+  gap: 6px;
+  width: 33.33%;
   box-sizing: border-box;
-  min-height: 70px;
-  padding: 12px;
+  padding: 10px 4px;
   border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 1px 5px rgba(15, 23, 42, 0.04);
-  font-size: 13px;
+
+  &:active {
+    background: var(--mall-bg);
+  }
 }
 
-.entry-tag {
-  margin-top: 12px;
-  font-size: 10px;
-  color: #0ea5e9;
+.entry-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+}
+
+.entry-emoji {
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* 图标底色：仅引用语义令牌的浅色层 */
+.tone-primary {
+  background: var(--mall-primary-light);
+}
+
+.tone-success {
+  background: var(--mall-success-light);
+}
+
+.tone-warning {
+  background: var(--mall-warning-light);
+}
+
+.tone-danger {
+  background: var(--mall-danger-light);
+}
+
+.entry-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mall-text);
+  white-space: nowrap;
 }
 
 /* ===== 价格行 ===== */
@@ -159,6 +217,277 @@ page {
   margin-top: 6px;
 }
 
+/* ===== 主价格（FR-C1：主色大号字，单位与金额同基线） ===== */
+.price-main {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--mall-primary);
+  line-height: 1.2;
+}
+
+.price-main-symbol {
+  font-size: 13px;
+  font-weight: 500;
+  margin-right: 2px;
+}
+
+.price-main-cents {
+  font-size: 14px;
+}
+
+/* ===== 底部通栏主行动按钮（FR-C1：固定在安全区上方） ===== */
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  padding-bottom: calc(10px + constant(safe-area-inset-bottom));
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  background: var(--mall-card);
+  border-top: 1px solid var(--mall-border-light);
+  box-sizing: border-box;
+}
+
+.bottom-bar-main {
+  flex: 1;
+}
+
+.bottom-bar-placeholder {
+  height: 64px;
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-bar-amount {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bottom-bar-amount-label {
+  font-size: 10px;
+  color: var(--mall-text-tertiary);
+}
+
+.bottom-bar-amount-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mall-primary);
+  white-space: nowrap;
+}
+
+/* ===== 商品详情页（FR-C1） ===== */
+.detail-media {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--mall-primary-light), var(--mall-primary-light-pressed));
+  color: var(--mall-primary);
+}
+
+.detail-media-title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+
+.detail-media-sub {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.meta-grid {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.meta-item {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--mall-bg);
+  text-align: center;
+}
+
+.meta-item-label {
+  display: block;
+  font-size: 10px;
+  color: var(--mall-text-tertiary);
+}
+
+.meta-item-value {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.intro-text {
+  display: block;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--mall-text-secondary);
+  white-space: pre-wrap;
+}
+
+.stock-out {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--mall-danger);
+}
+
+/* ===== 下单结果页（FR-C1：成功 / 失败 / 处理中三态） ===== */
+.result-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 20px 24px;
+  text-align: center;
+}
+
+.result-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 32px;
+  color: #fff;
+}
+
+.result-icon-success {
+  background: var(--mall-success);
+}
+
+.result-icon-processing {
+  background: var(--mall-primary);
+}
+
+.result-icon-failed {
+  background: var(--mall-danger);
+}
+
+.result-title {
+  margin-top: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.result-desc {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--mall-text-secondary);
+}
+
+.result-amount {
+  margin-top: 16px;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--mall-primary);
+}
+
+/* ===== 订单步骤条（FR-C2） ===== */
+.order-steps {
+  display: flex;
+  align-items: flex-start;
+  padding: 14px 4px 4px;
+}
+
+.order-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.order-step::before,
+.order-step::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  height: 2px;
+  width: 50%;
+  background: var(--mall-border);
+}
+
+.order-step::before {
+  left: 0;
+}
+
+.order-step::after {
+  right: 0;
+}
+
+.order-step:first-child::before,
+.order-step:last-child::after {
+  display: none;
+}
+
+.order-step-done::before,
+.order-step-done::after,
+.order-step-current::before {
+  background: var(--mall-primary);
+}
+
+.order-step-dot {
+  position: relative;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--mall-card);
+  border: 2px solid var(--mall-border);
+  box-sizing: border-box;
+}
+
+.order-step-done .order-step-dot {
+  background: var(--mall-primary);
+  border-color: var(--mall-primary);
+}
+
+.order-step-current .order-step-dot {
+  border-color: var(--mall-primary);
+  box-shadow: 0 0 0 3px var(--mall-primary-light);
+}
+
+.order-step-label {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--mall-text-tertiary);
+}
+
+.order-step-current .order-step-label,
+.order-step-done .order-step-label {
+  color: var(--mall-primary);
+  font-weight: 600;
+}
+
+.order-branch-tag {
+  margin-top: 10px;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  background: var(--mall-warning-light);
+  color: var(--mall-warning);
+}
+
 /* ===== 报告解读 ===== */
 .interpretation-block {
   display: flex;
@@ -166,6 +495,36 @@ page {
   margin-top: 8px;
   font-size: 12px;
   line-height: 1.7;
+}
+
+/* ===== 解读等待态（FR-C2） ===== */
+.waiting-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 8px;
+  padding: 20px 14px;
+  border-radius: 10px;
+  background: var(--mall-primary-light);
+  text-align: center;
+}
+
+.waiting-icon {
+  font-size: 28px;
+}
+
+.waiting-title {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mall-primary-pressed);
+}
+
+.waiting-desc {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--mall-text-secondary);
 }
 
 /* ===== 报告动态水印（查看人 + 时间，防截图外传） ===== */
@@ -183,7 +542,7 @@ page {
 .watermark-item {
   position: absolute;
   font-size: 12px;
-  color: #64748b;
+  color: var(--mall-text-secondary);
   opacity: 0.08;
   white-space: nowrap;
   transform: rotate(-20deg);
@@ -196,15 +555,15 @@ page {
   margin-top: 8px;
   padding: 8px 10px;
   border-radius: 8px;
-  background: #f1f5f9;
+  background: var(--mall-bg);
   font-size: 11px;
   line-height: 1.8;
-  color: #475569;
+  color: var(--mall-text-secondary);
 }
 
 .required-star {
   margin-right: 2px;
-  color: #dc2626;
+  color: var(--mall-danger);
 }
 
 /* ===== 表单辅助 ===== */
@@ -212,7 +571,7 @@ page {
   display: block;
   margin-top: 8px;
   font-size: 11px;
-  color: #64748b;
+  color: var(--mall-text-secondary);
 }
 
 .field-gap {
@@ -221,4 +580,136 @@ page {
 
 .action-gap {
   height: 10px;
+}
+
+/* ===== 采样指导视频区块（激活页） ===== */
+.guide-video-block {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--mall-primary-light);
+}
+
+.guide-video-title {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mall-primary-pressed);
+}
+
+.guide-video-block video {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.guide-video-intro {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--mall-text-secondary);
+}
+
+/* ===== 商城卡片：缩略块 + 横向布局（与商品详情页 media 同风格） ===== */
+.product-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.product-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--mall-primary-light), var(--mall-primary-light-pressed));
+  flex-shrink: 0;
+}
+
+.product-thumb-title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--mall-primary-pressed);
+}
+
+.product-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.product-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+/* ===== 商城卡片：视频标签与搭配推荐 ===== */
+.video-flag {
+  margin-top: 6px;
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--mall-primary-light);
+  font-size: 10px;
+  color: var(--mall-primary-pressed);
+}
+
+.related-line {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--mall-bg);
+  font-size: 11px;
+  color: var(--mall-text-secondary);
+}
+
+.related-item {
+  color: var(--mall-primary);
+}
+
+/* ===== 报告页移植咨询卡片 ===== */
+.consult-card {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--mall-primary-light), var(--mall-primary-light-pressed));
+}
+
+.consult-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mall-primary-pressed);
+}
+
+.consult-text {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--mall-text-secondary);
+}
+
+/* ===== 渠道归属只读摘要（FR-C1） ===== */
+.channel-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--mall-primary-light);
+  font-size: 11px;
+  color: var(--mall-primary-pressed);
 }

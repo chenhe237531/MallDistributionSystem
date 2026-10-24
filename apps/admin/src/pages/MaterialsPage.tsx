@@ -123,7 +123,7 @@ export default function MaterialsPage() {
           description={entity.active ? '停用后商家端无法再基于该模板生成素材' : undefined}
           onConfirm={() => void toggleStatus(entity, !entity.active)}
         >
-          <a style={entity.active ? { color: '#cf1322' } : undefined}>
+          <a style={entity.active ? { color: 'var(--ant-color-error)' } : undefined}>
             {entity.active ? '停用' : '启用'}
           </a>
         </Popconfirm>,
@@ -280,7 +280,7 @@ export default function MaterialsPage() {
               <Paragraph
                 style={{
                   marginTop: 8,
-                  background: '#f5f5f5',
+                  background: 'var(--ant-color-bg-layout)',
                   padding: 12,
                   borderRadius: 8,
                   whiteSpace: 'pre-wrap',

@@ -7,14 +7,20 @@ import {
   ProFormDigit,
   ProFormSelect,
   ProFormSwitch,
+  ProFormText,
+  ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components'
 import { formatCents } from '@mall/shared'
 import { api } from '../lib/api'
 
-const { Text } = Typography
+const { Text, Paragraph } = Typography
 
 type Batch = { id: string; batchNo: string; quantity: number; expiresAt?: string }
+
+type ProductSummary = { id: string; name: string; skuCode: string }
+
+type CourseSummary = { id: string; name: string; category: string }
 
 type Product = {
   id: string
@@ -31,6 +37,10 @@ type Product = {
   commissionRateCapBps: number
   distributable: boolean
   status: string
+  guideVideoUrl?: string | null
+  intro?: string | null
+  relatedProducts?: ProductSummary[]
+  boundCourses?: CourseSummary[]
   supplier?: { id: string; name: string; organization?: { name: string } | null } | null
   batches: Batch[]
   createdAt: string
@@ -54,11 +64,19 @@ type ReviewValues = {
 
 type AllocateValues = { quantity: number }
 
+type ContentValues = {
+  guideVideoUrl?: string
+  intro?: string
+  relatedProductIds?: string[]
+  boundCourseIds?: string[]
+}
+
 export default function ProductsPage() {
   const actionRef = useRef<ActionType>()
   const [reviewTarget, setReviewTarget] = useState<Product | null>(null)
   const [allocateTarget, setAllocateTarget] = useState<Product | null>(null)
   const [detail, setDetail] = useState<Product | null>(null)
+  const [contentTarget, setContentTarget] = useState<Product | null>(null)
 
   const reload = () => actionRef.current?.reload()
 
@@ -121,7 +139,7 @@ export default function ProductsPage() {
     {
       title: '操作',
       valueType: 'option',
-      width: 210,
+      width: 260,
       render: (_, entity) => [
         <a key="detail" onClick={() => void openDetail(entity.id)}>
           详情
@@ -131,6 +149,9 @@ export default function ProductsPage() {
         </a>,
         <a key="allocate" onClick={() => setAllocateTarget(entity)}>
           补充库存
+        </a>,
+        <a key="content" onClick={() => setContentTarget(entity)}>
+          内容运营
         </a>,
       ],
     },
@@ -259,6 +280,91 @@ export default function ProductsPage() {
         />
       </ModalForm>
 
+      <ModalForm<ContentValues>
+        title={`内容运营 · ${contentTarget?.name ?? ''}`}
+        width={620}
+        open={Boolean(contentTarget)}
+        modalProps={{ onCancel: () => setContentTarget(null) }}
+        onOpenChange={(open) => {
+          if (!open) setContentTarget(null)
+        }}
+        initialValues={
+          contentTarget
+            ? {
+                guideVideoUrl: contentTarget.guideVideoUrl ?? '',
+                intro: contentTarget.intro ?? '',
+                relatedProductIds: (contentTarget.relatedProducts ?? []).map((item) => item.id),
+                boundCourseIds: (contentTarget.boundCourses ?? []).map((item) => item.id),
+              }
+            : undefined
+        }
+        onFinish={async (values) => {
+          if (!contentTarget) return false
+          await api(`/products/${contentTarget.id}/content`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              guideVideoUrl: values.guideVideoUrl || null,
+              intro: values.intro || null,
+              relatedProductIds: values.relatedProductIds ?? [],
+              boundCourseIds: values.boundCourseIds ?? [],
+            }),
+          })
+          message.success('内容配置已保存')
+          setContentTarget(null)
+          if (detail?.id === contentTarget.id) {
+            void openDetail(detail.id)
+          }
+          reload()
+          return true
+        }}
+      >
+        <ProFormText
+          name="guideVideoUrl"
+          label="采样指导视频 URL"
+          placeholder="https://...（mp4 地址，C 端激活页与商城展示）"
+          rules={[
+            {
+              pattern: /^(https?:\/\/)?\S+$/,
+              message: '请输入合法 URL',
+            },
+          ]}
+          extra="原始视频文件不入代码库，上传 OSS/CDN 后粘贴地址"
+        />
+        <ProFormTextArea
+          name="intro"
+          label="商品介绍文案"
+          fieldProps={{ rows: 5, maxLength: 2000, showCount: true }}
+          placeholder="展示在 C 端商城与盒码激活页；页面顶部与页脚预留企业标识位置"
+        />
+        <ProFormSelect
+          name="relatedProductIds"
+          label="搭配推荐商品"
+          mode="multiple"
+          placeholder="选择要搭配推荐的商品"
+          request={async () => {
+            const data = await api<Product[]>('/products')
+            return data.map((item) => ({
+              label: `${item.name}（${item.skuCode}）`,
+              value: item.id,
+            }))
+          }}
+          extra="展示在 C 端商城商品卡片，作为搭配购买入口"
+        />
+        <ProFormSelect
+          name="boundCourseIds"
+          label="绑定培训课程"
+          mode="multiple"
+          placeholder="选择销售该商品前需学习的课程"
+          request={async () => {
+            const data = await api<Array<{ id: string; name: string; category: string }>>(
+              '/training/courses',
+            )
+            return data.map((item) => ({ label: item.name, value: item.id }))
+          }}
+          extra="商品与培训内容互相引用，销售/渠道角色可在培训中心学习"
+        />
+      </ModalForm>
+
       <Drawer
         width={560}
         open={Boolean(detail)}
@@ -286,6 +392,52 @@ export default function ProductsPage() {
                 {detail.testItems?.join('、') || '—'}
               </Descriptions.Item>
             </Descriptions>
+            <Space direction="vertical" size={4} style={{ display: 'flex' }}>
+              <Text strong>内容运营</Text>
+              <Paragraph style={{ marginBottom: 0 }}>
+                采样视频：
+                {detail.guideVideoUrl ? (
+                  <Text copyable style={{ wordBreak: 'break-all' }}>
+                    {detail.guideVideoUrl}
+                  </Text>
+                ) : (
+                  '未配置'
+                )}
+              </Paragraph>
+              <Paragraph
+                style={{ marginBottom: 0 }}
+                ellipsis={{ rows: 3, expandable: true, symbol: '展开' }}
+              >
+                介绍文案：{detail.intro || '未配置'}
+              </Paragraph>
+              <div>
+                <Text type="secondary">搭配推荐：</Text>
+                {detail.relatedProducts?.length ? (
+                  detail.relatedProducts.map((item) => (
+                    <Tag key={item.id} color="blue">
+                      {item.name}
+                    </Tag>
+                  ))
+                ) : (
+                  <Text type="secondary">无</Text>
+                )}
+              </div>
+              <div>
+                <Text type="secondary">绑定课程：</Text>
+                {detail.boundCourses?.length ? (
+                  detail.boundCourses.map((item) => (
+                    <Tag key={item.id} color="purple">
+                      {item.name}
+                    </Tag>
+                  ))
+                ) : (
+                  <Text type="secondary">无</Text>
+                )}
+              </div>
+              <Button block onClick={() => setContentTarget(detail)}>
+                编辑内容运营
+              </Button>
+            </Space>
             <Text strong>入库批次</Text>
             {detail.batches?.length ? (
               <ProTable<Batch>

@@ -281,7 +281,7 @@ export default function TrainingPage() {
                 title="待考试人数次"
                 value={sales.failed?.length ?? 0}
                 suffix="条"
-                valueStyle={{ color: (sales.failed?.length ?? 0) > 0 ? '#d46b08' : undefined }}
+                valueStyle={{ color: (sales.failed?.length ?? 0) > 0 ? 'var(--ant-color-warning)' : undefined }}
               />
             </Col>
             <Col span={6}>
@@ -289,7 +289,7 @@ export default function TrainingPage() {
                 title="30 天内到期"
                 value={sales.expiring?.length ?? 0}
                 suffix="条"
-                valueStyle={{ color: (sales.expiring?.length ?? 0) > 0 ? '#cf1322' : undefined }}
+                valueStyle={{ color: (sales.expiring?.length ?? 0) > 0 ? 'var(--ant-color-error)' : undefined }}
               />
             </Col>
           </Row>
