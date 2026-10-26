@@ -33,7 +33,8 @@ export default defineConfig({
     },
   },
   h5: {
-    publicPath: '/',
+    publicPath: process.env.TARO_PUBLIC_PATH || '/',
+    router: { mode: 'hash' },
     staticDirectory: 'static',
     devServer: {
       port: 10086,

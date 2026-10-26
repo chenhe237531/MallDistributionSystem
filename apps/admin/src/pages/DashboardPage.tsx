@@ -79,7 +79,7 @@ export default function DashboardPage() {
             <Text type="secondary">平台核心待办与关键指标，点击卡片直达对应业务模块。</Text>
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} md={6}>
           <Card loading={!stats}>
             <Statistic
               title="待审核账号"
@@ -92,7 +92,7 @@ export default function DashboardPage() {
             </Button>
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} md={6}>
           <Card loading={!stats}>
             <Statistic title="启用中账号" value={stats?.accountsActive ?? 0} suffix="个" />
             <Button type="link" size="small" style={{ padding: 0 }} onClick={() => go('/accounts')}>
@@ -100,7 +100,7 @@ export default function DashboardPage() {
             </Button>
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} md={6}>
           <Card loading={!stats}>
             <Statistic
               title="待转发报告"
@@ -113,7 +113,7 @@ export default function DashboardPage() {
             </Button>
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} md={6}>
           <Card loading={!stats}>
             <Statistic
               title="未处理告警"
@@ -127,11 +127,11 @@ export default function DashboardPage() {
           </Card>
         </Col>
 
-        <Col span={16}>
+        <Col xs={24} lg={16}>
           <Card title="快捷入口">
             <Row gutter={[12, 12]}>
               {QUICK_LINKS.map((link) => (
-                <Col key={link.path} span={8}>
+                <Col key={link.path} xs={12} sm={8}>
                   <Card
                     size="small"
                     hoverable
@@ -159,7 +159,7 @@ export default function DashboardPage() {
             </Space>
           </Card>
         </Col>
-        <Col span={8}>
+        <Col xs={24} lg={8}>
           <Card title="服务状态">
             {!healthLoaded ? (
               <Spin />

@@ -10,7 +10,7 @@ export default defineConfig({
     828: 1.81 / 2,
   },
   sourceRoot: 'src',
-  outputRoot: 'dist',
+  outputRoot: process.env.TARO_OUTPUT_ROOT || 'dist',
   plugins: [
     '@tarojs/plugin-framework-react',
     '@tarojs/plugin-platform-weapp',
@@ -32,7 +32,8 @@ export default defineConfig({
     },
   },
   h5: {
-    publicPath: '/',
+    publicPath: process.env.TARO_PUBLIC_PATH || '/',
+    router: { mode: 'hash' },
     staticDirectory: 'static',
     devServer: {
       port: 10087,

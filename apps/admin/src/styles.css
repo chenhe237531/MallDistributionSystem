@@ -129,3 +129,41 @@ body {
   font-size: 11px;
   line-height: 16px;
 }
+
+/*
+ * ===== H5（移动端）兼容 =====
+ * 布局壳的移动端行为由 ProLayout 内建（<768px 汉堡按钮 + 全屏浮层菜单），
+ * 这里补充：收起态侧栏彻底隐藏、表格横向滚动、弹层限宽与留白收紧。
+ */
+@media (max-width: 767px) {
+  /* fixSiderbar 的 -fixed 规则优先级高于 -hide-menu-collapsed，需显式隐藏收起态侧栏 */
+  .ant-pro-sider.ant-pro-sider-collapsed.ant-pro-sider-hide-menu-collapsed {
+    display: none;
+  }
+
+  /* 未声明 scroll.x 的表格：小屏横向滚动，避免列被挤压重叠 */
+  .ant-table-content,
+  .ant-table-body {
+    overflow-x: auto;
+  }
+
+  .ant-table table {
+    min-width: 640px;
+  }
+
+  /* 弹窗不超出屏幕（antd 已有 max-width，收窄留白） */
+  .ant-modal {
+    max-width: calc(100vw - 16px);
+  }
+
+  /* PageContainer 内容留白收紧 */
+  .ant-pro-page-container-children-container {
+    padding-inline: 12px;
+  }
+
+  /* 分页器允许换行，避免溢出 */
+  .ant-table-pagination.ant-pagination {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+}

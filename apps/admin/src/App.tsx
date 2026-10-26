@@ -6,7 +6,7 @@ import {
   Routes,
   useLocation,
 } from 'react-router-dom'
-import { Alert, Button, Card, Result, Space, Spin, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Grid, Result, Space, Spin, Tag, Typography } from 'antd'
 import {
   AuditOutlined,
   BankOutlined,
@@ -146,10 +146,18 @@ function ForbiddenPage() {
 }
 
 /** 非平台角色的推荐业务入口：后台仅平台运营可进入业务模块 */
+const MERCHANT_H5_URL = import.meta.env.VITE_MERCHANT_H5_URL ?? 'http://localhost:10086'
+const CUSTOMER_H5_URL = import.meta.env.VITE_CUSTOMER_H5_URL ?? 'http://localhost:10087'
 const ROLE_ENTRY: Partial<Record<Role, { label: string; url?: string }>> = {
-  [Role.MERCHANT]: { label: '商家端 H5', url: 'http://localhost:10086' },
-  [Role.SALES]: { label: '商家端 H5', url: 'http://localhost:10086' },
-  [Role.CUSTOMER]: { label: '客户端 H5', url: 'http://localhost:10087' },
+  [Role.MERCHANT]: MERCHANT_H5_URL
+    ? { label: '商家端 H5', url: MERCHANT_H5_URL }
+    : { label: '商家端（暂未开放独立入口）' },
+  [Role.SALES]: MERCHANT_H5_URL
+    ? { label: '商家端 H5', url: MERCHANT_H5_URL }
+    : { label: '商家端（暂未开放独立入口）' },
+  [Role.CUSTOMER]: CUSTOMER_H5_URL
+    ? { label: '客户端 H5', url: CUSTOMER_H5_URL }
+    : { label: '客户端（暂未开放独立入口）' },
   [Role.PARTNER]: { label: '合伙人端（规划中，暂未开放）' },
   [Role.SUPPLIER]: { label: '供应商端（规划中，暂未开放）' },
   [Role.LAB]: { label: '实验室端（规划中，暂未开放）' },
@@ -200,6 +208,9 @@ function Shell() {
   const [token, setTokenState] = useState(getToken())
   const [user, setUserState] = useState<SessionUser | null>(getSessionUser())
   const location = useLocation()
+  // H5 兼容：<768px 视为移动端；首帧 screens 未就绪时按视口宽度兜底，避免桌面布局闪烁
+  const screens = Grid.useBreakpoint()
+  const isMobile = screens.md === false || (screens.md === undefined && window.innerWidth < 768)
 
   useEffect(() => {
     if (!token || user) {
@@ -272,9 +283,18 @@ function Shell() {
       contentWidth="Fluid"
       location={{ pathname: location.pathname }}
       route={MENU_ROUTE}
+      /* H5：小屏收起时整体隐藏侧栏（避免 48px 栏遮挡内容），
+         头部由 ProLayout 自带汉堡按钮唤起全屏浮层菜单，点击菜单项后自动收起 */
+      menu={{ hideMenuWhenCollapsed: isMobile }}
       menuItemRender={(item, dom) =>
         item.path ? (
-          <Link to={item.path}>{dom}</Link>
+          <Link
+            to={item.path}
+            /* H5：菜单项点击后自动收起浮层菜单（ProLayout 通过 item.onClick 下发折叠回调） */
+            onClick={isMobile ? () => item.onClick?.() : undefined}
+          >
+            {dom}
+          </Link>
         ) : (
           dom
         )

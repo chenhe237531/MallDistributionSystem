@@ -11,6 +11,11 @@ type AuthResponse = {
   user: { id: string; name: string; role: string }
 }
 
+/** C 端演示账号：点击自动填充，再点登录即可进入该用户 */
+const DEMO_ACCOUNTS = [
+  { label: '演示客户', phone: '13900000003', password: 'Customer@123' },
+]
+
 function deviceId(): string {
   const key = 'mall_c_device'
   const existing = Taro.getStorageSync(key)
@@ -29,6 +34,13 @@ export default function Login() {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const fillDemo = (account: (typeof DEMO_ACCOUNTS)[number]) => {
+    setMode('login')
+    setPhone(account.phone)
+    setPassword(account.password)
+    setError('')
+  }
 
   const submit = async () => {
     setLoading(true)
@@ -108,6 +120,25 @@ export default function Login() {
         >
           {mode === 'login' ? '没有账号，去注册' : '已有账号，去登录'}
         </NutButton>
+        <View className="login-demo">
+          <Text className="login-demo-title">演示账号 · 点击自动填充</Text>
+          {DEMO_ACCOUNTS.map((account) => (
+            <View
+              key={account.phone}
+              className="login-demo-item"
+              onClick={() => fillDemo(account)}
+            >
+              <View className="login-demo-main">
+                <Text className="login-demo-role">{account.label}</Text>
+                <Text className="login-demo-account">
+                  {account.phone} / {account.password}
+                </Text>
+              </View>
+              <Text className="login-demo-action">填充</Text>
+            </View>
+          ))}
+          <Text className="login-demo-hint">填充后点击「登录」即可进入该用户</Text>
+        </View>
       </View>
       <View className="notice">
         <Text>{REPORT_DISCLAIMER}</Text>

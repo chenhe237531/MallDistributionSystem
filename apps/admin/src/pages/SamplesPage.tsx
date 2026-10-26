@@ -279,7 +279,7 @@ export default function SamplesPage() {
       >
         {detail ? (
           <Space direction="vertical" size={16} style={{ display: 'flex' }}>
-            <Descriptions column={2} size="small" bordered>
+            <Descriptions column={{ xs: 1, sm: 2 }} size="small" bordered>
               <Descriptions.Item label="状态">
                 <Tag color={STATUS_META[detail.status]?.color ?? 'default'}>
                   {STATUS_META[detail.status]?.label ?? detail.status}

@@ -241,7 +241,7 @@ export default function AuditPage() {
           }}
           expandable={{
             expandedRowRender: (record) => (
-              <Descriptions size="small" column={2} bordered>
+              <Descriptions size="small" column={{ xs: 1, sm: 2 }} bordered>
                 <Descriptions.Item label="资源">
                   {record.resourceType} / {record.resourceId}
                 </Descriptions.Item>

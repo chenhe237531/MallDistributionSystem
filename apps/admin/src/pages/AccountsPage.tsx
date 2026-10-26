@@ -201,7 +201,7 @@ export default function AccountsPage() {
         ]}
         expandable={{
           expandedRowRender: (record) => (
-            <Descriptions size="small" column={2} bordered>
+            <Descriptions size="small" column={{ xs: 1, sm: 2 }} bordered>
               <Descriptions.Item label="组织">
                 {record.organization?.name ?? '—'}
               </Descriptions.Item>

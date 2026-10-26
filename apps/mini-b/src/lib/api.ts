@@ -1,8 +1,9 @@
 import Taro from '@tarojs/taro'
 import { handleAuthExpired } from '../components/feedback'
 
-const BASE = 'http://localhost:3000/api'
-const ASSET_BASE = BASE.replace(/\/api$/, '')
+const IS_H5 = Taro.getEnv() === Taro.ENV_TYPE.WEB
+const BASE = IS_H5 ? '/api' : 'http://localhost:3000/api'
+const ASSET_BASE = IS_H5 ? '' : BASE.replace(/\/api$/, '')
 const TOKEN_KEY = 'mall_token'
 
 /** 商品图片存相对 URL（/uploads/...），H5/weapp 统一补全为可访问地址 */

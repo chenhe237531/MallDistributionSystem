@@ -582,6 +582,59 @@ page {
   height: 10px;
 }
 
+/* ===== 登录页演示账号 ===== */
+.login-demo {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--mall-border);
+}
+
+.login-demo-title {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--mall-text-secondary);
+}
+
+.login-demo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: var(--mall-primary-light);
+}
+
+.login-demo-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.login-demo-role {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.login-demo-account {
+  font-size: 11px;
+  color: var(--mall-text-secondary);
+}
+
+.login-demo-action {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mall-primary);
+}
+
+.login-demo-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--mall-text-secondary);
+}
+
 /* ===== 采样指导视频区块（激活页） ===== */
 .guide-video-block {
   margin-top: 8px;
