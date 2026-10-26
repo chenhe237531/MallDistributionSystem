@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common'
 import { Role } from '@mall/shared'
 import { AuditService } from '../audit/audit.service'
+import { asStringArray } from '../prisma/array-values'
 import { PrismaService } from '../prisma/prisma.service'
 import {
   CreateMaterialTemplateDto,
@@ -84,8 +85,9 @@ export class MaterialsService {
       throw new BadRequestException('素材模板已过有效期')
     }
 
-    if (template.applicableProductIds.length > 0) {
-      if (!dto.productId || !template.applicableProductIds.includes(dto.productId)) {
+    const applicableProductIds = asStringArray(template.applicableProductIds)
+    if (applicableProductIds.length > 0) {
+      if (!dto.productId || !applicableProductIds.includes(dto.productId)) {
         throw new BadRequestException('该模板不适用于所选商品')
       }
     }
@@ -134,8 +136,9 @@ export class MaterialsService {
       )
     }
 
-    const lockedClauses = template.lockedClauses.length
-      ? `\n\n【平台锁定条款】\n${template.lockedClauses.join('\n')}`
+    const lockedClauseList = asStringArray(template.lockedClauses)
+    const lockedClauses = lockedClauseList.length
+      ? `\n\n【平台锁定条款】\n${lockedClauseList.join('\n')}`
       : ''
     const content = `${body}${custom}${lockedClauses}\n\n渠道码：${channel.code}\n二维码：${qrPayload}`
 

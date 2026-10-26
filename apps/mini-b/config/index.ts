@@ -10,7 +10,8 @@ export default defineConfig({
     828: 1.81 / 2,
   },
   sourceRoot: 'src',
-  outputRoot: 'dist',
+  // 支持构建到独立目录（本地校验/CI 避免覆盖 dist）
+  outputRoot: process.env.TARO_OUTPUT_ROOT || 'dist',
   plugins: [
     '@tarojs/plugin-framework-react',
     '@tarojs/plugin-platform-weapp',

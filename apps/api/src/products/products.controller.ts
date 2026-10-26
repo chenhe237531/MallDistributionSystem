@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common'
 import { Role } from '@mall/shared'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { Roles } from '../auth/roles.decorator'
@@ -17,8 +17,8 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  list(@CurrentUser() user: AuthUser) {
-    return this.productsService.list(user)
+  list(@CurrentUser() user: AuthUser, @Query('category') category?: string) {
+    return this.productsService.list(user, category)
   }
 
   @Get('merchant/mine')

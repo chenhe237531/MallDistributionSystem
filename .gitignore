@@ -22,3 +22,12 @@ docs/归档-资料库/
 # IDE / 工具本地产物
 .trae/
 .trae-html-share-packages/
+.workbuddy/
+
+# Prisma 方言生成物与本地 SQLite 数据
+apps/api/prisma/schema.sqlite.prisma
+apps/api/prisma/schema.mysql.prisma
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+apps/api/prisma/*.db-shm
+apps/api/prisma/*.db-wal

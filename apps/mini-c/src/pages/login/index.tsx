@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import Taro from '@tarojs/taro'
-import { Text, View } from '@tarojs/components'
+import { Image, Text, View } from '@tarojs/components'
 import { Button as NutButton, Input as NutInput } from '@nutui/nutui-react-taro'
 import { api, setToken } from '../../lib/api'
+import { BRAND, REPORT_DISCLAIMER } from '../../lib/content'
+import logo from '../../assets/logo.png'
 
 type AuthResponse = {
   token: string
@@ -53,11 +55,17 @@ export default function Login() {
 
   return (
     <View className="page">
-      <View className="hero">
-        <Text className="hero-role">C 端</Text>
-        <Text className="hero-title">检测商城</Text>
-        <Text className="hero-status">居家采样、扫码激活、查看报告与解读</Text>
+      <View className="brand-hero">
+        <View className="brand-logo-row">
+          <Image className="brand-logo" src={logo} mode="aspectFit" />
+          <Text className="brand-name">
+            {BRAND.nameEn} · {BRAND.name}
+          </Text>
+        </View>
+        <Text className="brand-title">{BRAND.title}</Text>
+        <Text className="brand-subtitle">居家采样 · 扫码绑定 · 查看报告与解读</Text>
       </View>
+
       <View className="card" style={{ marginTop: '12px' }}>
         <Text className="section-title">{mode === 'login' ? '登录' : '注册'}</Text>
         {mode === 'register' ? (
@@ -102,7 +110,7 @@ export default function Login() {
         </NutButton>
       </View>
       <View className="notice">
-        <Text>本报告仅用于健康风险提示，不作为临床诊断依据。</Text>
+        <Text>{REPORT_DISCLAIMER}</Text>
       </View>
     </View>
   )

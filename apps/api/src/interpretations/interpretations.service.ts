@@ -17,6 +17,7 @@ import {
 } from '@mall/shared'
 import { AuditService } from '../audit/audit.service'
 import { NotificationsService } from '../notifications/notifications.service'
+import { asStringArray } from '../prisma/array-values'
 import { PrismaService } from '../prisma/prisma.service'
 import { MockAiAdapter } from './ai.adapter'
 import {
@@ -412,7 +413,7 @@ export class InterpretationsService {
       version: number
       status: string
       sections: unknown
-      sensitiveHits: string[]
+      sensitiveHits: unknown
       reviewNote: string | null
       reviewedBy: string | null
       reviewedAt: Date | null
@@ -457,7 +458,7 @@ export class InterpretationsService {
       publishedAt: interpretation.publishedAt,
       modelVersion: interpretation.modelVersion,
       promptVersion: interpretation.promptVersion,
-      sensitiveHits: isReviewer ? interpretation.sensitiveHits : undefined,
+      sensitiveHits: isReviewer ? asStringArray(interpretation.sensitiveHits) : undefined,
       reviewNote: isReviewer ? interpretation.reviewNote : undefined,
       contentHidden: false,
       disclaimer: AI_DISCLAIMER,

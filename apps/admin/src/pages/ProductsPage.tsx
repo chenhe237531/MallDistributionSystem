@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Button, Descriptions, Drawer, Empty, Space, Tag, Typography, message } from 'antd'
+import { Button, Descriptions, Drawer, Empty, Image as AntImage, Space, Tag, Typography, message } from 'antd'
 import type { ActionType, ProColumns } from '@ant-design/pro-components'
 import {
   ModalForm,
@@ -11,7 +11,7 @@ import {
   ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components'
-import { formatCents } from '@mall/shared'
+import { PRODUCT_CATEGORIES, formatCents, productCategoryLabel } from '@mall/shared'
 import { api } from '../lib/api'
 
 const { Text, Paragraph } = Typography
@@ -39,6 +39,8 @@ type Product = {
   status: string
   guideVideoUrl?: string | null
   intro?: string | null
+  images?: string[]
+  category?: string | null
   relatedProducts?: ProductSummary[]
   boundCourses?: CourseSummary[]
   supplier?: { id: string; name: string; organization?: { name: string } | null } | null
@@ -67,6 +69,8 @@ type AllocateValues = { quantity: number }
 type ContentValues = {
   guideVideoUrl?: string
   intro?: string
+  imagesText?: string
+  category?: string
   relatedProductIds?: string[]
   boundCourseIds?: string[]
 }
@@ -90,12 +94,21 @@ export default function ProductsPage() {
       title: '商品',
       dataIndex: 'name',
       render: (_, entity) => (
-        <Space direction="vertical" size={0}>
-          <Text strong>{entity.name}</Text>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            {entity.sampleType}
-            {entity.testItems?.length ? ` · ${entity.testItems.join(' / ')}` : ''}
-          </Text>
+        <Space size={8}>
+          <AntImage
+            src={entity.images?.[0]}
+            width={44}
+            height={44}
+            style={{ objectFit: 'cover', borderRadius: 8, background: '#f7f8fa' }}
+            fallback="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NCIgaGVpZ2h0PSI0NCI+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0IiBmaWxsPSIjZWZlY2ZmIi8+PC9zdmc+"
+          />
+          <Space direction="vertical" size={0}>
+            <Text strong>{entity.name}</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {productCategoryLabel(entity.category)} · {entity.sampleType}
+              {entity.testItems?.length ? ` · ${entity.testItems.join(' / ')}` : ''}
+            </Text>
+          </Space>
         </Space>
       ),
     },
@@ -293,6 +306,8 @@ export default function ProductsPage() {
             ? {
                 guideVideoUrl: contentTarget.guideVideoUrl ?? '',
                 intro: contentTarget.intro ?? '',
+                imagesText: (contentTarget.images ?? []).join('\n'),
+                category: contentTarget.category ?? undefined,
                 relatedProductIds: (contentTarget.relatedProducts ?? []).map((item) => item.id),
                 boundCourseIds: (contentTarget.boundCourses ?? []).map((item) => item.id),
               }
@@ -300,11 +315,17 @@ export default function ProductsPage() {
         }
         onFinish={async (values) => {
           if (!contentTarget) return false
+          const images = (values.imagesText ?? '')
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean)
           await api(`/products/${contentTarget.id}/content`, {
             method: 'PATCH',
             body: JSON.stringify({
               guideVideoUrl: values.guideVideoUrl || null,
               intro: values.intro || null,
+              images,
+              category: values.category ?? null,
               relatedProductIds: values.relatedProductIds ?? [],
               boundCourseIds: values.boundCourseIds ?? [],
             }),
@@ -318,6 +339,21 @@ export default function ProductsPage() {
           return true
         }}
       >
+        <ProFormSelect
+          name="category"
+          label="商品分类"
+          placeholder="选择采购页侧栏归类"
+          options={PRODUCT_CATEGORIES.map((item) => ({ label: item.label, value: item.key }))}
+          rules={[{ required: true, message: '请选择商品分类' }]}
+          extra="落库 Product.category，采购页按此字段过滤，不再按商品名关键词猜测"
+        />
+        <ProFormTextArea
+          name="imagesText"
+          label="商品图片 URL"
+          fieldProps={{ rows: 4, maxLength: 4000, showCount: true }}
+          placeholder={'/uploads/products/FMT-CAP-001/01.jpg\n每行一个 URL，第一行为列表主图'}
+          extra="支持相对地址（/uploads/...）或完整 https 地址；建议 1:1 主图 + 详情图，最多 9 张"
+        />
         <ProFormText
           name="guideVideoUrl"
           label="采样指导视频 URL"
@@ -382,6 +418,7 @@ export default function ProductsPage() {
               <Descriptions.Item label="供应商">
                 {detail.supplier?.organization?.name ?? detail.supplier?.name ?? '—'}
               </Descriptions.Item>
+              <Descriptions.Item label="分类">{productCategoryLabel(detail.category)}</Descriptions.Item>
               <Descriptions.Item label="采样方式">{detail.samplingMethod}</Descriptions.Item>
               <Descriptions.Item label="存储条件">{detail.storageCondition}</Descriptions.Item>
               <Descriptions.Item label="供货价">{formatCents(detail.supplyPriceCents)}</Descriptions.Item>
@@ -392,6 +429,18 @@ export default function ProductsPage() {
                 {detail.testItems?.join('、') || '—'}
               </Descriptions.Item>
             </Descriptions>
+            <Space direction="vertical" size={4} style={{ display: 'flex' }}>
+              <Text strong>商品图片</Text>
+              {detail.images?.length ? (
+                <Space wrap>
+                  {detail.images.map((src) => (
+                    <AntImage key={src} src={src} width={88} height={88} style={{ objectFit: 'cover', borderRadius: 8 }} />
+                  ))}
+                </Space>
+              ) : (
+                <Text type="secondary">未配置（商家端显示品牌占位图）</Text>
+              )}
+            </Space>
             <Space direction="vertical" size={4} style={{ display: 'flex' }}>
               <Text strong>内容运营</Text>
               <Paragraph style={{ marginBottom: 0 }}>

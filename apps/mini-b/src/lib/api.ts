@@ -2,7 +2,19 @@ import Taro from '@tarojs/taro'
 import { handleAuthExpired } from '../components/feedback'
 
 const BASE = 'http://localhost:3000/api'
+const ASSET_BASE = BASE.replace(/\/api$/, '')
 const TOKEN_KEY = 'mall_token'
+
+/** 商品图片存相对 URL（/uploads/...），H5/weapp 统一补全为可访问地址 */
+export function resolveAsset(url?: string | null): string {
+  if (!url) {
+    return ''
+  }
+  if (/^(https?:)?\/\//.test(url) || url.startsWith('data:')) {
+    return url
+  }
+  return `${ASSET_BASE}${url.startsWith('/') ? '' : '/'}${url}`
+}
 
 export function getToken(): string {
   return Taro.getStorageSync(TOKEN_KEY) ?? ''

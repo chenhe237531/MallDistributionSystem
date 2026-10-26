@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   BrowserRouter,
   Link,
@@ -6,7 +6,7 @@ import {
   Routes,
   useLocation,
 } from 'react-router-dom'
-import { Button, Result, Space } from 'antd'
+import { Alert, Button, Card, Result, Space, Spin, Tag, Typography } from 'antd'
 import {
   AuditOutlined,
   BankOutlined,
@@ -30,7 +30,16 @@ import {
 } from '@ant-design/icons'
 import { ProLayout } from '@ant-design/pro-components'
 import type { ProLayoutProps } from '@ant-design/pro-components'
-import { clearToken, getToken } from './lib/api'
+import { ROLE_LABELS, Role } from '@mall/shared'
+import {
+  api,
+  clearSessionUser,
+  clearToken,
+  getSessionUser,
+  getToken,
+  setSessionUser,
+  type SessionUser,
+} from './lib/api'
 import { proLayoutToken } from './theme'
 import AccountsPage from './pages/AccountsPage'
 import AlertsPage from './pages/AlertsPage'
@@ -136,17 +145,122 @@ function ForbiddenPage() {
   )
 }
 
+/** 非平台角色的推荐业务入口：后台仅平台运营可进入业务模块 */
+const ROLE_ENTRY: Partial<Record<Role, { label: string; url?: string }>> = {
+  [Role.MERCHANT]: { label: '商家端 H5', url: 'http://localhost:10086' },
+  [Role.SALES]: { label: '商家端 H5', url: 'http://localhost:10086' },
+  [Role.CUSTOMER]: { label: '客户端 H5', url: 'http://localhost:10087' },
+  [Role.PARTNER]: { label: '合伙人端（规划中，暂未开放）' },
+  [Role.SUPPLIER]: { label: '供应商端（规划中，暂未开放）' },
+  [Role.LAB]: { label: '实验室端（规划中，暂未开放）' },
+  [Role.NUTRITIONIST]: { label: '营养师端（规划中，暂未开放）' },
+}
+
+/** 非平台角色登录后展示权限提示，不进入平台业务菜单 */
+function RoleNoticePage({ user, onLogout }: { user: SessionUser; onLogout: () => void }) {
+  const label = ROLE_LABELS[user.role] ?? user.role
+  const entry = ROLE_ENTRY[user.role]
+  return (
+    <div className="login-page">
+      <Card className="role-notice-card">
+        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          <Space align="center">
+            <Tag color="blue">{label}</Tag>
+            <Typography.Title level={4} style={{ margin: 0 }}>
+              后台权限受限
+            </Typography.Title>
+          </Space>
+          <Alert
+            type="warning"
+            showIcon
+            message="当前角色无法进入后台业务模块"
+            description={`后台管理台仅向平台运营开放。当前登录账号：${user.name}（${user.phone}），角色：${label}。`}
+          />
+          <div className="role-notice-entry">
+            <Typography.Text type="secondary">该角色请使用</Typography.Text>
+            <Typography.Text strong>{entry?.label ?? '对应业务端'}</Typography.Text>
+          </div>
+          <Space wrap>
+            <Button type="primary" onClick={onLogout}>
+              退出并返回登录
+            </Button>
+            {entry?.url ? (
+              <Button href={entry.url} target="_blank">
+                前往{entry.label}
+              </Button>
+            ) : null}
+          </Space>
+        </Space>
+      </Card>
+    </div>
+  )
+}
+
 function Shell() {
   const [token, setTokenState] = useState(getToken())
+  const [user, setUserState] = useState<SessionUser | null>(getSessionUser())
   const location = useLocation()
 
-  if (!token) {
-    return <LoginPage onLogin={() => setTokenState(getToken())} />
-  }
+  useEffect(() => {
+    if (!token || user) {
+      return
+    }
+    let cancelled = false
+    void api<{ id: string; name: string; phone: string; primaryRole: Role }>('/auth/me')
+      .then((me) => {
+        if (cancelled) {
+          return
+        }
+        const session: SessionUser = {
+          id: me.id,
+          name: me.name,
+          phone: me.phone,
+          role: me.primaryRole,
+        }
+        setSessionUser(session)
+        setUserState(session)
+      })
+      .catch(() => {
+        if (cancelled) {
+          return
+        }
+        clearToken()
+        clearSessionUser()
+        setTokenState('')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [token, user])
 
   const logout = () => {
     clearToken()
+    clearSessionUser()
+    setUserState(null)
     setTokenState('')
+  }
+
+  if (!token) {
+    return (
+      <LoginPage
+        onLogin={() => {
+          setUserState(getSessionUser())
+          setTokenState(getToken())
+        }}
+      />
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="login-page">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (user.role !== Role.PLATFORM) {
+    return <RoleNoticePage user={user} onLogout={logout} />
   }
 
   return (

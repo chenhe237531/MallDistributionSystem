@@ -1,4 +1,14 @@
+import type { Role } from '@mall/shared'
+
 const TOKEN_KEY = 'mall_admin_token'
+const USER_KEY = 'mall_admin_user'
+
+export type SessionUser = {
+  id: string
+  name: string
+  phone: string
+  role: Role
+}
 
 export function getToken(): string {
   return localStorage.getItem(TOKEN_KEY) ?? ''
@@ -10,6 +20,26 @@ export function setToken(token: string): void {
 
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY)
+}
+
+export function getSessionUser(): SessionUser | null {
+  const raw = localStorage.getItem(USER_KEY)
+  if (!raw) {
+    return null
+  }
+  try {
+    return JSON.parse(raw) as SessionUser
+  } catch {
+    return null
+  }
+}
+
+export function setSessionUser(user: SessionUser): void {
+  localStorage.setItem(USER_KEY, JSON.stringify(user))
+}
+
+export function clearSessionUser(): void {
+  localStorage.removeItem(USER_KEY)
 }
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {

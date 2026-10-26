@@ -1,3 +1,6 @@
+// 多数据库兼容 Schema：本文件为 PostgreSQL 基准定义。
+// SQLite / MySQL 由 scripts/prisma-runtime.mjs 派生到 schema.<provider>.prisma，
+// 请统一通过 pnpm db:generate / pnpm db:push / pnpm db:seed 操作。
 generator client {
   provider = "prisma-client-js"
 }
@@ -246,6 +249,10 @@ model Product {
   status                   ProductStatus     @default(draft)
   guideVideoUrl            String?
   intro                    String?
+  /// 商品图片（有序，images[0] 为列表主图）；存相对 URL，静态服务前缀 /uploads
+  images                   String[]          @default([])
+  /// 结构化分类 key（@mall/shared PRODUCT_CATEGORIES），用于采购页侧栏过滤
+  category                 String?
   relatedLinks             ProductRelated[]  @relation("ProductRelatedMain")
   relatedOf                ProductRelated[]  @relation("ProductRelatedItem")
   courseBindings           ProductCourse[]
@@ -303,7 +310,10 @@ model MerchantProduct {
   merchant         User     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   productId        String
   product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// C 端展示价；默认按 product.supplyPriceCents × 2 生成（@mall/shared defaultRetailPriceCents）
   retailPriceCents Int
+  /// true = 商家自定义改价，后续不再随采购价自动换算；false = 使用默认 2 倍规则（可恢复）
+  priceCustomized  Boolean  @default(false)
   status           String   @default("active")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -518,6 +528,18 @@ model Sample {
   status         SampleStatus @default(activated)
   samplingMethod String
   questionnaire  Json
+  /// 绑定表单：采样时间（同时供实验室签收的采样时效校验复用）
+  sampledAt      DateTime?
+  /// 绑定表单：联系电话
+  contactPhone   String?
+  /// 绑定表单：与受检人关系 self/spouse/parent/child/other
+  relationship   String?
+  /// 绑定表单：受检人年龄
+  examineeAge    Int?
+  /// 绑定表单：备注信息（≤200 字）
+  remark         String?
+  /// 寄回运单号（结构化展示，本期不对接物流轨迹）
+  trackingNo     String?
   abnormalReason String?
   resampleOfId   String?
   resampleCount  Int          @default(0)

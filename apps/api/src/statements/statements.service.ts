@@ -18,6 +18,7 @@ import { formatCents, Role } from '@mall/shared'
 import { AuditService } from '../audit/audit.service'
 import { ChannelsService } from '../channels/channels.service'
 import { NotificationsService } from '../notifications/notifications.service'
+import { asRoleArray } from '../prisma/array-values'
 import { PrismaService } from '../prisma/prisma.service'
 import {
   GenerateStatementDto,
@@ -44,7 +45,7 @@ export class StatementsService {
       throw new ForbiddenException('只有平台可以生成对账单')
     }
     const subject = await this.prisma.user.findUnique({ where: { id: dto.subjectId } })
-    if (!subject || !subject.roles.includes(dto.subjectType as never)) {
+    if (!subject || !asRoleArray(subject.roles).includes(dto.subjectType as Role)) {
       throw new BadRequestException('对账主体不存在或角色不匹配')
     }
     await this.channelsService.assertNotPausedForSubject(dto.subjectId, dto.subjectType)
@@ -393,7 +394,7 @@ export class StatementsService {
    * 对 statement 汇总字段做读改写前加行锁，防止并发退款冲回/票证登记丢失更新。
    */
   private async lockStatementForUpdate(tx: DbClient, statementId: string): Promise<void> {
-    await tx.$queryRaw`SELECT id FROM "Statement" WHERE id = ${statementId} FOR UPDATE`
+    await this.prisma.lockRow(tx, 'Statement', statementId)
   }
 
   /**

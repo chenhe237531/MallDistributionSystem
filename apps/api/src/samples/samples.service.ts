@@ -24,15 +24,22 @@ import {
   MailSampleDto,
   ReceiveSampleDto,
   ResampleDto,
+  SubmitQuestionnaireDto,
 } from './dto/sample-flow.dto'
 import type { AuthUser } from '../auth/auth-user.type'
 
-const DEFAULT_QUESTIONNAIRE_FIELDS = [
-  { key: 'gender', label: '性别', required: true },
-  { key: 'age', label: '年龄', required: true },
-]
-
-type QuestionnaireField = { key: string; label?: string; required?: boolean }
+/** 商品问卷字段 schema（§5.5，向后兼容：无 type 视为 text） */
+type QuestionnaireField = {
+  key: string
+  label?: string
+  type?: 'text' | 'number' | 'radio' | 'checkbox' | 'textarea'
+  required?: boolean
+  options?: string[]
+  exclusiveOptions?: string[]
+  remarkOn?: string[]
+  unit?: string
+  placeholder?: string
+}
 
 @Injectable()
 export class SamplesService {
@@ -88,6 +95,13 @@ export class SamplesService {
     }
     if (!dto.consentGiven) {
       throw new BadRequestException('需签署检测服务协议与知情同意书')
+    }
+    const sampledAt = new Date(dto.sampledAt)
+    if (Number.isNaN(sampledAt.getTime())) {
+      throw new BadRequestException('采样时间格式不正确')
+    }
+    if (sampledAt.getTime() > Date.now()) {
+      throw new BadRequestException('采样时间不能晚于当前时间')
     }
 
     const box = await this.prisma.boxCode.findUnique({
@@ -147,17 +161,6 @@ export class SamplesService {
       })
     }
 
-    const fields = await this.questionnaireFields(box.productId)
-    for (const field of fields) {
-      if (!field.required) {
-        continue
-      }
-      const value = dto.questionnaire[field.key]
-      if (value === undefined || value === null || value === '') {
-        throw new BadRequestException(`请填写${field.label ?? field.key}`)
-      }
-    }
-
     const template = await this.prisma.contractTemplate.findFirst({
       where: { code: 'customer_detection', active: true },
       orderBy: { version: 'desc' },
@@ -205,7 +208,12 @@ export class SamplesService {
           channelId: box.channelId,
           status: SampleStatus.activated,
           samplingMethod: dto.samplingMethod,
-          questionnaire: dto.questionnaire as Prisma.InputJsonValue,
+          questionnaire: (dto.questionnaire ?? {}) as Prisma.InputJsonValue,
+          sampledAt,
+          contactPhone: dto.contactPhone,
+          relationship: dto.relationship,
+          examineeAge: dto.examineeAge,
+          remark: dto.remark ?? null,
         },
         include: { boxCode: true },
       })
@@ -332,13 +340,89 @@ export class SamplesService {
     ) {
       throw new BadRequestException('当前状态不能登记寄出')
     }
-    return this.setStatus(
-      id,
-      SampleStatus.in_transit,
-      'mailed',
-      dto.trackingNo ? `运单号 ${dto.trackingNo}` : undefined,
-      actor.sub,
-    )
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.sample.update({
+        where: { id },
+        data: {
+          status: SampleStatus.in_transit,
+          ...(dto.trackingNo ? { trackingNo: dto.trackingNo } : {}),
+        },
+      })
+      await tx.sampleEvent.create({
+        data: {
+          sampleId: id,
+          type: 'mailed',
+          note: dto.trackingNo ? `运单号 ${dto.trackingNo}` : undefined,
+          operatorId: actor.sub,
+        },
+      })
+      return updated
+    })
+  }
+
+  /**
+   * 提交健康问卷（§5.3）：仅归属本人的 activated 样本可提交；已提交后拒绝重复提交（D9）。
+   */
+  async submitQuestionnaire(id: string, dto: SubmitQuestionnaireDto, actor: AuthUser) {
+    const sample = await this.getOne(id, actor)
+    if (sample.customerId !== actor.sub) {
+      throw new ForbiddenException('只有样本本人可以提交问卷')
+    }
+    if (sample.status !== SampleStatus.activated) {
+      throw new BadRequestException('仅待问卷的已激活样本可以提交')
+    }
+    const existing = sample.questionnaire as Record<string, unknown> | null
+    if (existing && Object.keys(existing).length > 0) {
+      throw new ConflictException('问卷已提交，如需修改请联系客服')
+    }
+    if (!dto.answers || Object.keys(dto.answers).length === 0) {
+      throw new BadRequestException('请填写健康问卷')
+    }
+
+    // 商品配置了问卷字段时做服务端校验；未配置则由前端内置题单保证
+    const product = await this.prisma.product.findUnique({
+      where: { id: sample.boxCode.productId },
+      select: { questionnaireFields: true },
+    })
+    const configured = Array.isArray(product?.questionnaireFields)
+      ? (product.questionnaireFields as QuestionnaireField[])
+      : []
+    for (const field of configured) {
+      const value = dto.answers[field.key]
+      const empty =
+        value === undefined ||
+        value === null ||
+        value === '' ||
+        (Array.isArray(value) && value.length === 0)
+      if (field.required && empty) {
+        throw new BadRequestException(`请填写${field.label ?? field.key}`)
+      }
+      if (empty) {
+        continue
+      }
+      if (field.type === 'radio' && field.options && !field.options.includes(String(value))) {
+        throw new BadRequestException(`${field.label ?? field.key}选项不合法`)
+      }
+      if (field.type === 'checkbox' && field.options) {
+        const invalid = Array.isArray(value)
+          ? value.some((item) => !field.options!.includes(String(item)))
+          : true
+        if (invalid) {
+          throw new BadRequestException(`${field.label ?? field.key}选项不合法`)
+        }
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.sample.update({
+        where: { id },
+        data: { questionnaire: dto.answers as Prisma.InputJsonValue },
+      })
+      await tx.sampleEvent.create({
+        data: { sampleId: id, type: 'questionnaire_done', operatorId: actor.sub },
+      })
+      return updated
+    })
   }
 
   async receive(id: string, dto: ReceiveSampleDto, actor: AuthUser) {
@@ -509,18 +593,6 @@ export class SamplesService {
       where: { id: consent.id },
       data: { reportAuthorization: dto.authorized },
     })
-  }
-
-  private async questionnaireFields(productId: string): Promise<QuestionnaireField[]> {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-      select: { questionnaireFields: true },
-    })
-    const fields = product?.questionnaireFields
-    if (Array.isArray(fields) && fields.length > 0) {
-      return fields as QuestionnaireField[]
-    }
-    return DEFAULT_QUESTIONNAIRE_FIELDS
   }
 
   private generateSampleNo(): string {

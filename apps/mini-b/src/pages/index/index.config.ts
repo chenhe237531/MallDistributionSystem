@@ -1,3 +1,3 @@
 export default definePageConfig({
-  navigationBarTitleText: '商家工作台',
+  navigationBarTitleText: '百英诺 · 商家中心',
 })

@@ -15,6 +15,7 @@ type Reminder = { id: string; status?: string }
 type Health = {
   status: string
   database: string
+  databaseProvider?: string
   service: string
   version: string
 }
@@ -169,7 +170,7 @@ export default function DashboardPage() {
             )}
             <Space direction="vertical" style={{ marginTop: 12 }}>
               <Text>服务：{health?.service ?? '—'}</Text>
-              <Text>数据库：{health?.database ?? '—'}</Text>
+              <Text>数据库：{health?.databaseProvider ?? '—'}（{health?.database ?? '—'}）</Text>
               <Text>版本：{health?.version ?? '—'}</Text>
             </Space>
           </Card>

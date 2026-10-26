@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common'
 import { Role } from '@mall/shared'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { Roles } from '../auth/roles.decorator'
@@ -8,6 +8,7 @@ import {
   MailSampleDto,
   ReceiveSampleDto,
   ResampleDto,
+  SubmitQuestionnaireDto,
 } from './dto/sample-flow.dto'
 import { SamplesService } from './samples.service'
 
@@ -24,6 +25,16 @@ export class SamplesController {
   @Get()
   list(@CurrentUser() user: AuthUser) {
     return this.samplesService.list(user)
+  }
+
+  @Patch(':id/questionnaire')
+  @Roles(Role.CUSTOMER)
+  submitQuestionnaire(
+    @Param('id') id: string,
+    @Body() dto: SubmitQuestionnaireDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.samplesService.submitQuestionnaire(id, dto, user)
   }
 
   @Post(':id/mail')

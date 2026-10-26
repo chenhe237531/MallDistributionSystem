@@ -1,4 +1,9 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator'
+import { IsBoolean, IsObject, IsOptional, IsString } from 'class-validator'
+
+export class SubmitQuestionnaireDto {
+  @IsObject()
+  answers!: Record<string, unknown>
+}
 
 export class MailSampleDto {
   @IsOptional()

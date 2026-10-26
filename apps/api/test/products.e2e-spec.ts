@@ -141,24 +141,27 @@ describe('Products, batches and inventory (e2e)', () => {
     expect(reviewed.body.retailPriceCents).toBe(19900)
   })
 
-  it('enforces the platform floor price when a merchant lists the product', async () => {
+  it('defaults the C-end price to 2× supply price and enforces the cost floor', async () => {
+    // 低于采购价（8000）不允许，避免商家亏本销售
     await request(app.getHttpServer())
       .post('/api/products/merchant/listings')
       .set('Authorization', `Bearer ${merchantToken}`)
-      .send({ productId, retailPriceCents: 18900 })
+      .send({ productId, retailPriceCents: 7000 })
       .expect(400)
 
+    // 不传价格：默认 C 端售价 = 采购价 × 2 = 16000，且标记为默认规则
     const listed = await request(app.getHttpServer())
       .post('/api/products/merchant/listings')
       .set('Authorization', `Bearer ${merchantToken}`)
-      .send({ productId, retailPriceCents: 20900 })
+      .send({ productId })
       .expect(201)
-    expect(listed.body.retailPriceCents).toBe(20900)
+    expect(listed.body.retailPriceCents).toBe(16000)
+    expect(listed.body.priceCustomized).toBe(false)
 
     await request(app.getHttpServer())
       .post('/api/products/merchant/listings')
       .set('Authorization', `Bearer ${merchantToken}`)
-      .send({ productId, retailPriceCents: 20900 })
+      .send({ productId })
       .expect(409)
   })
 
