@@ -85,7 +85,7 @@ export class ContractsController {
   }
 
   @Get(':id')
-  getOne(@Param('id') id: string) {
-    return this.contractsService.getOne(id)
+  getOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.contractsService.getOneForActor(id, user)
   }
 }

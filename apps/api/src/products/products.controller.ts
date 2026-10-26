@@ -78,17 +78,17 @@ export class ProductsController {
   }
 
   @Get(':id/batches')
-  async batches(@Param('id') id: string) {
-    return (await this.productsService.getOne(id)).batches
+  batches(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.productsService.batches(id, user)
   }
 
   @Get(':id/inventory')
-  inventory(@Param('id') id: string) {
-    return this.productsService.inventory(id)
+  inventory(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.productsService.inventory(id, user)
   }
 
   @Get(':id')
-  getOne(@Param('id') id: string) {
-    return this.productsService.getOne(id)
+  getOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.productsService.getOne(id, user)
   }
 }

@@ -3,7 +3,7 @@ import { Alert, Button, Card, Form, Input, Typography } from 'antd'
 import { Role } from '@mall/shared'
 import { api, setToken } from '../lib/api'
 
-const { Title, Paragraph, Text } = Typography
+const { Title, Paragraph } = Typography
 
 type LoginResponse = {
   token: string
@@ -45,7 +45,7 @@ export default function LoginPage({ onLogin }: Props) {
         <Title level={3}>商城-分销系统</Title>
         <Paragraph type="secondary">平台后台登录</Paragraph>
         {error ? <Alert type="error" message={error} style={{ marginBottom: 16 }} /> : null}
-        <Form layout="vertical" onFinish={submit} initialValues={{ phone: '13800000000', password: 'Admin@123' }}>
+        <Form layout="vertical" onFinish={submit}>
           <Form.Item name="phone" label="手机号" rules={[{ required: true, message: '请输入手机号' }]}>
             <Input maxLength={11} />
           </Form.Item>
@@ -56,9 +56,6 @@ export default function LoginPage({ onLogin }: Props) {
             登录
           </Button>
         </Form>
-        <Text type="secondary" style={{ display: 'block', marginTop: 16, fontSize: 12 }}>
-          本地种子账号：13800000000 / Admin@123
-        </Text>
       </Card>
     </div>
   )

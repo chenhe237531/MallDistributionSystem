@@ -282,6 +282,21 @@ export class SalesOrdersService {
     }
 
     const paid = await this.prisma.$transaction(async (tx) => {
+      // 条件状态转移：并发重复请求只有一个能成功，避免库存双重分配与佣金重复生成
+      const claimed = await tx.salesOrder.updateMany({
+        where: { id, status: PrismaSalesOrderStatus.pending_payment, paidAt: null },
+        data: {
+          status: PrismaSalesOrderStatus.paid,
+          paidAt: new Date(),
+          paidAmountCents: paidAmountCents ?? order.totalAmountCents,
+        },
+      })
+      if (claimed.count === 0) {
+        return tx.salesOrder.findUniqueOrThrow({
+          where: { id },
+          include: { items: { include: { allocations: true } } },
+        })
+      }
       for (const item of order.items) {
         const allocations = await this.productsService.allocateStockInTransaction(
           tx,
@@ -300,17 +315,11 @@ export class SalesOrdersService {
           })
         }
       }
-      const updated = await tx.salesOrder.update({
+      await this.commissionsService.generateForOrderInTransaction(tx, order.id)
+      return tx.salesOrder.findUniqueOrThrow({
         where: { id },
-        data: {
-          status: PrismaSalesOrderStatus.paid,
-          paidAt: new Date(),
-          paidAmountCents: paidAmountCents ?? order.totalAmountCents,
-        },
         include: { items: { include: { allocations: true } } },
       })
-      await this.commissionsService.generateForOrderInTransaction(tx, order.id)
-      return updated
     })
     await this.auditService.record({
       actor,
@@ -484,24 +493,38 @@ export class SalesOrdersService {
       throw new BadRequestException('当前状态不能退款')
     }
 
-    const requested = dto.items?.length
-      ? dto.items
-      : order.items
-          .map((item) => ({
-            orderItemId: item.id,
-            quantity: item.quantity - item.refundedQuantity,
-          }))
-          .filter((item) => item.quantity > 0)
-    if (requested.length === 0) {
-      throw new BadRequestException('没有可退款数量')
-    }
+    const result = await this.prisma.$transaction(async (tx) => {
+      // 行锁串行化同一订单的并发退款，避免快照校验失效导致超退
+      await tx.$queryRaw`SELECT "id" FROM "SalesOrder" WHERE "id" = ${id} FOR UPDATE`
+      const fresh = await tx.salesOrder.findUniqueOrThrow({
+        where: { id },
+        include: { items: true },
+      })
+      if (
+        fresh.status === PrismaSalesOrderStatus.pending_payment ||
+        fresh.status === PrismaSalesOrderStatus.cancelled ||
+        fresh.status === PrismaSalesOrderStatus.refunded
+      ) {
+        throw new BadRequestException('当前状态不能退款')
+      }
 
-    const refunded = await this.prisma.$transaction(async (tx) => {
+      const requested = dto.items?.length
+        ? dto.items
+        : fresh.items
+            .map((item) => ({
+              orderItemId: item.id,
+              quantity: item.quantity - item.refundedQuantity,
+            }))
+            .filter((item) => item.quantity > 0)
+      if (requested.length === 0) {
+        throw new BadRequestException('没有可退款数量')
+      }
+
       let refundedNow = 0
       const refundedQuantityByItem = new Map<string, number>()
 
       for (const input of requested) {
-        const item = order.items.find((entry) => entry.id === input.orderItemId)
+        const item = fresh.items.find((entry) => entry.id === input.orderItemId)
         if (!item) {
           throw new BadRequestException('退款商品不属于该订单')
         }
@@ -556,13 +579,13 @@ export class SalesOrdersService {
         refundedNow += amountCents
       }
 
-      const fullyRefunded = order.items.every((item) => {
+      const fullyRefunded = fresh.items.every((item) => {
         const total =
           (refundedQuantityByItem.get(item.id) ?? item.refundedQuantity) === item.quantity
         return total
       })
 
-      return tx.salesOrder.update({
+      const updatedOrder = await tx.salesOrder.update({
         where: { id },
         data: {
           refundedAmountCents: { increment: refundedNow },
@@ -572,7 +595,10 @@ export class SalesOrdersService {
         },
         include: { items: true, refunds: true },
       })
+      return { order: updatedOrder, requested }
     })
+    const refunded = result.order
+    const requested = result.requested
     await this.auditService.record({
       actor,
       action: 'order.refund',
