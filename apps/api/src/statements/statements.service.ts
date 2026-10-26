@@ -163,39 +163,31 @@ export class StatementsService {
     if (statement.status === PrismaStatementStatus.settled) {
       throw new BadRequestException('已结清账单不能新增票证')
     }
+    const duplicate = await this.prisma.statementVoucher.findUnique({
+      where: { voucherNo: dto.voucherNo },
+    })
+    if (duplicate) {
+      throw new ConflictException('该票证号码已登记')
+    }
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      await tx.statementVoucher
-        .create({
-          data: {
-            statementId: id,
-            voucherNo: dto.voucherNo,
-            title: dto.title,
-            taxNo: dto.taxNo,
-            amountCents: dto.amountCents,
-            issuedAt: new Date(dto.issuedAt),
-            imageUrl: dto.imageUrl,
-            registeredBy: actor.sub,
-          },
-        })
-        .catch((error: unknown) => {
-          if (
-            error instanceof Prisma.PrismaClientKnownRequestError &&
-            error.code === 'P2002'
-          ) {
-            throw new ConflictException('该票证号码已登记')
-          }
-          throw error
-        })
-      const guarded = await tx.statement.updateMany({
-        where: { id, status: { not: PrismaStatementStatus.settled } },
-        data: { voucherRegisteredCents: { increment: dto.amountCents } },
+      await this.lockStatementForUpdate(tx, id)
+      const locked = await tx.statement.findUniqueOrThrow({ where: { id } })
+      await tx.statementVoucher.create({
+        data: {
+          statementId: id,
+          voucherNo: dto.voucherNo,
+          title: dto.title,
+          taxNo: dto.taxNo,
+          amountCents: dto.amountCents,
+          issuedAt: new Date(dto.issuedAt),
+          imageUrl: dto.imageUrl,
+          registeredBy: actor.sub,
+        },
       })
-      if (guarded.count === 0) {
-        throw new BadRequestException('已结清账单不能新增票证')
-      }
-      const refreshed = await tx.statement.findUniqueOrThrow({ where: { id } })
-      const overAmount = refreshed.voucherRegisteredCents - refreshed.totalPayableCents
+      const remaining = locked.totalPayableCents - locked.voucherRegisteredCents
+      const overAmount = dto.amountCents - remaining
+      let difference = overAmount
       if (overAmount > 0) {
         await tx.statementDifference.create({
           data: {
@@ -205,23 +197,26 @@ export class StatementsService {
             createdBy: actor.sub,
           },
         })
+        difference = overAmount
       }
+      const voucherRegisteredCents = locked.voucherRegisteredCents + dto.amountCents
       const voucherMissingCents = Math.max(
-        refreshed.totalPayableCents - refreshed.voucherRegisteredCents,
+        locked.totalPayableCents - voucherRegisteredCents,
         0,
       )
-      const differenceCents = refreshed.totalPayableCents - refreshed.voucherRegisteredCents
+      const differenceCents = locked.totalPayableCents - voucherRegisteredCents
       return tx.statement.update({
         where: { id },
         data: {
+          voucherRegisteredCents,
           voucherMissingCents,
           differenceCents,
           status:
             overAmount > 0
               ? PrismaStatementStatus.disputed
-              : statement.status === PrismaStatementStatus.disputed && voucherMissingCents === 0
+              : locked.status === PrismaStatementStatus.disputed && voucherMissingCents === 0
                 ? PrismaStatementStatus.reconciled
-                : undefined,
+                : locked.status,
         },
         include: { lines: true, vouchers: true, differences: true },
       })
@@ -247,13 +242,11 @@ export class StatementsService {
       throw new BadRequestException('已结清账单不能直接调整，请先反结清')
     }
     return this.prisma.$transaction(async (tx) => {
-      const guarded = await tx.statement.updateMany({
-        where: { id, status: { not: PrismaStatementStatus.settled } },
-        data: { adjustmentCents: { increment: dto.amountCents } },
-      })
-      if (guarded.count === 0) {
-        throw new BadRequestException('已结清账单不能直接调整，请先反结清')
-      }
+      await this.lockStatementForUpdate(tx, id)
+      const locked = await tx.statement.findUniqueOrThrow({ where: { id } })
+      const adjustmentCents = locked.adjustmentCents + dto.amountCents
+      const totalPayableCents =
+        locked.openingUnsettledCents + locked.newPayableCents + adjustmentCents
       await tx.statementLine.create({
         data: {
           statementId: id,
@@ -264,18 +257,13 @@ export class StatementsService {
           amountCents: dto.amountCents,
         },
       })
-      const refreshed = await tx.statement.findUniqueOrThrow({ where: { id } })
-      const totalPayableCents =
-        refreshed.openingUnsettledCents + refreshed.newPayableCents + refreshed.adjustmentCents
       return tx.statement.update({
         where: { id },
         data: {
+          adjustmentCents,
           totalPayableCents,
-          voucherMissingCents: Math.max(
-            totalPayableCents - refreshed.voucherRegisteredCents,
-            0,
-          ),
-          differenceCents: totalPayableCents - refreshed.voucherRegisteredCents,
+          voucherMissingCents: Math.max(totalPayableCents - locked.voucherRegisteredCents, 0),
+          differenceCents: totalPayableCents - locked.voucherRegisteredCents,
         },
         include: { lines: true, vouchers: true, differences: true },
       })
@@ -402,15 +390,48 @@ export class StatementsService {
   }
 
   /**
-   * 退款后同步对账单：
-   * 1. 佣金行：以佣金当前净额（amountCents - reversedAmountCents，冲销在本函数之前执行）
-   *    为目标值，扣除行原值与历史冲回，得到本次调整额。此前的实现以行净额乘累计退款
-   *    比例，会把账单生成前的退款重复扣减，这里改为直接按当前净额求差，多次部分退款
-   *    后也能精确归零。
-   * 2. 商家结算行：按订单项累计退款后的净额重算 orderSettlement，并对引用该结算的
-   *    对账单行追加冲回，使商家对账单同样反映退款。
+   * 对 statement 汇总字段做读改写前加行锁，防止并发退款冲回/票证登记丢失更新。
    */
-  async addRefundAdjustmentInTransaction(tx: DbClient, orderItemId: string) {
+  private async lockStatementForUpdate(tx: DbClient, statementId: string): Promise<void> {
+    await tx.$queryRaw`SELECT id FROM "Statement" WHERE id = ${statementId} FOR UPDATE`
+  }
+
+  /**
+   * 在持锁状态下把一笔调整额落到对账单汇总字段（调整行由调用方创建）。
+   */
+  private async applyAdjustmentToStatement(
+    tx: DbClient,
+    statementId: string,
+    amountCents: number,
+  ) {
+    const statement = await tx.statement.findUnique({ where: { id: statementId } })
+    if (!statement) {
+      return
+    }
+    const adjustmentCents = statement.adjustmentCents + amountCents
+    const totalPayableCents =
+      statement.openingUnsettledCents + statement.newPayableCents + adjustmentCents
+    await tx.statement.update({
+      where: { id: statementId },
+      data: {
+        adjustmentCents,
+        totalPayableCents,
+        voucherMissingCents: Math.max(totalPayableCents - statement.voucherRegisteredCents, 0),
+        differenceCents: totalPayableCents - statement.voucherRegisteredCents,
+      },
+    })
+  }
+
+  /**
+   * refundedQuantity 为该订单项累计已退数量（含本次），
+   * 按累计数量计算目标冲回总额，再扣除已冲回部分，避免多次部分退款时按次舍入产生偏差。
+   */
+  async addRefundAdjustmentInTransaction(
+    tx: DbClient,
+    orderItemId: string,
+    refundedQuantity: number,
+    itemQuantity: number,
+  ) {
     const commissions = await tx.commission.findMany({ where: { orderItemId } })
     for (const commission of commissions) {
       const lines = await tx.statementLine.findMany({
@@ -418,184 +439,85 @@ export class StatementsService {
         include: { statement: true },
       })
       for (const line of lines) {
-        const targetNet = commission.amountCents - commission.reversedAmountCents
-        const targetDelta = targetNet - line.amountCents
-        if (targetDelta === 0) {
-          continue
-        }
         if (line.statement.status === PrismaStatementStatus.settled) {
-          await this.alertSettledStatementHitByRefund(
-            tx,
-            line.statementId,
-            line.statement.statementNo,
-            `佣金 ${commission.commissionNo}`,
-          )
           continue
         }
-        await this.adjustStatementLineInTransaction(
-          tx,
-          line.statement,
-          commission.id,
-          `退款冲回 · 佣金 ${commission.commissionNo}`,
-          targetDelta,
-        )
+        await this.lockStatementForUpdate(tx, line.statementId)
+        const targetTotal = -Math.round((line.amountCents * refundedQuantity) / itemQuantity)
+        const prior = await tx.statementLine.aggregate({
+          where: {
+            statementId: line.statementId,
+            sourceType: 'refund_adjustment',
+            sourceId: commission.id,
+          },
+          _sum: { amountCents: true },
+        })
+        const amountCents = targetTotal - (prior._sum.amountCents ?? 0)
+        if (amountCents === 0) {
+          continue
+        }
+        await tx.statementLine.create({
+          data: {
+            statementId: line.statementId,
+            sourceType: 'refund_adjustment',
+            sourceId: commission.id,
+            description: `退款冲回 · 佣金 ${commission.commissionNo}`,
+            baseAmountCents: 0,
+            amountCents,
+          },
+        })
+        await this.applyAdjustmentToStatement(tx, line.statementId, amountCents)
       }
     }
-
-    await this.addMerchantSettlementRefundAdjustmentInTransaction(tx, orderItemId)
   }
 
   /**
-   * 按订单项累计退款状态重算商家结算（orderSettlement），并同步调整引用该结算的
-   * 未结清对账单行。目标值按累计口径计算，避免多次部分退款的舍入残留。
+   * 退款后商家收入行（order_settlement）冲回：currentIncome 为重算后的当前商家收入净额。
+   * 行金额（income0）在入账时快照，累计冲回目标 = -(income0 - currentIncome)，
+   * 本次冲回 = 累计目标 - 已冲回累计，与佣金冲回一致防重入、防多次部分退款舍入残留。
    */
-  private async addMerchantSettlementRefundAdjustmentInTransaction(
+  async addSettlementRefundAdjustmentInTransaction(
     tx: DbClient,
-    orderItemId: string,
+    settlementId: string | null,
+    currentIncomeCents: number,
   ) {
-    const item = await tx.salesOrderItem.findUnique({ where: { id: orderItemId } })
-    if (!item) {
+    if (!settlementId) {
       return
     }
-    const settlement = await tx.orderSettlement.findUnique({ where: { orderItemId } })
-    if (!settlement) {
-      return
-    }
-    const commissions = await tx.commission.findMany({ where: { orderItemId } })
-    const netCommissionCents = (level: number) =>
-      commissions
-        .filter((commission) => commission.level === level)
-        .reduce(
-          (sum, commission) => sum + commission.amountCents - commission.reversedAmountCents,
-          0,
-        )
-
-    const netAmountCents = item.amountCents - item.refundedAmountCents
-    const remainingQuantity = item.quantity - item.refundedQuantity
-    const supplyCostCents = item.supplyPriceCents * remainingQuantity
-    const platformServiceFeeCents = Math.round(
-      (netAmountCents * item.platformServiceRateBps) / 10000,
-    )
-    const level1CommissionCents = netCommissionCents(1)
-    const level2CommissionCents = netCommissionCents(2)
-    const merchantIncomeCents =
-      netAmountCents - supplyCostCents - platformServiceFeeCents - level1CommissionCents - level2CommissionCents
-
-    await tx.orderSettlement.update({
-      where: { id: settlement.id },
-      data: {
-        supplyCostCents,
-        platformServiceFeeCents,
-        level1CommissionCents,
-        level2CommissionCents,
-        merchantIncomeCents,
-      },
-    })
-
     const lines = await tx.statementLine.findMany({
-      where: { sourceType: 'order_settlement', sourceId: settlement.id },
+      where: { sourceType: 'order_settlement', sourceId: settlementId },
       include: { statement: true },
     })
     for (const line of lines) {
-      const targetDelta = merchantIncomeCents - line.amountCents
-      if (targetDelta === 0) {
-        continue
-      }
       if (line.statement.status === PrismaStatementStatus.settled) {
-        await this.alertSettledStatementHitByRefund(
-          tx,
-          line.statementId,
-          line.statement.statementNo,
-          `订单结算 ${settlement.id}`,
-        )
         continue
       }
-      await this.adjustStatementLineInTransaction(
-        tx,
-        line.statement,
-        settlement.id,
-        `退款冲回 · 订单结算 ${settlement.id}`,
-        targetDelta,
-      )
+      await this.lockStatementForUpdate(tx, line.statementId)
+      const targetTotal = -(line.amountCents - currentIncomeCents)
+      const prior = await tx.statementLine.aggregate({
+        where: {
+          statementId: line.statementId,
+          sourceType: 'refund_adjustment',
+          sourceId: settlementId,
+        },
+        _sum: { amountCents: true },
+      })
+      const amountCents = targetTotal - (prior._sum.amountCents ?? 0)
+      if (amountCents === 0) {
+        continue
+      }
+      await tx.statementLine.create({
+        data: {
+          statementId: line.statementId,
+          sourceType: 'refund_adjustment',
+          sourceId: settlementId,
+          description: '退款冲回 · 商家收入',
+          baseAmountCents: 0,
+          amountCents,
+        },
+      })
+      await this.applyAdjustmentToStatement(tx, line.statementId, amountCents)
     }
-  }
-
-  /**
-   * 退款命中已结清账单时无法自动冲回，留痕告警提醒平台人工处理，
-   * 避免已付佣金/商家收入退款后成为静默损失。
-   */
-  private async alertSettledStatementHitByRefund(
-    tx: DbClient,
-    statementId: string,
-    statementNo: string,
-    sourceDescription: string,
-  ) {
-    const existing = await tx.systemAlert.findFirst({
-      where: { type: 'refund_hits_settled_statement', subjectId: statementId, status: 'open' },
-    })
-    if (existing) {
-      return
-    }
-    await tx.systemAlert.create({
-      data: {
-        type: 'refund_hits_settled_statement',
-        subjectType: 'statement',
-        subjectId: statementId,
-        message: `退款冲回命中已结清账单 ${statementNo}（${sourceDescription}），需人工追偿处理`,
-        severity: 'warning',
-      },
-    })
-  }
-
-  /**
-   * 以“目标净额 − 行原值”为本次应调整总额，扣除此前已冲回部分后写入一条
-   * refund_adjustment 行并更新账单汇总。返回本次实际新增的调整额。
-   */
-  private async adjustStatementLineInTransaction(
-    tx: DbClient,
-    statement: { id: string; adjustmentCents: number; openingUnsettledCents: number; newPayableCents: number; voucherRegisteredCents: number },
-    sourceId: string,
-    description: string,
-    targetDelta: number,
-  ): Promise<number> {
-    const prior = await tx.statementLine.aggregate({
-      where: {
-        statementId: statement.id,
-        sourceType: 'refund_adjustment',
-        sourceId,
-      },
-      _sum: { amountCents: true },
-    })
-    const amountCents = targetDelta - (prior._sum.amountCents ?? 0)
-    if (amountCents === 0) {
-      return 0
-    }
-    await tx.statementLine.create({
-      data: {
-        statementId: statement.id,
-        sourceType: 'refund_adjustment',
-        sourceId,
-        description,
-        baseAmountCents: 0,
-        amountCents,
-      },
-    })
-    const adjustmentCents = statement.adjustmentCents + amountCents
-    const totalPayableCents =
-      statement.openingUnsettledCents + statement.newPayableCents + adjustmentCents
-    await tx.statement.update({
-      where: { id: statement.id },
-      data: {
-        adjustmentCents,
-        totalPayableCents,
-        voucherMissingCents: Math.max(
-          totalPayableCents - statement.voucherRegisteredCents,
-          0,
-        ),
-        differenceCents: totalPayableCents - statement.voucherRegisteredCents,
-      },
-    })
-    return amountCents
   }
 
   async exportExcel(id: string, actor: AuthUser): Promise<Buffer> {

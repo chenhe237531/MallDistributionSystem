@@ -193,6 +193,156 @@ async function main(): Promise<void> {
         },
       ],
     },
+    {
+      code: 'product_knowledge',
+      name: '产品知识课：检测与移植产品线',
+      category: 'product',
+      audience: ['sales', 'partner'] as const,
+      required: false,
+      validityMonths: 12,
+      chapters: [
+        {
+          title: '产品线四件套',
+          content:
+            '菌群移植制品分胶囊、菌泥、菌液、菌群冻干粉四种剂型：活菌量均为 2.5×10^12 CFU/次，肠菌分离制备工艺一致；区别在于胶囊需增加活菌包埋工艺、冻干粉需增加冻干包埋工艺，以及移植方式/途径不同。配套产品有 FMT 专用辅剂（A 液益生菌+B 液益生元，移植期增强定植率）与微移植胶囊（疗程结束后 30 天内每日 1 粒巩固疗效）。',
+        },
+        {
+          title: '规格与储运速查',
+          content:
+            '胶囊 0-4℃ 储存 2 个月，下单后 1-2 天发货；菌泥 -20℃ 储存 2 个月；辅剂 0-4℃ 储存 15 天且不可冷冻；健康食品线常温 2 年。收到订单后按检测报告配型选择供体中间品完成最后工艺，制备周期 1-2 天，2-3 天内发货。',
+        },
+        {
+          title: '疗程标准',
+          content:
+            '1 个标准疗程=每天 1 次、连续 6 天。按疾病分级：明确感染源腹泻 1 标准+1 巩固；肠道良性疾病 2+2；伴器质性病变 3+3；长期性疾病 4+4。一般 1 个疗程显效、2 个疗程见效、3 个疗程强效。病程每增加 5 年、年龄≥65 岁需增加 1 个标准疗程。',
+        },
+      ],
+      questions: [
+        {
+          type: 'single',
+          prompt: '菌群移植制品四种剂型的相同点是？',
+          options: [
+            { key: 'A', text: '活菌量均为 2.5×10^12 CFU/次，分离制备工艺一致' },
+            { key: 'B', text: '都通过口服胶囊使用' },
+            { key: 'C', text: '储存条件全部为常温' },
+          ],
+          answer: 'A',
+        },
+        {
+          type: 'single',
+          prompt: '肠道良性疾病（如肠易激综合征、慢性便秘）的推荐疗程标准是？',
+          options: [
+            { key: 'A', text: '1 个标准疗程 + 1 个巩固疗程' },
+            { key: 'B', text: '2 个标准疗程 + 2 个巩固疗程' },
+            { key: 'C', text: '4 个标准疗程 + 4 个巩固疗程' },
+          ],
+          answer: 'B',
+        },
+        {
+          type: 'judge',
+          prompt: '微移植胶囊在疗程结束后 30 天内每日服用 1 粒，用于巩固移植疗效。',
+          options: [
+            { key: 'A', text: '正确' },
+            { key: 'B', text: '错误' },
+          ],
+          answer: 'A',
+        },
+      ],
+    },
+    {
+      code: 'sampling_ops',
+      name: '采样与操作规范课',
+      category: 'sampling',
+      audience: ['sales', 'partner', 'merchant'] as const,
+      required: false,
+      validityMonths: 12,
+      chapters: [
+        {
+          title: '取样规范：防污染六要点',
+          content:
+            '① 避免尿液、水、血液污染粪便，取样前排尽尿液；② 可在便池铺垫卫生纸后排便；③ 粪便取中间内部区域，避开接触空气、地面和便池内壁的部分；④ 用无菌勺挖取 1-3 颗黄豆大小（3-5g）；⑤ 放入采样管摇匀盖紧并标记信息；⑥ 女性不建议生理期取样。专用保存液可保护基因组 DNA，室温可保存 7 天。',
+        },
+        {
+          title: '检测前用药限制',
+          content:
+            '检测前两周停用：抗生素、抗寄生虫药、抗真菌药、益生菌补充剂、质子泵抑制剂（PPIs）、铋剂（长期服用益生菌者不需要停）。检测前两日停用：阿司匹林等非甾体抗炎药、消化酶、泻药、活性炭、抗酸剂。取样前一周不要饮酒。',
+        },
+        {
+          title: '采样指导视频要点',
+          content:
+            '商品详情与盒码激活页均配有采样指导视频，引导客户观看后再采样。视频讲解取样位置、取样量与封存步骤，配套商品「肠道菌群基因组检测」使用。',
+        },
+      ],
+      questions: [
+        {
+          type: 'multiple',
+          prompt: '肠道菌群检测前两周应停用哪些药物/补充剂？',
+          options: [
+            { key: 'A', text: '抗生素' },
+            { key: 'B', text: '质子泵抑制剂（胃药）' },
+            { key: 'C', text: '益生菌补充剂（非长期服用）' },
+            { key: 'D', text: '钙片' },
+          ],
+          answer: ['A', 'B', 'C'],
+        },
+        {
+          type: 'single',
+          prompt: '粪便样本应取哪个部位？',
+          options: [
+            { key: 'A', text: '表面与便池接触的部分' },
+            { key: 'B', text: '粪便中间内部、未接触空气与便池的部分' },
+            { key: 'C', text: '任意部位混合即可' },
+          ],
+          answer: 'B',
+        },
+      ],
+    },
+    {
+      code: 'case_teaching',
+      name: '适应症案例教学',
+      category: 'case',
+      audience: ['sales'] as const,
+      required: false,
+      validityMonths: 12,
+      chapters: [
+        {
+          title: '肠道疾病案例',
+          content:
+            '慢性便秘：32 岁患者 3 个疗程后 PAC-SYM 评分 35→11，一周 4 次以上自主排便。溃疡性结肠炎：39 岁患者 4 个疗程后 Mayo 评分 9→4、内镜评分 3→1。肠易激综合征（IBS-D）：单疗程后 IBS-SSS 各分项积分下降、粪便短链脂肪酸改善。',
+        },
+        {
+          title: '代谢与精神案例',
+          content:
+            '肥胖：47 岁患者 2 个疗程减重 32.3 斤；司美格鲁肽联用 3 个疗程减重 59 斤、空腹血糖 12.3→7.8。2 型糖尿病：3 个疗程空腹血糖 11.32→7.81。自闭症患儿疗程后肠菌种类数 460→1162，社交与语言能力改善；焦虑症 HAMA 评分 24→7.5。',
+        },
+        {
+          title: '案例讲述合规',
+          content:
+            '讲述案例时必须说明个体差异与「效果因人而异」，禁止承诺疗效、禁止使用「治愈/根治/保证有效」等表述。资料原话：每个人体质不同，精准配型可提高移植成功率，但不承诺 100%。代谢类疾病需配合饮食管理。',
+        },
+      ],
+      questions: [
+        {
+          type: 'judge',
+          prompt: '向客户介绍案例时，可以承诺「坚持做疗程就一定能治愈」。',
+          options: [
+            { key: 'A', text: '正确' },
+            { key: 'B', text: '错误' },
+          ],
+          answer: 'B',
+        },
+        {
+          type: 'single',
+          prompt: '讲述真实案例的正确方式是？',
+          options: [
+            { key: 'A', text: '引用检测指标变化并说明个体差异、不做疗效承诺' },
+            { key: 'B', text: '承诺同款效果' },
+            { key: 'C', text: '对比其他机构贬低同行' },
+          ],
+          answer: 'A',
+        },
+      ],
+    },
   ]
 
   for (const course of courses) {
@@ -451,6 +601,9 @@ async function main(): Promise<void> {
     await ensureActiveContract('DEMO-SUPPLIER-001', supplierTemplate.id, supplierTemplate.version, supplier.id, 'supplier')
   }
 
+  const demoVideoUrl =
+    'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4'
+
   const demoProducts = [
     {
       skuCode: 'DEMO-BASIC-001',
@@ -480,6 +633,88 @@ async function main(): Promise<void> {
     },
   ]
 
+  // 资料转化方案新增：检测服务与 FMT 产品线（含采样视频/介绍文案/搭配推荐）
+  type ContentProduct = {
+    skuCode: string
+    name: string
+    supplyPriceCents: number
+    retailPriceCents: number
+    testItems: string[]
+    sampleType: string
+    samplingMethod: string
+    storageCondition: string
+    shelfLifeDays: number
+    guideVideoUrl?: string
+    intro: string
+    relatedSkuCodes: string[]
+    courseCodes: string[]
+  }
+
+  const contentProducts: ContentProduct[] = [
+    {
+      skuCode: 'KIT-GUT-STD-001',
+      name: '肠道菌群基因组检测·标准版',
+      supplyPriceCents: 89900,
+      retailPriceCents: 199900,
+      testItems: ['肠道菌群微生态指数5项', '健康评估7项', '代谢评估10项', '疾病风险预测8项'],
+      sampleType: '粪便',
+      samplingMethod: '居家采样管+保存液（京东上门取件）',
+      storageCondition: '阴凉避光保存',
+      shelfLifeDays: 730,
+      guideVideoUrl: demoVideoUrl,
+      intro:
+        '高通量宏基因组测序，可检出细菌、真菌、病毒等 3 万多种肠道微生物，报告约 70 页，收样后 7-10 个工作日出具，京东快递上门取件。含 AI 智能解读与专业报告解读服务。本报告仅用于健康风险提示，不作为临床诊断依据。',
+      relatedSkuCodes: ['KIT-GUT-EXP-001'],
+      courseCodes: ['sampling_ops'],
+    },
+    {
+      skuCode: 'KIT-GUT-EXP-001',
+      name: '肠道菌群基因组检测·极速版',
+      supplyPriceCents: 129900,
+      retailPriceCents: 299900,
+      testItems: ['肠道菌群微生态指数6+项', '健康评估10项', '代谢评估16+项', '疾病风险预测39项'],
+      sampleType: '粪便',
+      samplingMethod: '居家采样管+保存液（京东上门取件）',
+      storageCondition: '阴凉避光保存',
+      shelfLifeDays: 730,
+      guideVideoUrl: demoVideoUrl,
+      intro:
+        '极速版收样后 3-5 个工作日出报告，报告约 130 页，健康评估与代谢评估维度更全面，疾病风险预测多达 39 项。本报告仅用于健康风险提示，不作为临床诊断依据。',
+      relatedSkuCodes: ['KIT-GUT-STD-001'],
+      courseCodes: ['sampling_ops'],
+    },
+    {
+      skuCode: 'FMT-CAP-001',
+      name: 'FMT 健康人源肠道菌群胶囊',
+      supplyPriceCents: 299900,
+      retailPriceCents: 599900,
+      testItems: ['单次移植活菌数≥2.5万亿CFU'],
+      sampleType: '口服肠溶胶囊',
+      samplingMethod: '遵医嘱温水吞服',
+      storageCondition: '0-4℃ 冷藏，2 个月',
+      shelfLifeDays: 60,
+      intro:
+        '同济医院共建菌库供体，GMP 生产质量管理规范及 P2 实验室环境制备，新型包埋肠溶胶囊技术直达肠道。单次移植活菌数≥2.5 万亿 CFU，远高于国内外共识要求。须在执业医师指导下使用，严禁自行服用。',
+      relatedSkuCodes: ['FMT-ADJ-001'],
+      courseCodes: ['product_knowledge', 'sampling_ops'],
+    },
+    {
+      skuCode: 'FMT-ADJ-001',
+      name: 'FMT 专用辅剂',
+      supplyPriceCents: 39900,
+      retailPriceCents: 89900,
+      testItems: ['活菌量≥1.5万亿CFU/瓶'],
+      sampleType: '口服液态（A液+B液）',
+      samplingMethod: '早晨空腹，温开水稀释胃酸后混合服用',
+      storageCondition: '0-4℃ 冷藏，15 天，不可冷冻',
+      shelfLifeDays: 15,
+      intro:
+        '同济医院专家团队自主研发的院线级专供制剂，优选动物双歧杆菌 BB-12、鼠李糖乳杆菌 GG 等菌株，不添加任何防腐剂。可单独使用（6 天/疗程），也可配合菌群移植使用，增强移植菌群定植率。',
+      relatedSkuCodes: ['FMT-CAP-001'],
+      courseCodes: ['product_knowledge'],
+    },
+  ]
+
   for (const item of demoProducts) {
     const product = await prisma.product.upsert({
       where: { skuCode: item.skuCode },
@@ -498,6 +733,7 @@ async function main(): Promise<void> {
         commissionRateCapBps: 2000,
         distributable: true,
         status: 'active',
+        guideVideoUrl: demoVideoUrl,
       },
       create: {
         skuCode: item.skuCode,
@@ -515,6 +751,7 @@ async function main(): Promise<void> {
         commissionRateCapBps: 2000,
         distributable: true,
         status: 'active',
+        guideVideoUrl: demoVideoUrl,
       },
     })
 
@@ -540,6 +777,105 @@ async function main(): Promise<void> {
         retailPriceCents: item.retailPriceCents,
       },
     })
+  }
+
+  // 资料转化方案商品：创建后回填搭配推荐（ProductRelated）与课程绑定（ProductCourse）
+  const productIdBySku = new Map<string, string>()
+  const courseIdByCode = new Map<string, string>()
+  for (const course of await prisma.course.findMany({ select: { id: true, code: true } })) {
+    courseIdByCode.set(course.code, course.id)
+  }
+
+  for (const item of contentProducts) {
+    const product = await prisma.product.upsert({
+      where: { skuCode: item.skuCode },
+      update: {
+        name: item.name,
+        supplierId: supplier.id,
+        testItems: item.testItems,
+        sampleType: item.sampleType,
+        samplingMethod: item.samplingMethod,
+        storageCondition: item.storageCondition,
+        shelfLifeDays: item.shelfLifeDays,
+        supplyPriceCents: item.supplyPriceCents,
+        suggestedRetailPriceCents: item.retailPriceCents,
+        retailPriceCents: item.retailPriceCents,
+        platformServiceRateBps: 1000,
+        commissionRateCapBps: 2000,
+        distributable: true,
+        status: 'active',
+        guideVideoUrl: item.guideVideoUrl ?? null,
+        intro: item.intro,
+      },
+      create: {
+        skuCode: item.skuCode,
+        name: item.name,
+        supplierId: supplier.id,
+        testItems: item.testItems,
+        sampleType: item.sampleType,
+        samplingMethod: item.samplingMethod,
+        storageCondition: item.storageCondition,
+        shelfLifeDays: item.shelfLifeDays,
+        supplyPriceCents: item.supplyPriceCents,
+        suggestedRetailPriceCents: item.retailPriceCents,
+        retailPriceCents: item.retailPriceCents,
+        platformServiceRateBps: 1000,
+        commissionRateCapBps: 2000,
+        distributable: true,
+        status: 'active',
+        guideVideoUrl: item.guideVideoUrl ?? null,
+        intro: item.intro,
+      },
+    })
+    productIdBySku.set(item.skuCode, product.id)
+
+    await prisma.batch.upsert({
+      where: { productId_batchNo: { productId: product.id, batchNo: `${item.skuCode}-B1` } },
+      update: { expiresAt: inOneYear, quantity: 200 },
+      create: {
+        productId: product.id,
+        batchNo: `${item.skuCode}-B1`,
+        productionDate: now,
+        expiresAt: inOneYear,
+        quantity: 200,
+        remaining: 200,
+      },
+    })
+
+    await prisma.merchantProduct.upsert({
+      where: { merchantId_productId: { merchantId: merchant.id, productId: product.id } },
+      update: { retailPriceCents: item.retailPriceCents, status: 'active' },
+      create: {
+        merchantId: merchant.id,
+        productId: product.id,
+        retailPriceCents: item.retailPriceCents,
+      },
+    })
+  }
+
+  for (const item of contentProducts) {
+    const productId = productIdBySku.get(item.skuCode)
+    if (!productId) continue
+    for (const [sort, relatedSku] of item.relatedSkuCodes.entries()) {
+      const relatedProductId = productIdBySku.get(relatedSku)
+      if (!relatedProductId || relatedProductId === productId) continue
+      await prisma.productRelated.upsert({
+        where: {
+          productId_relatedProductId: { productId, relatedProductId },
+        },
+        update: { sort },
+        create: { productId, relatedProductId, sort },
+      })
+    }
+    for (const courseCode of item.courseCodes) {
+      const courseId = courseIdByCode.get(courseCode)
+      if (!courseId) continue
+      await prisma.productCourse.upsert({
+        where: { productId_courseId: { productId, courseId } },
+        update: {},
+        create: { productId, courseId },
+      })
+    }
   }
 
   let account = await prisma.prepaidAccount.findUnique({ where: { merchantId: merchant.id } })

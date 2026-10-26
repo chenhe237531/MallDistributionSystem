@@ -1,143 +1,653 @@
+/* ===== 设计令牌 → CSS 变量（FR-DS，值与 @mall/shared designTokens 同步，主色 #1677ff） ===== */
+:root,
 page {
-  background: #f1f5f9;
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mall-primary: #1677ff;
+  --mall-primary-hover: #4096ff;
+  --mall-primary-pressed: #0958d9;
+  --mall-primary-light: #e6f4ff;
+  --mall-primary-light-pressed: #bae0ff;
+  --mall-success: #00b42a;
+  --mall-success-light: #e8ffea;
+  --mall-warning: #ff7d00;
+  --mall-warning-light: #fff7e8;
+  --mall-danger: #f53f3f;
+  --mall-danger-light: #ffece8;
+  --mall-text: #1f2329;
+  --mall-text-secondary: #646a73;
+  --mall-text-tertiary: #8f959e;
+  --mall-border: #e5e6eb;
+  --mall-border-light: #f2f3f5;
+  --mall-bg: #f7f8fa;
+  --mall-card: #ffffff;
+  --mall-brand-dark: #0f2540;
+
+  /* ===== NutUI 主题覆盖（品牌色 → 设计令牌，变量名以 NutUI dist/style.css 为准） ===== */
+  --nutui-color-primary: var(--mall-primary);
+  --nutui-color-primary-pressed: var(--mall-primary-pressed);
+  --nutui-color-primary-light: var(--mall-primary-light);
+  --nutui-color-primary-light-pressed: var(--mall-primary-light-pressed);
+  --nutui-color-primary-disabled: var(--mall-primary-light-pressed);
+  --nutui-color-primary-disabled-special: var(--mall-primary-light-pressed);
+  --nutui-color-primary-text: var(--mall-card);
+  --nutui-color-title: var(--mall-text);
+  --nutui-color-text: var(--mall-text-secondary);
+  --nutui-color-text-help: var(--mall-text-tertiary);
+  --nutui-color-border: var(--mall-border);
+  --nutui-color-background: var(--mall-bg);
 }
 
+page {
+  background: var(--mall-bg);
+  color: var(--mall-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+}
+
+/* ===== 共享布局（375 设计稿基准） ===== */
 .page {
   min-height: 100vh;
-  padding: 24px;
+  padding: 12px;
   box-sizing: border-box;
+  background: var(--mall-bg);
 }
 
+/* 青绿渐变头卡 */
 .hero {
   display: flex;
   flex-direction: column;
-  padding: 32px;
-  border-radius: 24px;
-  background: linear-gradient(135deg, #0f766e, #134e4a);
+  padding: 18px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--mall-primary), var(--mall-brand-dark));
   color: #fff;
+  box-shadow: 0 6px 16px rgba(22, 119, 255, 0.24);
 }
 
 .hero-role {
-  font-size: 24px;
-  opacity: 0.8;
+  font-size: 12px;
+  opacity: 0.82;
+  letter-spacing: 1px;
 }
 
 .hero-title {
-  margin-top: 12px;
-  font-size: 40px;
+  margin-top: 6px;
+  font-size: 20px;
   font-weight: 600;
 }
 
 .hero-balance {
-  margin-top: 24px;
-  font-size: 30px;
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .hero-status {
-  margin-top: 8px;
-  font-size: 24px;
-  opacity: 0.75;
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.78;
+  line-height: 1.6;
 }
 
 .section {
-  margin-top: 28px;
+  margin-top: 16px;
 }
 
 .section-title {
-  font-size: 28px;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mall-text);
+
+  &::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    margin-right: 6px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--mall-primary-hover), var(--mall-primary));
+  }
 }
 
 .card {
-  margin-top: 16px;
-  padding: 24px;
-  border-radius: 20px;
-  background: #fff;
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--mall-card);
+  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.05);
 }
 
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
-  font-size: 26px;
-  color: #0f172a;
+  padding: 5px 0;
+  font-size: 13px;
+  color: var(--mall-text);
 }
 
 .row-label {
-  color: #64748b;
-}
-
-.entry-grid {
-  display: flex;
-  flex-wrap: wrap;
-  margin-top: 16px;
-  gap: 16px;
-}
-
-.entry-item {
-  width: calc(33.33% - 11px);
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 24px;
-  min-height: 140px;
-  border-radius: 20px;
-  background: #fff;
-  font-size: 26px;
-  color: #0f172a;
-}
-
-.entry-tag {
-  margin-top: 24px;
-  font-size: 20px;
-  color: #94a3b8;
-}
-
-.btn {
-  margin-top: 16px;
-  background: #0f766e;
-  color: #fff;
-  border-radius: 16px;
-  font-size: 26px;
-}
-
-.btn-secondary {
-  margin-top: 12px;
-  background: #e2e8f0;
-  color: #0f172a;
-  border-radius: 16px;
-  font-size: 24px;
-}
-
-.input {
-  margin-top: 12px;
-  padding: 16px;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  font-size: 26px;
-  background: #fff;
-}
-
-.tag {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 8px;
-  background: #ccfbf1;
-  color: #0f766e;
-  font-size: 20px;
+  color: var(--mall-text-secondary);
 }
 
 .muted {
-  color: #64748b;
-  font-size: 22px;
+  color: var(--mall-text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
 }
 
 .error {
+  margin-top: 6px;
+  color: var(--mall-danger);
+  font-size: 12px;
+}
+
+/* 轻量标签（自定义场景） */
+.tag-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--mall-primary-light);
+  color: var(--mall-primary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+/* NutUI 组件微调 */
+.nut-cell {
+  border-radius: 10px;
+  margin-top: 8px;
+  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.05);
+}
+
+.nut-cell-group {
+  .nut-cell {
+    margin-top: 0;
+    box-shadow: none;
+  }
+
+  .nut-cell:last-child {
+    border-radius: 0 0 10px 10px;
+  }
+
+  .nut-cell:first-child {
+    border-radius: 10px 10px 0 0;
+  }
+}
+
+.nut-empty {
   margin-top: 12px;
-  color: #dc2626;
-  font-size: 22px;
+  padding: 16px 0;
+}
+
+.nut-empty__description {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--mall-text-tertiary);
+}
+
+/* ===== 首页 ===== */
+/* FR-B1：今日经营指标卡 */
+.metric-row {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.metric-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.metric-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mall-primary);
+  white-space: nowrap;
+}
+
+.metric-label {
+  font-size: 10px;
+  color: var(--mall-text-tertiary);
+}
+
+.metric-divider {
+  width: 1px;
+  height: 26px;
+  background: var(--mall-border-light);
+}
+
+.index-grid-card {
+  padding: 14px 8px;
+}
+
+/* 3 列图标宫格（flex 自绘，避免 NutUI Grid 单元格不撑满导致的大片留白） */
+.index-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.index-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 33.33%;
+  box-sizing: border-box;
+  padding: 10px 4px;
+  border-radius: 10px;
+
+  &:active {
+    background: var(--mall-bg);
+  }
+}
+
+.index-entry-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+}
+
+.index-entry-emoji {
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* 图标底色：仅引用语义令牌的浅色层 */
+.tone-primary {
+  background: var(--mall-primary-light);
+}
+
+.tone-success {
+  background: var(--mall-success-light);
+}
+
+.tone-warning {
+  background: var(--mall-warning-light);
+}
+
+.tone-danger {
+  background: var(--mall-danger-light);
+}
+
+.index-entry-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mall-text);
+  white-space: nowrap;
+}
+
+.index-todo-card {
+  padding: 4px 12px;
+}
+
+.index-todo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: 10px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.index-todo-emoji {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.index-todo-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+
+  &::after {
+    content: '';
+    display: block;
+    height: 1px;
+    margin-top: 12px;
+    background: var(--mall-bg);
+    transform: translateY(12px);
+  }
+
+  &:last-child::after {
+    display: none;
+  }
+}
+
+.index-todo-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.index-todo-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mall-text);
+}
+
+.index-todo-hint {
+  font-size: 11px;
+  color: var(--mall-warning);
+}
+
+.index-todo-value {
+  margin-left: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mall-primary);
+}
+
+.index-todo-arrow {
+  margin-left: 8px;
+  font-size: 16px;
+  color: var(--mall-border);
+}
+
+.index-logout {
+  margin-top: 20px;
+}
+
+/* ===== 登录页 ===== */
+.login-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 48px;
+}
+
+.login-card {
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.login-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.login-field {
+  margin-top: 12px;
+
+  .nut-input {
+    margin-top: 4px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--mall-border);
+    background: transparent;
+  }
+}
+
+.login-label {
+  font-size: 12px;
+  color: var(--mall-text-secondary);
+}
+
+.login-submit {
+  margin-top: 20px;
+}
+
+.login-demo {
+  display: block;
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* ===== 通用表单卡片 ===== */
+.form-field {
+  margin-top: 10px;
+
+  .nut-input {
+    margin-top: 4px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--mall-border);
+    background: transparent;
+  }
+}
+
+.form-label {
+  font-size: 12px;
+  color: var(--mall-text-secondary);
+}
+
+.form-submit {
+  margin-top: 16px;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 10px;
+}
+
+/* ===== 业务金额展示 ===== */
+.biz-amount {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mall-primary);
+}
+
+.biz-amount-negative {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mall-danger);
+}
+
+/* ===== 业绩区间切换 ===== */
+.biz-range-card {
+  margin-top: 10px;
+  padding: 12px;
+}
+
+.biz-range-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.biz-range-chip {
+  padding: 5px 12px;
+  border: 1px solid var(--mall-border);
+  border-radius: 999px;
+  background: var(--mall-bg);
+  font-size: 12px;
+  color: var(--mall-text-secondary);
+
+  &:active {
+    background: var(--mall-primary-light);
+  }
+}
+
+.biz-range-chip-active {
+  border-color: var(--mall-primary);
+  background: var(--mall-primary);
+  color: #fff;
+}
+
+.biz-range-pickers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.biz-range-picker {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border: 1px solid var(--mall-border);
+  border-radius: 8px;
+  background: var(--mall-bg);
+}
+
+.biz-range-picker-label {
+  font-size: 11px;
+  color: var(--mall-text-tertiary);
+}
+
+.biz-range-picker-value {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mall-text);
+}
+
+.biz-range-sep {
+  font-size: 12px;
+  color: var(--mall-text-tertiary);
+}
+
+.biz-range-caption {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--mall-text-secondary);
+}
+
+/* ===== 预付款 ===== */
+.prepaid-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.prepaid-export {
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+
+/* ===== 采购页 ===== */
+.proc-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.proc-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.proc-quantity {
+  flex: 1;
+
+  .nut-input {
+    padding: 6px 10px;
+    border: 1px solid var(--mall-border);
+    border-radius: 8px;
+    background: var(--mall-bg);
+  }
+}
+
+.proc-submit {
+  flex-shrink: 0;
+}
+
+/* ===== 客户页 ===== */
+.cust-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.cust-stats {
+  margin-top: 6px;
+
+  .nut-cell {
+    background: var(--mall-bg);
+    border-radius: 8px !important;
+    margin-top: 6px;
+    box-shadow: none;
+  }
+}
+
+.cust-stat {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mall-primary);
+}
+
+/* ===== 素材页 ===== */
+.mat-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.mat-generate {
+  margin-top: 10px;
+}
+
+/* ===== 培训页 ===== */
+.train-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.train-progress {
+  margin-top: 8px;
+}
+
+.train-action {
+  margin-top: 10px;
+}
+
+/* ===== 报告页 ===== */
+.report-error {
+  display: block;
+}
+
+.rep-no {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.rep-summary {
+  display: block;
+  margin: 6px 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--mall-text);
+}
+
+.interpretation-block {
+  margin-top: 10px;
+
+  .nut-tag {
+    margin-bottom: 4px;
+  }
+}
+
+.interpretation-text {
+  display: block;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--mall-text-secondary);
+}
+
+/* ===== 消息页 ===== */
+.notif-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.notif-body {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--mall-text-secondary);
 }

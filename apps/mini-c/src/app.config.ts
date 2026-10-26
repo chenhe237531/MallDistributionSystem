@@ -2,7 +2,10 @@ export default defineAppConfig({
   pages: [
     'pages/index/index',
     'pages/login/index',
+    'pages/product/index',
     'pages/order/index',
+    'pages/pay-result/index',
+    'pages/order-detail/index',
     'pages/orders/index',
     'pages/activate/index',
     'pages/reports/index',

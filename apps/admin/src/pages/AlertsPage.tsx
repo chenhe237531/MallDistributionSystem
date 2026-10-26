@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Button, Card, Input, Space, Table, Tag, Typography, message } from 'antd'
+import { useRef, useState } from 'react'
+import { Button, Input, Select, Space, Tag, message } from 'antd'
+import type { ActionType, ProColumns } from '@ant-design/pro-components'
+import { PageContainer, ProTable } from '@ant-design/pro-components'
 import { api } from '../lib/api'
-
-const { Title, Paragraph } = Typography
 
 type Alert = {
   id: string
@@ -16,133 +16,149 @@ type Alert = {
   resolvedAt: string | null
 }
 
-const SEVERITY_COLORS: Record<string, string> = {
-  critical: 'red',
-  warning: 'orange',
-  info: 'blue',
+const SEVERITY_META: Record<string, { label: string; color: string }> = {
+  critical: { label: '严重', color: 'red' },
+  warning: { label: '警告', color: 'orange' },
+  info: { label: '提示', color: 'blue' },
 }
 
+const STATUS_META: Record<string, { label: string; color: string }> = {
+  open: { label: '待处理', color: 'red' },
+  resolved: { label: '已处理', color: 'green' },
+}
+
+const formatDateTime = (value?: string | null) =>
+  value ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '—'
+
+const STATUS_OPTIONS = [
+  { value: 'open', label: '待处理' },
+  { value: 'resolved', label: '已处理' },
+  { value: '', label: '全部' },
+]
+
 export default function AlertsPage() {
-  const [alerts, setAlerts] = useState<Alert[]>([])
-  const [status, setStatus] = useState('open')
-  const [type, setType] = useState('')
-  const [loading, setLoading] = useState(false)
+  const actionRef = useRef<ActionType>()
+  const [statusInput, setStatusInput] = useState('open')
+  const [typeInput, setTypeInput] = useState('')
+  const [filters, setFilters] = useState<{ status: string; type: string }>({
+    status: 'open',
+    type: '',
+  })
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams()
-      if (status) {
-        params.set('status', status)
-      }
-      if (type.trim()) {
-        params.set('type', type.trim())
-      }
-      setAlerts(await api<Alert[]>(`/alerts?${params.toString()}`))
-    } catch (error) {
-      void message.error(error instanceof Error ? error.message : '加载失败')
-    } finally {
-      setLoading(false)
-    }
-  }, [status, type])
-
-  useEffect(() => {
-    void load()
-  }, [load])
+  const applyFilters = () => setFilters({ status: statusInput, type: typeInput.trim() })
 
   const resolve = async (id: string) => {
     try {
       await api(`/alerts/${id}/resolve`, { method: 'POST', body: JSON.stringify({}) })
-      void message.success('告警已处理')
-      await load()
-    } catch (error) {
-      void message.error(error instanceof Error ? error.message : '处理失败')
+      message.success('告警已处理')
+      actionRef.current?.reload()
+    } catch (cause) {
+      message.error(cause instanceof Error ? cause.message : '处理失败')
     }
   }
 
-  return (
-    <div>
-      <Title level={4} style={{ margin: 0 }}>
-        风控告警
-      </Title>
-      <Paragraph type="secondary">
-        覆盖自购、层级异常、盒码异常、异常注册、高频退款、预付款异常、报告外传与培训作弊。
-      </Paragraph>
+  const columns: ProColumns<Alert>[] = [
+    {
+      title: '时间',
+      dataIndex: 'createdAt',
+      width: 180,
+      renderText: (value: string) => formatDateTime(value),
+    },
+    {
+      title: '级别',
+      dataIndex: 'severity',
+      width: 90,
+      render: (_, entity) => {
+        const meta = SEVERITY_META[entity.severity] ?? {
+          label: entity.severity,
+          color: 'default',
+        }
+        return <Tag color={meta.color}>{meta.label}</Tag>
+      },
+    },
+    {
+      title: '类型',
+      dataIndex: 'type',
+      width: 220,
+      render: (_, entity) => <Tag color="blue">{entity.type}</Tag>,
+    },
+    { title: '告警内容', dataIndex: 'message', ellipsis: true },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      width: 100,
+      render: (_, entity) => {
+        const meta = STATUS_META[entity.status] ?? { label: entity.status, color: 'default' }
+        return <Tag color={meta.color}>{meta.label}</Tag>
+      },
+    },
+    {
+      title: '操作',
+      valueType: 'option',
+      width: 90,
+      render: (_, entity) =>
+        entity.status === 'open' ? (
+          <a key="resolve" onClick={() => void resolve(entity.id)}>
+            处理
+          </a>
+        ) : (
+          [<span key="none">—</span>]
+        ),
+    },
+  ]
 
-      <Card
-        style={{ marginBottom: 16 }}
-        title={
-          <Space>
+  return (
+    <PageContainer
+      header={{ title: '风控告警', subTitle: '告警检索与处理' }}
+      content="覆盖自购、层级异常、盒码异常、异常注册、高频退款、预付款异常、报告外传与培训作弊。"
+    >
+      <ProTable<Alert>
+        rowKey="id"
+        actionRef={actionRef}
+        columns={columns}
+        search={false}
+        options={{ reload: true, density: true, setting: true }}
+        params={{ status: filters.status, type: filters.type }}
+        pagination={{ pageSize: 20 }}
+        headerTitle={
+          <Space wrap>
             <Input
-              value={type}
-              onChange={(event) => setType(event.target.value)}
+              value={typeInput}
+              onChange={(event) => setTypeInput(event.target.value)}
+              onPressEnter={applyFilters}
               placeholder="告警类型，如 box_code_multi_scan"
-              style={{ width: 320 }}
               allowClear
+              style={{ width: 260 }}
             />
-            <select
-              value={status}
-              onChange={(event) => setStatus(event.target.value)}
-              style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #d9d9d9' }}
-            >
-              <option value="open">待处理</option>
-              <option value="resolved">已处理</option>
-              <option value="">全部</option>
-            </select>
-            <Button type="primary" onClick={() => void load()}>
+            <Select
+              value={statusInput}
+              onChange={setStatusInput}
+              options={STATUS_OPTIONS}
+              style={{ width: 120 }}
+            />
+            <Button type="primary" onClick={applyFilters}>
               检索
             </Button>
           </Space>
         }
-      >
-        <Table
-          size="small"
-          rowKey="id"
-          loading={loading}
-          dataSource={alerts}
-          pagination={{ pageSize: 20 }}
-          columns={[
-            {
-              title: '时间',
-              dataIndex: 'createdAt',
-              width: 180,
-              render: (value: string) => new Date(value).toLocaleString('zh-CN'),
-            },
-            {
-              title: '级别',
-              dataIndex: 'severity',
-              width: 100,
-              render: (value: string) => (
-                <Tag color={SEVERITY_COLORS[value] ?? 'default'}>{value}</Tag>
-              ),
-            },
-            {
-              title: '类型',
-              dataIndex: 'type',
-              width: 240,
-              render: (value: string) => <Tag color="blue">{value}</Tag>,
-            },
-            { title: '告警内容', dataIndex: 'message' },
-            {
-              title: '状态',
-              dataIndex: 'status',
-              width: 100,
-              render: (value: string) =>
-                value === 'open' ? <Tag color="red">待处理</Tag> : <Tag color="green">已处理</Tag>,
-            },
-            {
-              title: '操作',
-              width: 100,
-              render: (_, alert) =>
-                alert.status === 'open' ? (
-                  <Button size="small" onClick={() => void resolve(alert.id)}>
-                    处理
-                  </Button>
-                ) : null,
-            },
-          ]}
-        />
-      </Card>
-    </div>
+        request={async (params) => {
+          try {
+            const search = new URLSearchParams()
+            if (params.status) {
+              search.set('status', params.status)
+            }
+            const type = (params.type ?? '').trim()
+            if (type) {
+              search.set('type', type)
+            }
+            const data = await api<Alert[]>(`/alerts?${search.toString()}`)
+            return { data, success: true }
+          } catch (cause) {
+            message.error(cause instanceof Error ? cause.message : '加载失败')
+            return { data: [], success: false }
+          }
+        }}
+      />
+    </PageContainer>
   )
 }

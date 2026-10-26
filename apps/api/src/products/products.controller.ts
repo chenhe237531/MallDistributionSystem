@@ -9,6 +9,7 @@ import { CreateListingDto } from './dto/create-listing.dto'
 import { CreateProductDto } from './dto/create-product.dto'
 import { ReviewProductDto } from './dto/review-product.dto'
 import { UpdateListingDto } from './dto/update-listing.dto'
+import { UpdateProductContentDto } from './dto/update-product-content.dto'
 import { ProductsService } from './products.service'
 
 @Controller('products')
@@ -52,6 +53,12 @@ export class ProductsController {
   @Roles(Role.PLATFORM)
   review(@Param('id') id: string, @Body() dto: ReviewProductDto) {
     return this.productsService.review(id, dto)
+  }
+
+  @Patch(':id/content')
+  @Roles(Role.PLATFORM)
+  updateContent(@Param('id') id: string, @Body() dto: UpdateProductContentDto) {
+    return this.productsService.updateContent(id, dto)
   }
 
   @Post(':id/batches')

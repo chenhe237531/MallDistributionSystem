@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Taro from '@tarojs/taro'
 import { Text, View } from '@tarojs/components'
+import { Button as NutButton, Empty, Tag, Toast } from '@nutui/nutui-react-taro'
 import { api, ensureLogin, go } from '../../lib/api'
 
 type Notification = {
@@ -34,7 +35,10 @@ export default function Notifications() {
       return
     }
     void load().catch((cause) => {
-      void Taro.showToast({ title: cause instanceof Error ? cause.message : '加载失败', icon: 'none' })
+      Toast.show('notifications-toast', {
+        title: cause instanceof Error ? cause.message : '加载失败',
+        icon: 'fail',
+      })
     })
   }, [])
 
@@ -46,12 +50,16 @@ export default function Notifications() {
       await api(`/notifications/${item.id}/read`, { method: 'POST', data: {} })
       await load()
     } catch (cause) {
-      void Taro.showToast({ title: cause instanceof Error ? cause.message : '操作失败', icon: 'none' })
+      Toast.show('notifications-toast', {
+        title: cause instanceof Error ? cause.message : '操作失败',
+        icon: 'fail',
+      })
     }
   }
 
   return (
     <View className="page">
+      <Toast id="notifications-toast" />
       <View className="hero">
         <Text className="hero-role">消息中心</Text>
         <Text className="hero-title">{unread} 条未读</Text>
@@ -59,12 +67,14 @@ export default function Notifications() {
       </View>
 
       <View className="section">
-        {items.length === 0 ? <Text className="muted">暂无消息</Text> : null}
+        {items.length === 0 ? <Empty description="暂无消息" /> : null}
         {items.map((item) => (
           <View key={item.id} className="card" onClick={() => void read(item)}>
             <View className="row">
-              <Text>{item.title}</Text>
-              <Text className="tag">{item.status === 'read' ? '已读' : '未读'}</Text>
+              <Text className="card-title">{item.title}</Text>
+              <Tag type={item.status === 'read' ? 'default' : 'primary'}>
+                {item.status === 'read' ? '已读' : '未读'}
+              </Tag>
             </View>
             <Text>{item.body}</Text>
             <Text className="muted">
@@ -72,9 +82,16 @@ export default function Notifications() {
             </Text>
             {item.failureReason ? <Text className="muted">{item.failureReason}</Text> : null}
             {item.type === 'report_ready' || item.type === 'report_shared' ? (
-              <Text className="tag" onClick={() => go('/pages/reports/index')}>
-                查看报告
-              </Text>
+              <View className="price-row">
+                <NutButton
+                  size="small"
+                  type="primary"
+                  fill="outline"
+                  onClick={() => go('/pages/reports/index')}
+                >
+                  查看报告
+                </NutButton>
+              </View>
             ) : null}
           </View>
         ))}

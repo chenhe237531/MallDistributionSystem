@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Text, View } from '@tarojs/components'
-import { formatCents } from '@mall/shared'
+import { Button as NutButton, Empty, Price, Tag } from '@nutui/nutui-react-taro'
+import {
+  SALES_ORDER_STATUS_LABELS,
+  SALES_ORDER_STATUS_TONES,
+  designTokens,
+  formatCents,
+  statusLabel,
+} from '@mall/shared'
 import { api, ensureLogin, go } from '../../lib/api'
 
 type Order = {
@@ -10,21 +17,6 @@ type Order = {
   totalAmountCents: number
   createdAt: string
   items: Array<{ id: string; productName: string; quantity: number }>
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  pending_payment: '待支付',
-  paid: '已支付',
-  pending_shipment: '待发货',
-  shipped: '已发货',
-  pending_sampling: '待采样',
-  testing: '检测中',
-  report_ready: '报告已出',
-  completed: '已完成',
-  cancelled: '已取消',
-  refunding: '退款中',
-  refunded: '已退款',
-  after_sale: '售后中',
 }
 
 export default function Orders() {
@@ -45,29 +37,29 @@ export default function Orders() {
       <View className="section">
         <Text className="section-title">我的订单</Text>
         {error ? <Text className="error">{error}</Text> : null}
-        {orders.length === 0 ? <Text className="muted">暂无订单</Text> : null}
+        {orders.length === 0 ? <Empty description="暂无订单" /> : null}
         {orders.map((order) => (
           <View key={order.id} className="card">
             <View className="row">
-              <Text>{order.orderNo}</Text>
-              <Text className="tag">{STATUS_LABELS[order.status] ?? order.status}</Text>
+              <Text className="card-title">{order.orderNo}</Text>
+              <Tag type={SALES_ORDER_STATUS_TONES[order.status] ?? 'default'}>
+                {statusLabel(SALES_ORDER_STATUS_LABELS, order.status)}
+              </Tag>
             </View>
             {order.items.map((item) => (
               <Text key={item.id} className="muted">
                 {item.productName} × {item.quantity}
               </Text>
             ))}
-            <View className="row" style={{ marginTop: '12px' }}>
-              <Text style={{ color: '#dc2626', fontWeight: 600 }}>
-                {formatCents(order.totalAmountCents)} 元
-              </Text>
-              {['paid', 'shipped', 'pending_sampling', 'testing', 'report_ready', 'completed'].includes(
-                order.status,
-              ) ? (
-                <Text className="tag" onClick={() => go('/pages/activate/index')}>
-                  扫码激活
-                </Text>
-              ) : null}
+            <View className="price-row">
+              <Price price={formatCents(order.totalAmountCents)} symbol="¥" color={designTokens.colorPrimary} />
+              <NutButton
+                size="small"
+                fill="outline"
+                onClick={() => go(`/pages/order-detail/index?orderNo=${order.orderNo}`)}
+              >
+                查看详情
+              </NutButton>
             </View>
             <Text className="muted">{new Date(order.createdAt).toLocaleString('zh-CN')}</Text>
           </View>

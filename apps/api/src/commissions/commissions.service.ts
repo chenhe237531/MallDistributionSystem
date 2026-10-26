@@ -303,6 +303,44 @@ export class CommissionsService {
   }
 
   /**
+   * 退款后按累计净额口径重算订单项结算（货款/成本/服务费/佣金净额/商家收入）。
+   * 返回商家收入的累计应冲回差额（旧值 - 新值），供对账行冲回使用。
+   */
+  async recomputeSettlementForItemInTransaction(tx: Prisma.TransactionClient, orderItemId: string) {
+    const item = await tx.salesOrderItem.findUnique({ where: { id: orderItemId } })
+    if (!item) {
+      throw new BadRequestException('订单项不存在')
+    }
+    const commissions = await tx.commission.findMany({ where: { orderItemId } })
+    const netAmount = (level: number) =>
+      commissions
+        .filter((commission) => commission.level === level)
+        .reduce((sum, commission) => sum + commission.amountCents - commission.reversedAmountCents, 0)
+    const level1Net = netAmount(1)
+    const level2Net = netAmount(2)
+    const amountEff = item.amountCents - item.refundedAmountCents
+    const supplyEff = item.supplyPriceCents * (item.quantity - item.refundedQuantity)
+    const feeEff = Math.round((amountEff * item.platformServiceRateBps) / 10000)
+    const merchantIncome = amountEff - supplyEff - feeEff - level1Net - level2Net
+
+    const prev = await tx.orderSettlement.findUnique({ where: { orderItemId } })
+    if (!prev) {
+      return { settlementId: null, currentIncome: 0 }
+    }
+    await tx.orderSettlement.update({
+      where: { orderItemId },
+      data: {
+        supplyCostCents: supplyEff,
+        platformServiceFeeCents: feeEff,
+        level1CommissionCents: level1Net,
+        level2CommissionCents: level2Net,
+        merchantIncomeCents: merchantIncome,
+      },
+    })
+    return { settlementId: prev.id, currentIncome: merchantIncome }
+  }
+
+  /**
    * refundedQuantity 为该订单项累计已退数量（含本次），
    * 按累计数量计算目标冲销额，避免多次部分退款时按次舍入产生残留。
    */

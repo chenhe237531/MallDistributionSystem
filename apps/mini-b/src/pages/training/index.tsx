@@ -1,7 +1,15 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
-import { Button, Text, View } from '@tarojs/components'
+import { Text, View } from '@tarojs/components'
+import { TRAINING_STATUS_LABELS, TRAINING_STATUS_TONES, statusLabel } from '@mall/shared'
 import { api, ensureLogin } from '../../lib/api'
+import {
+  Button as NutButton,
+  Empty,
+  Progress,
+  Tag,
+  Toast,
+} from '@nutui/nutui-react-taro'
 
 type Record = {
   id: string
@@ -11,6 +19,9 @@ type Record = {
   completedChapterIds: string[]
   course: { id: string; name: string; chapters: Array<{ id: string; title: string }> }
 }
+
+const toast = (title: string, icon?: 'success' | 'fail') =>
+  Toast.show('b-toast', { title, icon })
 
 export default function Training() {
   const [records, setRecords] = useState<Record[]>([])
@@ -34,7 +45,7 @@ export default function Training() {
       (chapter) => !record.completedChapterIds.includes(chapter.id),
     )
     if (!next) {
-      void Taro.showToast({ title: '章节已完成，请参加考试', icon: 'none' })
+      toast('章节已完成，请参加考试')
       return
     }
     setLoading(true)
@@ -43,10 +54,10 @@ export default function Training() {
         method: 'POST',
         data: {},
       })
-      void Taro.showToast({ title: '章节已完成', icon: 'success' })
+      toast('章节已完成', 'success')
       await load()
     } catch (cause) {
-      void Taro.showToast({ title: cause instanceof Error ? cause.message : '操作失败', icon: 'none' })
+      toast(cause instanceof Error ? cause.message : '操作失败')
     } finally {
       setLoading(false)
     }
@@ -56,25 +67,43 @@ export default function Training() {
     <View className="page">
       <View className="section">
         <Text className="section-title">我的学习</Text>
-        {records.length === 0 ? <Text className="muted">暂无学习任务</Text> : null}
+        {records.length === 0 ? <Empty description="暂无学习任务" /> : null}
         {records.map((record) => (
           <View key={record.id} className="card">
             <View className="row">
-              <Text>{record.course.name}</Text>
-              <Text className="tag">{record.status}</Text>
+              <Text className="train-name">{record.course.name}</Text>
+              <Tag type={TRAINING_STATUS_TONES[record.status] ?? 'default'}>
+                {statusLabel(TRAINING_STATUS_LABELS, record.status)}
+              </Tag>
+            </View>
+            <View className="train-progress">
+              <Progress
+                percent={Math.max(0, Math.min(100, record.progress))}
+                showText
+                color="#1677ff"
+              />
             </View>
             <Text className="muted">
               进度 {record.progress}%
               {record.examScore !== null ? ` · 考试 ${record.examScore} 分` : ''}
             </Text>
             {record.status !== 'passed' ? (
-              <Button className="btn-secondary" loading={loading} onClick={() => void completeNext(record)}>
+              <NutButton
+                className="train-action"
+                block
+                type="primary"
+                fill="outline"
+                loading={loading}
+                onClick={() => void completeNext(record)}
+              >
                 完成下一章节
-              </Button>
+              </NutButton>
             ) : null}
           </View>
         ))}
       </View>
+
+      <Toast id="b-toast" />
     </View>
   )
 }

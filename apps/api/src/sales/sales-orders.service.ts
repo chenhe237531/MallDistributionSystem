@@ -59,11 +59,67 @@ export class SalesOrdersService {
             batches: {
               where: { remaining: { gt: 0 }, expiresAt: { gt: now } },
             },
+            relatedLinks: {
+              orderBy: { sort: 'asc' },
+              select: { related: { select: { id: true, name: true, skuCode: true } } },
+            },
           },
         },
       },
       orderBy: { createdAt: 'desc' },
     })
+
+    // 搭配推荐：解析关联商品在各商家 active 上架中的最低价（优先当前渠道商家）
+    const relatedIds = [
+      ...new Set(
+        listings.flatMap((listing) => listing.product.relatedLinks.map((link) => link.related.id)),
+      ),
+    ]
+    const relatedListings =
+      relatedIds.length > 0
+        ? await this.prisma.merchantProduct.findMany({
+            where: {
+              status: 'active',
+              productId: { in: relatedIds },
+              product: { status: 'active' },
+            },
+            select: {
+              id: true,
+              merchantId: true,
+              productId: true,
+              retailPriceCents: true,
+            },
+          })
+        : []
+    const bestRelatedListing = new Map<string, (typeof relatedListings)[number]>()
+    for (const related of relatedListings) {
+      const current = bestRelatedListing.get(related.productId)
+      if (!current) {
+        bestRelatedListing.set(related.productId, related)
+        continue
+      }
+      // 渠道商家自己的上架优先；同级再比价格
+      const currentPreferred = merchantId ? current.merchantId === merchantId : false
+      const relatedPreferred = merchantId ? related.merchantId === merchantId : false
+      if (
+        (relatedPreferred && !currentPreferred) ||
+        (relatedPreferred === currentPreferred &&
+          related.retailPriceCents < current.retailPriceCents)
+      ) {
+        bestRelatedListing.set(related.productId, related)
+      }
+    }
+    const relatedPriceById = new Map(
+      relatedIds.map((productId) => {
+        const listing = bestRelatedListing.get(productId)
+        return [
+          productId,
+          listing
+            ? { listingId: listing.id, retailPriceCents: listing.retailPriceCents }
+            : { listingId: null, retailPriceCents: null },
+        ]
+      }),
+    )
 
     return listings.map((listing) => ({
       listingId: listing.id,
@@ -74,6 +130,18 @@ export class SalesOrdersService {
       skuCode: listing.product.skuCode,
       retailPriceCents: listing.retailPriceCents,
       available: listing.product.batches.reduce((sum, batch) => sum + batch.remaining, 0),
+      guideVideoUrl: listing.product.guideVideoUrl,
+      intro: listing.product.intro,
+      related: listing.product.relatedLinks.map((link) => {
+        const price = relatedPriceById.get(link.related.id)
+        return {
+          productId: link.related.id,
+          name: link.related.name,
+          skuCode: link.related.skuCode,
+          listingId: price?.listingId ?? null,
+          retailPriceCents: price?.retailPriceCents ?? null,
+        }
+      }),
     }))
   }
 
@@ -205,6 +273,12 @@ export class SalesOrdersService {
     }
     if (order.status !== PrismaSalesOrderStatus.pending_payment) {
       throw new BadRequestException('当前状态不能登记支付')
+    }
+    if (
+      paidAmountCents !== undefined &&
+      paidAmountCents !== order.totalAmountCents
+    ) {
+      throw new BadRequestException('登记支付金额必须等于订单应付金额')
     }
 
     const paid = await this.prisma.$transaction(async (tx) => {
@@ -487,7 +561,20 @@ export class SalesOrdersService {
           cumulativeQuantity,
           item.quantity,
         )
-        await this.statementsService.addRefundAdjustmentInTransaction(tx, item.id)
+        await this.statementsService.addRefundAdjustmentInTransaction(
+          tx,
+          item.id,
+          cumulativeQuantity,
+          item.quantity,
+        )
+        // 商家收入行同步冲回：先按累计净额重算结算，再对已入对账单的行做差额冲回
+        const { settlementId, currentIncome } =
+          await this.commissionsService.recomputeSettlementForItemInTransaction(tx, item.id)
+        await this.statementsService.addSettlementRefundAdjustmentInTransaction(
+          tx,
+          settlementId,
+          currentIncome,
+        )
         refundedQuantityByItem.set(item.id, cumulativeQuantity)
         refundedNow += amountCents
       }

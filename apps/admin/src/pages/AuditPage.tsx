@@ -13,9 +13,10 @@ import {
   Typography,
   message,
 } from 'antd'
+import { PageContainer } from '@ant-design/pro-components'
 import { api, getToken } from '../lib/api'
 
-const { Title, Paragraph } = Typography
+const { Paragraph } = Typography
 
 type AuditLog = {
   id: string
@@ -48,6 +49,9 @@ type Filters = {
   resourceType?: string
   action?: string
 }
+
+const formatDateTime = (value?: string | null) =>
+  value ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '—'
 
 export default function AuditPage() {
   const [form] = Form.useForm()
@@ -82,7 +86,7 @@ export default function AuditPage() {
       setItems(result.items)
       setTotal(result.total)
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '加载失败')
+      message.error(error instanceof Error ? error.message : '加载失败')
     } finally {
       setLoading(false)
     }
@@ -108,9 +112,16 @@ export default function AuditPage() {
     setPage(1)
   }
 
+  const reset = () => {
+    form.resetFields()
+    setFilters({})
+    setRange(null)
+    setPage(1)
+  }
+
   const exportPackage = async () => {
     if (purpose.trim().length < 2) {
-      void message.warning('请填写导出用途')
+      message.warning('请填写导出用途')
       return
     }
     setExporting(true)
@@ -141,25 +152,21 @@ export default function AuditPage() {
       anchor.download = `audit-package.${exportFormat === 'pdf' ? 'pdf' : 'xlsx'}`
       anchor.click()
       URL.revokeObjectURL(url)
-      void message.success('凭证包已导出，导出用途已留痕')
+      message.success('凭证包已导出，导出用途已留痕')
       setExportOpen(false)
       setPurpose('')
     } catch (error) {
-      void message.error(error instanceof Error ? error.message : '导出失败')
+      message.error(error instanceof Error ? error.message : '导出失败')
     } finally {
       setExporting(false)
     }
   }
 
   return (
-    <div>
-      <Title level={4} style={{ margin: 0 }}>
-        合规留痕中心
-      </Title>
-      <Paragraph type="secondary">
-        只追加留痕，支持按订单号、盒码、客户、渠道与时间检索，并导出 PDF 汇总 + Excel 明细凭证包。
-      </Paragraph>
-
+    <PageContainer
+      header={{ title: '合规留痕', subTitle: '审计日志与凭证包导出' }}
+      content="只追加留痕，支持按订单号、盒码、客户、渠道与时间检索，并导出 PDF 汇总 + Excel 明细凭证包。"
+    >
       <Card style={{ marginBottom: 16 }}>
         <Form form={form} layout="inline" onFinish={() => search()}>
           <Form.Item name="orderNo" label="订单号">
@@ -188,16 +195,7 @@ export default function AuditPage() {
               <Button type="primary" htmlType="submit">
                 检索
               </Button>
-              <Button
-                onClick={() => {
-                  form.resetFields()
-                  setFilters({})
-                  setRange(null)
-                  setPage(1)
-                }}
-              >
-                重置
-              </Button>
+              <Button onClick={reset}>重置</Button>
             </Space>
           </Form.Item>
         </Form>
@@ -227,10 +225,10 @@ export default function AuditPage() {
         }
       >
         <Table
-          size="small"
           rowKey="id"
           loading={loading}
           dataSource={items}
+          locale={{ emptyText: '暂无留痕记录' }}
           pagination={{
             current: page,
             pageSize,
@@ -243,7 +241,7 @@ export default function AuditPage() {
           }}
           expandable={{
             expandedRowRender: (record) => (
-              <Descriptions size="small" column={2}>
+              <Descriptions size="small" column={2} bordered>
                 <Descriptions.Item label="资源">
                   {record.resourceType} / {record.resourceId}
                 </Descriptions.Item>
@@ -257,7 +255,15 @@ export default function AuditPage() {
                   {record.channelId ?? '—'} / {record.merchantId ?? '—'}
                 </Descriptions.Item>
                 <Descriptions.Item label="详情" span={2}>
-                  <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                  <pre
+                    style={{
+                      margin: 0,
+                      whiteSpace: 'pre-wrap',
+                      background: 'var(--ant-color-bg-layout)',
+                      padding: 8,
+                      borderRadius: 6,
+                    }}
+                  >
                     {JSON.stringify(record.detail, null, 2)}
                   </pre>
                 </Descriptions.Item>
@@ -269,7 +275,7 @@ export default function AuditPage() {
               title: '时间',
               dataIndex: 'createdAt',
               width: 180,
-              render: (value: string) => new Date(value).toLocaleString('zh-CN'),
+              render: (value: string) => formatDateTime(value),
             },
             {
               title: '动作',
@@ -278,10 +284,25 @@ export default function AuditPage() {
               render: (value: string) => <Tag color="blue">{value}</Tag>,
             },
             { title: '资源类型', dataIndex: 'resourceType', width: 130 },
-            { title: '订单号', dataIndex: 'orderNo', width: 180, render: (value) => value ?? '—' },
-            { title: '盒码', dataIndex: 'boxCode', width: 180, render: (value) => value ?? '—' },
+            {
+              title: '订单号',
+              dataIndex: 'orderNo',
+              width: 180,
+              render: (value: string | null) => value ?? '—',
+            },
+            {
+              title: '盒码',
+              dataIndex: 'boxCode',
+              width: 180,
+              render: (value: string | null) => value ?? '—',
+            },
             { title: '客户', dataIndex: 'customerId', ellipsis: true },
-            { title: '角色', dataIndex: 'actorRole', width: 110, render: (value) => value ?? 'system' },
+            {
+              title: '角色',
+              dataIndex: 'actorRole',
+              width: 110,
+              render: (value: string | null) => value ?? 'system',
+            },
           ]}
         />
       </Card>
@@ -304,6 +325,6 @@ export default function AuditPage() {
           maxLength={100}
         />
       </Modal>
-    </div>
+    </PageContainer>
   )
 }

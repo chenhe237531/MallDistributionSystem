@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react'
 import Taro from '@tarojs/taro'
-import { Button, Text, View } from '@tarojs/components'
+import { Text, View } from '@tarojs/components'
+import { Button as NutButton, Empty, Tag } from '@nutui/nutui-react-taro'
 import { formatCents } from '@mall/shared'
 import { api, clearToken, getToken, go, routeParams } from '../../lib/api'
+
+type RelatedItem = {
+  productId: string
+  name: string
+  skuCode: string
+  listingId: string | null
+  retailPriceCents: number | null
+}
 
 type StorefrontItem = {
   listingId: string
@@ -13,14 +22,19 @@ type StorefrontItem = {
   skuCode: string
   retailPriceCents: number
   available: number
+  guideVideoUrl?: string | null
+  intro?: string | null
+  related?: RelatedItem[]
 }
 
-const ENTRIES = [
-  { label: '扫码激活', url: '/pages/activate/index' },
-  { label: '我的订单', url: '/pages/orders/index' },
-  { label: '我的报告', url: '/pages/reports/index' },
-  { label: '消息中心', url: '/pages/notifications/index' },
-  { label: '隐私与授权', url: '/pages/profile/index' },
+type EntryTone = 'primary' | 'success' | 'warning' | 'danger'
+
+const ENTRIES: Array<{ label: string; icon: string; tone: EntryTone; url: string }> = [
+  { label: '扫码激活', icon: '📷', tone: 'primary', url: '/pages/activate/index' },
+  { label: '我的订单', icon: '📦', tone: 'warning', url: '/pages/orders/index' },
+  { label: '我的报告', icon: '📋', tone: 'success', url: '/pages/reports/index' },
+  { label: '消息中心', icon: '🔔', tone: 'danger', url: '/pages/notifications/index' },
+  { label: '隐私与授权', icon: '🛡️', tone: 'primary', url: '/pages/profile/index' },
 ]
 
 export default function Index() {
@@ -54,64 +68,117 @@ export default function Index() {
 
       <View className="section">
         <Text className="section-title">在售检测盒</Text>
-        {items.length === 0 ? <Text className="muted">暂无在售商品</Text> : null}
+        {items.length === 0 ? <Empty description="暂无在售商品" /> : null}
         {items.map((item) => (
-          <View key={item.listingId} className="card">
-            <View className="row">
-              <Text>{item.productName}</Text>
-              <Text className="tag">{item.merchantName}</Text>
+          <View
+            key={item.listingId}
+            className="card product-card"
+            onClick={() =>
+              go(
+                `/pages/product/index?listingId=${item.listingId}${channelCode ? `&channel=${channelCode}` : ''}`,
+              )
+            }
+          >
+            <View className="product-head">
+              <View className="product-thumb">
+                <Text className="product-thumb-title">{item.productName.slice(0, 2)}</Text>
+              </View>
+              <View className="product-body">
+                <View className="product-title-row">
+                  <Text className="card-title">{item.productName}</Text>
+                  <Tag plain type="primary">
+                    {item.merchantName}
+                  </Tag>
+                </View>
+                <Text className="muted">
+                  {item.skuCode} · 库存 {item.available} 盒
+                </Text>
+                <View className="price-row">
+                  {/* FR-C1：主价格使用主色大号字，¥ 与金额同基线 */}
+                  <View className="price-main">
+                    <Text className="price-main-symbol">¥</Text>
+                    <Text className="price-main-cents">{formatCents(item.retailPriceCents)}</Text>
+                  </View>
+                  <NutButton
+                    type="primary"
+                    size="small"
+                    onClick={() => {
+                      if (!getToken()) {
+                        go('/pages/login/index')
+                        return
+                      }
+                      go(
+                        `/pages/product/index?listingId=${item.listingId}${channelCode ? `&channel=${channelCode}` : ''}`,
+                      )
+                    }}
+                  >
+                    立即购买
+                  </NutButton>
+                </View>
+              </View>
             </View>
-            <Text className="muted">
-              {item.skuCode} · 库存 {item.available} 盒
-            </Text>
-            <View className="row">
-              <Text style={{ color: '#dc2626', fontWeight: 600 }}>
-                {formatCents(item.retailPriceCents)} 元
-              </Text>
-              <Button
-                className="btn"
-                onClick={() => {
-                  if (!getToken()) {
-                    go('/pages/login/index')
-                    return
-                  }
-                  go(
-                    `/pages/order/index?listingId=${item.listingId}&name=${encodeURIComponent(item.productName)}&price=${item.retailPriceCents}&merchant=${encodeURIComponent(item.merchantName)}${channelCode ? `&channel=${channelCode}` : ''}`,
-                  )
-                }}
-              >
-                立即购买
-              </Button>
-            </View>
+            {item.guideVideoUrl ? <Text className="video-flag">含采样指导视频</Text> : null}
+            {item.related && item.related.length > 0 ? (
+              <View className="related-line">
+                <Text>搭配推荐：</Text>
+                {item.related.map((rel) =>
+                  rel.listingId && rel.retailPriceCents != null ? (
+                    <Text
+                      key={rel.productId}
+                      className="related-item"
+                      onClick={() => {
+                        if (!getToken()) {
+                          go('/pages/login/index')
+                          return
+                        }
+                        go(
+                          `/pages/product/index?listingId=${rel.listingId}${channelCode ? `&channel=${channelCode}` : ''}`,
+                        )
+                      }}
+                    >
+                      {rel.name} ¥{formatCents(rel.retailPriceCents)}{' '}
+                    </Text>
+                  ) : (
+                    <Text key={rel.productId}>{rel.name} </Text>
+                  ),
+                )}
+              </View>
+            ) : null}
           </View>
         ))}
       </View>
 
       <View className="section">
         <Text className="section-title">我的服务</Text>
-        <View className="entry-grid">
-          {ENTRIES.map((entry) => (
-            <View
-              key={entry.url}
-              className="entry-item"
-              onClick={() => {
-                if (!getToken()) {
-                  go('/pages/login/index')
-                  return
-                }
-                go(entry.url)
-              }}
-            >
-              <Text>{entry.label}</Text>
-              <Text className="entry-tag">进入</Text>
-            </View>
-          ))}
+        <View className="card">
+          <View className="entry-grid">
+            {ENTRIES.map((entry) => (
+              <View
+                key={entry.url}
+                className="entry-item"
+                onClick={() => {
+                  if (!getToken()) {
+                    go('/pages/login/index')
+                    return
+                  }
+                  go(entry.url)
+                }}
+              >
+                <View className={`entry-icon tone-${entry.tone}`}>
+                  <Text className="entry-emoji">{entry.icon}</Text>
+                </View>
+                <Text className="entry-name">{entry.label}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
 
+      <View className="action-gap" />
       {loggedIn ? (
-        <Button
-          className="btn-secondary"
+        <NutButton
+          block
+          fill="outline"
           onClick={() => {
             clearToken()
             setLoggedIn(false)
@@ -119,11 +186,11 @@ export default function Index() {
           }}
         >
           退出登录
-        </Button>
+        </NutButton>
       ) : (
-        <Button className="btn" onClick={() => go('/pages/login/index')}>
+        <NutButton block type="primary" onClick={() => go('/pages/login/index')}>
           登录 / 注册
-        </Button>
+        </NutButton>
       )}
 
       <View className="notice">

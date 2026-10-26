@@ -3,6 +3,7 @@ packages:
   - packages/*
 
 allowBuilds:
+  '@nutui/nutui-react-taro': true
   '@parcel/watcher': true
   '@prisma/client': true
   '@prisma/engines': true

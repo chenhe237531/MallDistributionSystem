@@ -244,12 +244,42 @@ model Product {
   commissionRateCapBps     Int               @default(0)
   distributable            Boolean           @default(false)
   status                   ProductStatus     @default(draft)
+  guideVideoUrl            String?
+  intro                    String?
+  relatedLinks             ProductRelated[]  @relation("ProductRelatedMain")
+  relatedOf                ProductRelated[]  @relation("ProductRelatedItem")
+  courseBindings           ProductCourse[]
   batches                  Batch[]
   listings                 MerchantProduct[]
   createdAt                DateTime          @default(now())
   updatedAt                DateTime          @updatedAt
 
   @@index([supplierId])
+}
+
+model ProductRelated {
+  id               String   @id @default(cuid())
+  productId        String
+  product          Product  @relation("ProductRelatedMain", fields: [productId], references: [id], onDelete: Cascade)
+  relatedProductId String
+  related          Product  @relation("ProductRelatedItem", fields: [relatedProductId], references: [id], onDelete: Cascade)
+  sort             Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  @@unique([productId, relatedProductId])
+  @@index([relatedProductId])
+}
+
+model ProductCourse {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([productId, courseId])
+  @@index([courseId])
 }
 
 model Batch {
@@ -888,6 +918,7 @@ model Course {
   chapters       CourseChapter[]
   questions      ExamQuestion[]
   records        LearningRecord[]
+  productBindings ProductCourse[]
   createdAt      DateTime        @default(now())
 }
 

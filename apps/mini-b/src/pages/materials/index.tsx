@@ -1,10 +1,21 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
-import { Button, Text, View } from '@tarojs/components'
+import { Text, View } from '@tarojs/components'
 import { api, ensureLogin } from '../../lib/api'
+import {
+  Button as NutButton,
+  Cell,
+  CellGroup,
+  Empty,
+  Tag,
+  Toast,
+} from '@nutui/nutui-react-taro'
 
 type Template = { id: string; name: string; category: string; body: string }
 type Material = { id: string; title: string; content: string }
+
+const toast = (title: string, icon?: 'success' | 'fail') =>
+  Toast.show('b-toast', { title, icon })
 
 export default function Materials() {
   const [templates, setTemplates] = useState<Template[]>([])
@@ -33,10 +44,10 @@ export default function Materials() {
     setLoading(true)
     try {
       await api('/materials/generate', { method: 'POST', data: { templateId } })
-      void Taro.showToast({ title: '素材已生成', icon: 'success' })
+      toast('素材已生成', 'success')
       await load()
     } catch (cause) {
-      void Taro.showToast({ title: cause instanceof Error ? cause.message : '生成失败', icon: 'none' })
+      toast(cause instanceof Error ? cause.message : '生成失败')
     } finally {
       setLoading(false)
     }
@@ -46,30 +57,46 @@ export default function Materials() {
     <View className="page">
       <View className="section">
         <Text className="section-title">平台模板</Text>
+        {templates.length === 0 ? <Empty description="暂无模板" /> : null}
         {templates.map((template) => (
           <View key={template.id} className="card">
             <View className="row">
-              <Text>{template.name}</Text>
-              <Text className="tag">{template.category}</Text>
+              <Text className="mat-name">{template.name}</Text>
+              <Tag type="success">{template.category}</Tag>
             </View>
             <Text className="muted">{template.body.slice(0, 60)}…</Text>
-            <Button className="btn" loading={loading} onClick={() => generate(template.id)}>
+            <NutButton
+              className="mat-generate"
+              block
+              type="primary"
+              size="small"
+              loading={loading}
+              onClick={() => generate(template.id)}
+            >
               生成带渠道码素材
-            </Button>
+            </NutButton>
           </View>
         ))}
       </View>
 
       <View className="section">
         <Text className="section-title">已生成素材</Text>
-        {materials.length === 0 ? <Text className="muted">暂无素材</Text> : null}
-        {materials.map((material) => (
-          <View key={material.id} className="card">
-            <Text>{material.title}</Text>
-            <Text className="muted">{material.content.slice(0, 80)}…</Text>
-          </View>
-        ))}
+        {materials.length === 0 ? (
+          <Empty description="暂无素材" />
+        ) : (
+          <CellGroup>
+            {materials.map((material) => (
+              <Cell
+                key={material.id}
+                title={material.title}
+                description={<Text className="muted">{material.content.slice(0, 80)}…</Text>}
+              />
+            ))}
+          </CellGroup>
+        )}
       </View>
+
+      <Toast id="b-toast" />
     </View>
   )
 }

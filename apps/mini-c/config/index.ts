@@ -2,11 +2,11 @@ import { defineConfig } from '@tarojs/cli'
 
 export default defineConfig({
   projectName: 'mall-mini-c',
-  designWidth: 750,
+  designWidth: 375,
   deviceRatio: {
     640: 2.34 / 2,
     750: 1,
-    375: 2,
+    375: 1,
     828: 1.81 / 2,
   },
   sourceRoot: 'src',
@@ -15,6 +15,7 @@ export default defineConfig({
     '@tarojs/plugin-framework-react',
     '@tarojs/plugin-platform-weapp',
     '@tarojs/plugin-platform-h5',
+    '@tarojs/plugin-html',
   ],
   defineConstants: {},
   framework: 'react',
