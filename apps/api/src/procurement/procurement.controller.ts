@@ -1,14 +1,26 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common'
 import { Role } from '@mall/shared'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { Roles } from '../auth/roles.decorator'
 import type { AuthUser } from '../auth/auth-user.type'
 import { CreateProcurementDto } from './dto/create-procurement.dto'
+import { SwitchMultiSupplierDto } from './dto/switch-multi-supplier.dto'
 import { ProcurementService } from './procurement.service'
 
 @Controller('procurement-orders')
 export class ProcurementController {
   constructor(private readonly procurementService: ProcurementService) {}
+
+  @Get('settings/multi-supplier')
+  getMultiSupplier() {
+    return this.procurementService.getMultiSupplierEnabled()
+  }
+
+  @Patch('settings/multi-supplier')
+  @Roles(Role.PLATFORM)
+  setMultiSupplier(@Body() dto: SwitchMultiSupplierDto) {
+    return this.procurementService.setMultiSupplierEnabled(dto.enabled)
+  }
 
   @Post()
   @Roles(Role.MERCHANT)

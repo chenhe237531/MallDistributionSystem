@@ -20,6 +20,9 @@ import { CreateProcurementDto } from './dto/create-procurement.dto'
 import type { AuthUser } from '../auth/auth-user.type'
 
 const RELATED_TYPE = 'procurement_order'
+const MULTI_SUPPLIER_CONFIG_KEY = 'procurement.multiSupplier'
+
+type ProcurementItemInput = CreateProcurementDto['items'][number]
 
 @Injectable()
 export class ProcurementService {
@@ -30,6 +33,23 @@ export class ProcurementService {
     private readonly boxCodesService: BoxCodesService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  async getMultiSupplierEnabled(): Promise<boolean> {
+    const config = await this.prisma.systemConfig.findUnique({
+      where: { key: MULTI_SUPPLIER_CONFIG_KEY },
+    })
+    const value = config?.value as { enabled?: boolean } | null | undefined
+    return Boolean(value?.enabled)
+  }
+
+  async setMultiSupplierEnabled(enabled: boolean) {
+    await this.prisma.systemConfig.upsert({
+      where: { key: MULTI_SUPPLIER_CONFIG_KEY },
+      update: { value: { enabled } },
+      create: { key: MULTI_SUPPLIER_CONFIG_KEY, value: { enabled } },
+    })
+    return { enabled }
+  }
 
   async create(actor: AuthUser, dto: CreateProcurementDto) {
     if (!actor.roles.includes(Role.MERCHANT)) {
@@ -42,103 +62,35 @@ export class ProcurementService {
     if (products.length !== productIds.length) {
       throw new BadRequestException('采购商品不存在')
     }
-    const supplierIds = new Set(products.map((product) => product.supplierId))
-    if (supplierIds.size > 1) {
-      throw new BadRequestException('同一采购单只能包含同一供应商的商品')
-    }
     if (products.some((product) => product.status !== 'active')) {
       throw new BadRequestException('存在未上架商品，无法采购')
     }
-    const supplierId = products[0].supplierId
-    await this.contractsService.assertSupplierCanSupply(supplierId)
 
-    const orderNo = this.generateOrderNo()
+    const itemsBySupplier = new Map<string, ProcurementItemInput[]>()
+    for (const item of dto.items) {
+      const product = products.find((candidate) => candidate.id === item.productId)!
+      const group = itemsBySupplier.get(product.supplierId) ?? []
+      group.push(item)
+      itemsBySupplier.set(product.supplierId, group)
+    }
+
+    if (itemsBySupplier.size > 1 && !(await this.getMultiSupplierEnabled())) {
+      throw new BadRequestException('同一采购单只能包含同一供应商的商品')
+    }
+    for (const supplierId of itemsBySupplier.keys()) {
+      await this.contractsService.assertSupplierCanSupply(supplierId)
+    }
 
     const created = await this.prisma.$transaction(async (tx) => {
-      const now = new Date()
-      let totalAmountCents = 0
-      const itemRows: Array<{
-        productId: string
-        productName: string
-        skuCode: string
-        batchId: string
-        batchNo: string
-        supplyPriceCents: number
-        quantity: number
-        amountCents: number
-      }> = []
-
-      for (const input of dto.items) {
-        const product = products.find((item) => item.id === input.productId)
-        if (!product) {
-          throw new BadRequestException('采购商品不存在')
-        }
-        const batches = await tx.batch.findMany({
-          where: {
-            productId: product.id,
-            remaining: { gt: 0 },
-            expiresAt: { gt: now },
-          },
-          orderBy: [{ expiresAt: 'asc' }, { productionDate: 'asc' }],
-        })
-        const stock = batches.reduce((sum, batch) => sum + batch.remaining, 0)
-        if (stock < input.quantity) {
-          throw new BadRequestException(`库存不足：${product.name} 当前可用 ${stock} 盒`)
-        }
-
-        let needed = input.quantity
-        for (const batch of batches) {
-          if (needed <= 0) {
-            break
-          }
-          const take = Math.min(needed, batch.remaining)
-          await tx.batch.update({
-            where: { id: batch.id },
-            data: { remaining: { decrement: take } },
-          })
-          const amountCents = take * product.supplyPriceCents
-          itemRows.push({
-            productId: product.id,
-            productName: product.name,
-            skuCode: product.skuCode,
-            batchId: batch.id,
-            batchNo: batch.batchNo,
-            supplyPriceCents: product.supplyPriceCents,
-            quantity: take,
-            amountCents,
-          })
-          totalAmountCents += amountCents
-          needed -= take
-        }
+      const orders = []
+      for (const [supplierId, items] of itemsBySupplier) {
+        orders.push(
+          await this.createOrderInTransaction(tx, actor, supplierId, items, products, dto.remark),
+        )
       }
-
-      const order = await tx.procurementOrder.create({
-        data: {
-          orderNo,
-          merchantId: actor.sub,
-          supplierId,
-          status: PrismaProcurementStatus.deducted,
-          totalAmountCents,
-          remark: dto.remark,
-          items: { create: itemRows },
-        },
-        include: {
-          items: true,
-          supplier: { select: { id: true, name: true, organization: true } },
-        },
-      })
-
-      await this.prepaidService.reserveInTransaction(
-        tx,
-        actor.sub,
-        totalAmountCents,
-        RELATED_TYPE,
-        order.id,
-        actor.sub,
-      )
-
-      return order
+      return orders
     })
+
     const account = await this.prisma.prepaidAccount.findUnique({
       where: { merchantId: actor.sub },
     })
@@ -156,7 +108,99 @@ export class ProcurementService {
         payload: { availableCents: account.availableCents },
       })
     }
-    return created
+    // 单供应商提交保持返回单对象；多供应商（开关开启自动拆单）返回订单数组
+    return created.length === 1 ? created[0] : created
+  }
+
+  private async createOrderInTransaction(
+    tx: Prisma.TransactionClient,
+    actor: AuthUser,
+    supplierId: string,
+    items: ProcurementItemInput[],
+    products: Array<{ id: string; name: string; skuCode: string; supplyPriceCents: number }>,
+    remark?: string,
+  ) {
+    const orderNo = this.generateOrderNo()
+    const now = new Date()
+    let totalAmountCents = 0
+    const itemRows: Array<{
+      productId: string
+      productName: string
+      skuCode: string
+      batchId: string
+      batchNo: string
+      supplyPriceCents: number
+      quantity: number
+      amountCents: number
+    }> = []
+
+    for (const input of items) {
+      const product = products.find((item) => item.id === input.productId)!
+      const batches = await tx.batch.findMany({
+        where: {
+          productId: product.id,
+          remaining: { gt: 0 },
+          expiresAt: { gt: now },
+        },
+        orderBy: [{ expiresAt: 'asc' }, { productionDate: 'asc' }],
+      })
+      const stock = batches.reduce((sum, batch) => sum + batch.remaining, 0)
+      if (stock < input.quantity) {
+        throw new BadRequestException(`库存不足：${product.name} 当前可用 ${stock} 盒`)
+      }
+
+      let needed = input.quantity
+      for (const batch of batches) {
+        if (needed <= 0) {
+          break
+        }
+        const take = Math.min(needed, batch.remaining)
+        await tx.batch.update({
+          where: { id: batch.id },
+          data: { remaining: { decrement: take } },
+        })
+        const amountCents = take * product.supplyPriceCents
+        itemRows.push({
+          productId: product.id,
+          productName: product.name,
+          skuCode: product.skuCode,
+          batchId: batch.id,
+          batchNo: batch.batchNo,
+          supplyPriceCents: product.supplyPriceCents,
+          quantity: take,
+          amountCents,
+        })
+        totalAmountCents += amountCents
+        needed -= take
+      }
+    }
+
+    const order = await tx.procurementOrder.create({
+      data: {
+        orderNo,
+        merchantId: actor.sub,
+        supplierId,
+        status: PrismaProcurementStatus.deducted,
+        totalAmountCents,
+        remark,
+        items: { create: itemRows },
+      },
+      include: {
+        items: true,
+        supplier: { select: { id: true, name: true, organization: true } },
+      },
+    })
+
+    await this.prepaidService.reserveInTransaction(
+      tx,
+      actor.sub,
+      totalAmountCents,
+      RELATED_TYPE,
+      order.id,
+      actor.sub,
+    )
+
+    return order
   }
 
   async list(actor: AuthUser) {
