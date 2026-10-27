@@ -40,6 +40,10 @@ export default function Training() {
     })
   })
 
+  const openCourse = (courseId: string) => {
+    void Taro.navigateTo({ url: `/pages/training-detail/index?id=${courseId}` })
+  }
+
   const completeNext = async (record: Record) => {
     const next = record.course.chapters.find(
       (chapter) => !record.completedChapterIds.includes(chapter.id),
@@ -69,7 +73,11 @@ export default function Training() {
         <Text className="section-title">我的学习</Text>
         {records.length === 0 ? <Empty description="暂无学习任务" /> : null}
         {records.map((record) => (
-          <View key={record.id} className="card">
+          <View
+            key={record.id}
+            className="card train-card"
+            onClick={() => openCourse(record.course.id)}
+          >
             <View className="row">
               <Text className="train-name">{record.course.name}</Text>
               <Tag type={TRAINING_STATUS_TONES[record.status] ?? 'default'}>
@@ -80,13 +88,16 @@ export default function Training() {
               <Progress
                 percent={Math.max(0, Math.min(100, record.progress))}
                 showText
-                color="#1677ff"
+                color="var(--mall-primary)"
               />
             </View>
             <Text className="muted">
               进度 {record.progress}%
               {record.examScore !== null ? ` · 考试 ${record.examScore} 分` : ''}
             </Text>
+            <View className="train-foot">
+              <Text className="train-enter">查看课程与课件 ›</Text>
+            </View>
             {record.status !== 'passed' ? (
               <NutButton
                 className="train-action"
@@ -94,7 +105,11 @@ export default function Training() {
                 type="primary"
                 fill="outline"
                 loading={loading}
-                onClick={() => void completeNext(record)}
+                onClick={(event) => {
+                  // 按钮独立动作，不要连带进入详情
+                  event.stopPropagation()
+                  void completeNext(record)
+                }}
               >
                 完成下一章节
               </NutButton>

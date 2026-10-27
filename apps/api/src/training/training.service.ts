@@ -21,6 +21,7 @@ import {
   CreateQuestionDto,
   ExamSubmissionDto,
 } from './dto/training.dto'
+import { TrainingMaterialsService } from './training-materials.service'
 import type { AuthUser } from '../auth/auth-user.type'
 
 const PASS_SCORE = 60
@@ -32,6 +33,7 @@ export class TrainingService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly notificationsService: NotificationsService,
+    private readonly materialsService: TrainingMaterialsService,
   ) {}
 
   async createCourse(dto: CreateCourseDto) {
@@ -109,7 +111,37 @@ export class TrainingService {
     if (!isPlatform && !asRoleArray(course.audience).some((role) => actor.roles.includes(role))) {
       throw new ForbiddenException('无权查看该课程')
     }
-    return this.toCourseView(course, isPlatform)
+    // 详情页一次拿全：课程结构 + 本人学习记录 + 目录解析出的配套课件
+    const record = await this.prisma.learningRecord.findUnique({
+      where: { userId_courseId: { userId: actor.sub, courseId: course.id } },
+    })
+    return {
+      ...this.toCourseView(course, isPlatform),
+      record,
+      materials: this.materialsService.summariesForCourse(course.code),
+    }
+  }
+
+  /** 课件全文：必须能看到它归属的至少一门课程 */
+  async getMaterial(materialId: string, actor: AuthUser) {
+    const courseCodes = this.materialsService.courseCodesOf(materialId)
+    if (courseCodes.length === 0) {
+      throw new NotFoundException('课件不存在')
+    }
+    const courses = await this.prisma.course.findMany({
+      where: { code: { in: courseCodes } },
+      select: { audience: true },
+    })
+    const isPlatform = actor.roles.includes(Role.PLATFORM)
+    const visible =
+      isPlatform ||
+      courses.some((course) =>
+        asRoleArray(course.audience).some((role) => actor.roles.includes(role)),
+      )
+    if (!visible) {
+      throw new ForbiddenException('无权查看该课件')
+    }
+    return this.materialsService.reader(materialId)
   }
 
   async enroll(userId: string, roles: Role[], courseId: string) {

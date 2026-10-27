@@ -32,6 +32,8 @@ apps/api/prisma/*.db-journal
 apps/api/prisma/*.db-shm
 apps/api/prisma/*.db-wal
 
+# 课件目录解析产物（客户原始资料，由 pnpm materials:extract 本地生成，不入库）
+apps/api/uploads/training/
 # 云托管打包产物、二维码与 H5 静态构建（本地交付，不入库）
 deploy/artifacts/
 deploy/qrcodes/
@@ -39,3 +41,6 @@ apps/*/dist-h5-*/
 
 # 演示截图归档（旧版重复产物，不入库）
 doc/flow-demo/shots/_archive/
+
+# 本地解析缓存与运行日志
+.tmp/
