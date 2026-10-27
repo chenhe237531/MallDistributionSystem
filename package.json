@@ -23,7 +23,8 @@
     "db:setup": "pnpm db:push && pnpm db:seed",
     "db:migrate": "pnpm --filter @mall/api prisma:migrate",
     "db:seed": "pnpm --filter @mall/api seed",
-    "postinstall": "pnpm --filter @mall/shared build"
+    "postinstall": "pnpm --filter @mall/shared build",
+    "materials:extract": "python3 scripts/extract_training_materials.py"
   },
   "devDependencies": {
     "webpack": "5.91.0"

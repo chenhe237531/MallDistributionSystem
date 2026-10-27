@@ -31,6 +31,12 @@ export class TrainingController {
     return this.trainingService.getCourse(id, user)
   }
 
+  // 课件正文（课程详情页点开「配套课件」时加载）
+  @Get('materials/:id')
+  material(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.trainingService.getMaterial(id, user)
+  }
+
   @Post('courses/:id/chapters')
   @Roles(Role.PLATFORM)
   addChapter(@Param('id') id: string, @Body() dto: CreateChapterDto) {

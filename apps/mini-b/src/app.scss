@@ -692,6 +692,337 @@ page {
   margin-top: 10px;
 }
 
+/* 课程卡可点击进入详情：给出可点提示，按钮自身阻止冒泡 */
+.train-card {
+  position: relative;
+}
+
+.train-card:active {
+  opacity: 0.88;
+}
+
+.train-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.train-enter {
+  font-size: 11px;
+  color: var(--mall-primary);
+}
+
+/* ===== 课程详情 / 课件阅读 ===== */
+.tr-hero {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid var(--mall-card-border);
+  border-radius: 16px;
+  background: var(--mall-card);
+  box-shadow: var(--mall-shadow);
+}
+
+.tr-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tr-hero-title {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--mall-text);
+}
+
+.tr-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 10px;
+}
+
+.tr-hero-meta-item {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--mall-text-secondary);
+}
+
+.tr-hero-action {
+  margin-top: 14px;
+}
+
+.tr-hint {
+  display: block;
+  margin: 4px 0 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--mall-text-tertiary);
+}
+
+/* 章节手风琴 */
+.tr-chapter {
+  margin-top: 8px;
+  border: 1px solid var(--mall-card-border);
+  border-radius: 12px;
+  background: var(--mall-card);
+  overflow: hidden;
+}
+
+.tr-chapter-done {
+  border-color: var(--mall-primary-light);
+}
+
+.tr-chapter-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+}
+
+.tr-chapter-index {
+  flex: none;
+  width: 26px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--mall-primary);
+}
+
+.tr-chapter-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--mall-text);
+}
+
+.tr-chapter-state {
+  flex: none;
+  font-size: 11px;
+  color: var(--mall-text-tertiary);
+}
+
+.tr-chapter-state-done {
+  color: var(--mall-success);
+}
+
+.tr-chapter-body {
+  padding: 0 14px 14px 14px;
+}
+
+.tr-chapter-action {
+  margin-top: 10px;
+}
+
+.tr-paragraph {
+  display: block;
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--mall-text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tr-paragraph + .tr-paragraph {
+  margin-top: 8px;
+}
+
+/* 配套课件 */
+.tr-material {
+  margin-top: 8px;
+  padding: 13px 14px;
+  border: 1px solid var(--mall-card-border);
+  border-radius: 12px;
+  background: var(--mall-card);
+  box-shadow: var(--mall-shadow);
+}
+
+.tr-material:active {
+  opacity: 0.88;
+}
+
+.tr-material-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tr-material-badge {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--mall-primary-light);
+  color: var(--mall-primary);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.tr-material-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--mall-text);
+}
+
+.tr-material-arrow {
+  flex: none;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--mall-text-tertiary);
+}
+
+.tr-material-summary {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--mall-text-secondary);
+}
+
+.tr-material-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 8px;
+}
+
+.tr-material-meta-item {
+  font-size: 10px;
+  color: var(--mall-text-tertiary);
+}
+
+.tr-material-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.tr-material-tag {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--mall-surface-3, var(--mall-bg));
+  color: var(--mall-text-tertiary);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+/* 阅读页 */
+.tr-reader-head {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid var(--mall-card-border);
+  border-radius: 16px;
+  background: var(--mall-card);
+  box-shadow: var(--mall-shadow);
+}
+
+.tr-reader-title {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--mall-text);
+}
+
+.tr-reader-summary {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--mall-text-secondary);
+}
+
+.tr-reader-source {
+  display: block;
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--mall-text-tertiary);
+  word-break: break-all;
+}
+
+.tr-player {
+  position: relative;
+  height: 210px;
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+.tr-player-video {
+  width: 100%;
+  height: 100%;
+}
+
+.tr-page-image {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--mall-card-border);
+  background: var(--mall-card);
+}
+
+.tr-outline-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tr-outline-toggle {
+  font-size: 11px;
+  color: var(--mall-primary);
+}
+
+.tr-section {
+  margin-top: 8px;
+  border: 1px solid var(--mall-card-border);
+  border-radius: 12px;
+  background: var(--mall-card);
+  overflow: hidden;
+}
+
+.tr-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.tr-section-index {
+  flex: none;
+  width: 24px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mall-primary);
+}
+
+.tr-section-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--mall-text);
+}
+
+.tr-section-page {
+  flex: none;
+  font-size: 10px;
+  color: var(--mall-text-tertiary);
+}
+
+.tr-section-body {
+  padding: 2px 14px 14px 14px;
+}
+
 /* ===== 报告页 ===== */
 .report-error {
   display: block;

@@ -37,11 +37,18 @@ export default defineConfig({
     router: { mode: 'hash' },
     staticDirectory: 'static',
     devServer: {
-      port: 10086,
+      // 本地可起多套实例并行校验：端口与后端地址均可用环境变量覆盖
+      port: Number(process.env.TARO_DEV_PORT || 10086),
       // H5 端 API 走相对路径 /api，开发态需代理到后端服务（否则登录等请求 404）
       proxy: {
-        '/api': { target: 'http://localhost:3000', changeOrigin: true },
-        '/uploads': { target: 'http://localhost:3000', changeOrigin: true },
+        '/api': {
+          target: process.env.API_PROXY_TARGET || 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/uploads': {
+          target: process.env.API_PROXY_TARGET || 'http://localhost:3000',
+          changeOrigin: true,
+        },
       },
     },
     postcss: {

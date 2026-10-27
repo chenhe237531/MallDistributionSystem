@@ -14,6 +14,8 @@ export default defineAppConfig({
     'pages/business/index',
     'pages/materials/index',
     'pages/training/index',
+    'pages/training-detail/index',
+    'pages/training-material/index',
     'pages/claims/index',
     'pages/notifications/index',
     'pages/profile/index',
