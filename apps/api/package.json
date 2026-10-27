@@ -4,15 +4,20 @@
   "private": true,
   "scripts": {
     "dev": "nest start --watch",
+    "predev": "pnpm db:generate",
     "build": "nest build",
+    "prebuild": "pnpm db:generate",
     "start": "node dist/main.js",
     "test": "jest",
     "test:e2e": "pnpm seed && jest --config ./test/jest-e2e.json --runInBand",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
-    "seed": "tsx prisma/seed.ts"
+    "pretypecheck": "pnpm db:generate",
+    "db:generate": "node scripts/prisma-runtime.mjs generate",
+    "prisma:generate": "pnpm db:generate",
+    "db:push": "node scripts/prisma-runtime.mjs push",
+    "prisma:migrate": "node scripts/prisma-runtime.mjs migrate",
+    "prisma:deploy": "node scripts/prisma-runtime.mjs deploy",
+    "seed": "pnpm db:generate && tsx prisma/seed.ts"
   },
   "dependencies": {
     "@mall/shared": "workspace:*",

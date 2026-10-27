@@ -17,7 +17,9 @@ import PDFDocument from 'pdfkit'
 import { formatCents, Role } from '@mall/shared'
 import { AuditService } from '../audit/audit.service'
 import { ChannelsService } from '../channels/channels.service'
+import { ContractsService, CONTRACT_CODES } from '../contracts/contracts.service'
 import { NotificationsService } from '../notifications/notifications.service'
+import { asRoleArray } from '../prisma/array-values'
 import { PrismaService } from '../prisma/prisma.service'
 import {
   GenerateStatementDto,
@@ -36,6 +38,7 @@ export class StatementsService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly channelsService: ChannelsService,
+    private readonly contractsService: ContractsService,
     private readonly notificationsService: NotificationsService,
   ) {}
 
@@ -44,7 +47,7 @@ export class StatementsService {
       throw new ForbiddenException('只有平台可以生成对账单')
     }
     const subject = await this.prisma.user.findUnique({ where: { id: dto.subjectId } })
-    if (!subject || !subject.roles.includes(dto.subjectType as never)) {
+    if (!subject || !asRoleArray(subject.roles).includes(dto.subjectType as Role)) {
       throw new BadRequestException('对账主体不存在或角色不匹配')
     }
     await this.channelsService.assertNotPausedForSubject(dto.subjectId, dto.subjectType)
@@ -341,9 +344,26 @@ export class StatementsService {
         `已登记票证不足，仍有 ${formatCents(missing)} 元未取得票证，不能结清`,
       )
     }
-    const settled = await this.prisma.statement.update({
-      where: { id },
-      data: { status: PrismaStatementStatus.settled, settledAt: new Date() },
+    // FR-11：分销合作协议为线下签署 + 后台登记，时点为首次对账（结清）前
+    if (statement.subjectType === 'partner') {
+      const contract = await this.contractsService.findActiveContract(
+        statement.subjectId,
+        CONTRACT_CODES.PARTNER_DISTRIBUTION,
+      )
+      if (!contract) {
+        throw new BadRequestException(
+          '该合伙人的分销合作协议未登记或已失效，请先在合同管理完成线下签署登记后再结清',
+        )
+      }
+    }
+    const settled = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.statement.update({
+        where: { id },
+        data: { status: PrismaStatementStatus.settled, settledAt: new Date() },
+      })
+      // 结清打款完成，联动账单内佣金明细 → settled（对账单为打款口径）
+      await this.syncCommissionsToStatementStatus(tx, id, CommissionStatus.settled)
+      return updated
     })
     await this.auditService.record({
       actor,
@@ -365,13 +385,52 @@ export class StatementsService {
     if (statement.status !== PrismaStatementStatus.settled) {
       throw new BadRequestException('只有已结清账单可以反结清')
     }
-    return this.prisma.statement.update({
-      where: { id },
-      data: {
-        status: PrismaStatementStatus.reconciled,
-        settledAt: null,
-        reopenedAt: new Date(),
+    // 反结清与 settle 联动对称：仅回退被本次结清推进为 settled 的佣金明细
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.statement.update({
+        where: { id },
+        data: {
+          status: PrismaStatementStatus.reconciled,
+          settledAt: null,
+          reopenedAt: new Date(),
+        },
+      })
+      await this.syncCommissionsToStatementStatus(
+        tx,
+        id,
+        CommissionStatus.reconciled,
+        CommissionStatus.settled,
+      )
+      return updated
+    })
+  }
+
+  /**
+   * 对账单结清/反结清时同步佣金明细状态：
+   * - settle：账单内全部佣金行（sourceType=commission）推进为 settled；
+   * - reopen：仅把 settled 的佣金回退为 toStatus（默认 reconciled），避免误伤其他流程。
+   */
+  private async syncCommissionsToStatementStatus(
+    tx: DbClient,
+    statementId: string,
+    toStatus: CommissionStatus,
+    fromStatus?: CommissionStatus,
+  ) {
+    const lines = await tx.statementLine.findMany({
+      where: { statementId, sourceType: 'commission' },
+      select: { sourceId: true },
+    })
+    if (lines.length === 0) {
+      return
+    }
+    await tx.commission.updateMany({
+      where: {
+        id: { in: lines.map((line) => line.sourceId) },
+        status: fromStatus
+          ? { in: [fromStatus] }
+          : { notIn: [CommissionStatus.invalid, CommissionStatus.disputed] },
       },
+      data: { status: toStatus },
     })
   }
 
@@ -393,7 +452,7 @@ export class StatementsService {
    * 对 statement 汇总字段做读改写前加行锁，防止并发退款冲回/票证登记丢失更新。
    */
   private async lockStatementForUpdate(tx: DbClient, statementId: string): Promise<void> {
-    await tx.$queryRaw`SELECT id FROM "Statement" WHERE id = ${statementId} FOR UPDATE`
+    await this.prisma.lockRow(tx, 'Statement', statementId)
   }
 
   /**

@@ -22,3 +22,20 @@ docs/归档-资料库/
 # IDE / 工具本地产物
 .trae/
 .trae-html-share-packages/
+.workbuddy/
+
+# Prisma 方言生成物与本地 SQLite 数据
+apps/api/prisma/schema.sqlite.prisma
+apps/api/prisma/schema.mysql.prisma
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+apps/api/prisma/*.db-shm
+apps/api/prisma/*.db-wal
+
+# 云托管打包产物、二维码与 H5 静态构建（本地交付，不入库）
+deploy/artifacts/
+deploy/qrcodes/
+apps/*/dist-h5-*/
+
+# 演示截图归档（旧版重复产物，不入库）
+doc/flow-demo/shots/_archive/

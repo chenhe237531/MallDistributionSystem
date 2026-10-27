@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>移植后健康助手 产品开发文档（PRD + 技术方案）v1.0</title>
+<style>
+  :root{
+    --paper:#f6f4ef;
+    --surface:#fffdf9;
+    --ink:#1b1a17;
+    --ink-2:#45413a;
+    --muted:#7a756b;
+    --line:#e2ddd2;
+    --line-soft:#ece7dc;
+    --accent:#0d5c53;
+    --accent-soft:#e6efed;
+    --warn:#96690f;
+    --warn-soft:#fbf1dc;
+    --warn-line:#e8d5ae;
+    --radius:12px;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --serif:"Songti SC","Source Han Serif SC","Noto Serif SC",Georgia,serif;
+    --mono:"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .layout{display:grid;grid-template-columns:268px minmax(0,1fr)}
+  .sidebar{
+    position:sticky;top:0;height:100vh;overflow:auto;
+    border-right:1px solid var(--line);background:#f1eee6;
+    padding:30px 20px 26px;display:flex;flex-direction:column;gap:20px;
+  }
+  .brand{font-family:var(--serif);font-size:19px;font-weight:700;line-height:1.45;letter-spacing:.01em}
+  .brand small{display:block;font-family:var(--sans);font-size:10.5px;font-weight:500;color:var(--muted);letter-spacing:.16em;margin-top:7px}
+  .toc{list-style:none;margin:0;padding:0;font-size:13px}
+  .toc li{margin:1px 0}
+  .toc a{
+    display:flex;align-items:baseline;gap:8px;
+    padding:7px 10px;border-radius:7px;color:var(--ink-2);
+    text-decoration:none;border-left:2px solid transparent;
+  }
+  .toc a:hover{background:#e8e3d6}
+  .toc a.active{background:var(--accent-soft);color:var(--accent);border-left-color:var(--accent);font-weight:600}
+  .toc .num{font-family:var(--mono);font-size:10.5px;color:var(--muted);min-width:14px}
+  .toc a.active .num{color:var(--accent)}
+  .side-meta{font-size:10.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;line-height:1.95;margin-top:auto}
+  .side-meta b{display:block;color:var(--ink-2);font-size:10.5px;letter-spacing:.1em;margin-bottom:2px}
+  main{padding:50px 54px 90px;max-width:1020px;min-width:0}
+  .kicker{font-size:10.5px;letter-spacing:.24em;color:var(--accent);font-weight:700;text-transform:uppercase}
+  h1{font-family:var(--serif);font-size:30px;line-height:1.35;margin:8px 0 4px}
+  .doc-sub{color:var(--muted);font-size:13.5px;margin-bottom:8px}
+  .meta-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 18px;margin:20px 0 8px;font-size:13px;line-height:1.9;
+  }
+  .meta-card b{color:var(--ink);font-weight:600}
+  .meta-card span.k{color:var(--muted);display:inline-block;min-width:86px}
+  h2{
+    font-family:var(--serif);font-size:22px;margin:52px 0 14px;padding-top:14px;
+    border-top:1px solid var(--line);
+  }
+  h2 .no{color:var(--accent);font-family:var(--mono);font-size:14px;margin-right:10px;vertical-align:2px}
+  h3{font-size:16.5px;margin:30px 0 10px;color:var(--ink)}
+  h4{font-size:14.5px;margin:20px 0 8px;color:var(--ink-2)}
+  p{margin:9px 0}
+  ul,ol{margin:8px 0;padding-left:24px}
+  li{margin:4px 0}
+  table{
+    width:100%;border-collapse:collapse;margin:14px 0;font-size:13px;
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  }
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line-soft);text-align:left;vertical-align:top}
+  th{background:#f1eee6;font-weight:600;font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  code{font-family:var(--mono);font-size:12.5px;background:#efece3;padding:1px 6px;border-radius:5px;color:#5a4a2f}
+  pre{
+    background:#211f1a;color:#e8e4d8;border-radius:10px;padding:16px 18px;
+    overflow:auto;font-size:12.5px;line-height:1.7;margin:14px 0;
+  }
+  pre code{background:none;color:inherit;padding:0}
+  .tag{
+    display:inline-block;font-size:11px;font-weight:600;padding:1px 9px;border-radius:99px;
+    background:var(--accent-soft);color:var(--accent);margin-right:6px;white-space:nowrap;
+  }
+  .tag.p1{background:#efeee8;color:var(--muted)}
+  .tag.warn{background:var(--warn-soft);color:var(--warn)}
+  .callout{
+    background:var(--warn-soft);border:1px solid var(--warn-line);border-radius:10px;
+    padding:12px 16px;margin:14px 0;font-size:13.5px;color:#5d4712;
+  }
+  .callout b{color:var(--warn)}
+  .note{
+    background:var(--accent-soft);border:1px solid #cfdfdc;border-radius:10px;
+    padding:12px 16px;margin:14px 0;font-size:13.5px;color:#1d4a44;
+  }
+  .fr{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 20px;margin:14px 0;
+  }
+  .fr-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .fr-id{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700}
+  .fr-name{font-weight:700;font-size:15px}
+  .flow{
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0;font-size:13px;
+  }
+  .flow .step{
+    background:var(--surface);border:1px solid var(--line);border-radius:8px;
+    padding:7px 12px;font-weight:600;color:var(--ink-2);
+  }
+  .flow .step.hl{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .flow .arr{color:var(--muted);font-family:var(--mono)}
+  .src{font-size:11.5px;color:var(--muted)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto}.grid2{grid-template-columns:1fr}main{padding:28px 20px 60px}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="brand">移植后健康助手<small>PRD + 技术方案 · v1.0</small></div>
+    <ul class="toc">
+      <li><a href="#s1"><span class="num">01</span>背景与目标</a></li>
+      <li><a href="#s2"><span class="num">02</span>目标用户与使用场景</a></li>
+      <li><a href="#s3"><span class="num">03</span>核心功能与业务流程</a></li>
+      <li><a href="#s4"><span class="num">04</span>消息推送规则与时机</a></li>
+      <li><a href="#s5"><span class="num">05</span>清肠药物双路径</a></li>
+      <li><a href="#s6"><span class="num">06</span>数据结构与接口设计</a></li>
+      <li><a href="#s7"><span class="num">07</span>权限与状态判定</a></li>
+      <li><a href="#s8"><span class="num">08</span>异常与边界情况</a></li>
+      <li><a href="#s9"><span class="num">09</span>worktree 开发与分支协作</a></li>
+      <li><a href="#s10"><span class="num">10</span>里程碑与验收标准</a></li>
+      <li><a href="#s11"><span class="num">11</span>开放问题</a></li>
+    </ul>
+    <div class="side-meta">
+      <b>依据资料</b>
+      百英诺科技菌群移植项目介绍 202601<br>
+      精准菌群移植服务流程（终端版）20260225<br>
+      商城-分销系统 PRD v0.7<br>
+      <b>关联遗留</b>
+      FR-16 微信订阅消息真实推送
+    </div>
+  </nav>
+
+  <main>
+    <div class="kicker">PRODUCT &amp; TECHNICAL SPECIFICATION</div>
+    <h1>移植后健康助手</h1>
+    <div class="doc-sub">产品开发文档（PRD + 技术方案） · 版本 v1.0 · 2026-10-27 · 状态：待评审</div>
+
+    <div class="meta-card">
+      <div><span class="k">功能范围</span><b>凡从商家处购买移植服务的 C 端消费者，接受移植服务后均可获得健康助手功能</b></div>
+      <div><span class="k">核心行为</span>依据服务流程文档中的注意事项，向消费者推送早、中、晚三个时段的通知；并在移植前提醒服用清肠药物（平台购买 / 用户自购两条路径）</div>
+      <div><span class="k">技术栈落点</span>apps/api（NestJS + Prisma + @nestjs/schedule）、apps/mini-c（Taro4 C 端）、apps/mini-b（Taro4 商家端）、apps/admin（React + antd5）、packages/shared</div>
+      <div><span class="k">术语约定</span>「移植日」= 用户开始服用胶囊的第一天，记为 D0；「旅程」= TransplantJourney，一次完整移植服务的健康管理周期</div>
+    </div>
+
+    <!-- ==================== 01 ==================== -->
+    <h2 id="s1"><span class="no">01</span>背景与目标</h2>
+    <p>平台已承接武汉百英诺生物的菌群移植业务：消费者从商家购买移植服务后，需经历 <b>移植前 7 天准备 → 移植前 1 天清肠 → 6 天移植期 → 30 天恢复期</b> 共约 43 天的完整周期。服务流程文档对每个阶段有明确的注意事项（用药禁忌、饮食禁忌、服药方法、不良反应处理），但目前这些要求仅以纸质/PDF 形式交付用户，执行情况完全依赖用户自觉，商家也无法感知用户是否按规程准备。</p>
+    <p>观察到的链路断点：</p>
+    <ul>
+      <li><b>移植前 1 天清肠</b>是移植成败的关键前置步骤（聚乙二醇电解质散清洁肠道至无渣清水状），但药物需要用户提前备好——遗漏或临时买不到药会直接导致移植延期；</li>
+      <li>移植期 6 天每天需按时、按法服用胶囊（晨起空腹、≤37℃ 温凉水送服、服后 1 小时禁食），规则细碎，纯靠记忆易出错；</li>
+      <li>移植后 30 天内的饮食/运动/复检要求，以及腹泻、腹胀、轻度发热等自限性不良反应的应对，用户缺少即时可查的指导入口。</li>
+    </ul>
+    <p><b>产品决策：</b>为购买移植服务的 C 端消费者提供「健康助手」功能——以移植日为主线，按阶段自动生成早、中、晚三时段的推送计划，把文档中的注意事项转化为到点即达的执行指令；把清肠药物准备做成「平台购买 / 自行购买」双路径闭环，未就绪时升级提醒并同步商家跟进。</p>
+    <p><b>预期可观察结果：</b></p>
+    <ul>
+      <li>用户在每个阶段开始时即收到该阶段注意事项，不需要翻文档；</li>
+      <li>清肠日前，清肠药物就绪状态可在系统内被确认（两条路径均可），未就绪时商家收到预警并可介入；</li>
+      <li>商家可查看名下客户各自的旅程阶段与准备状态，平台可审计全部推送记录。</li>
+    </ul>
+
+    <!-- ==================== 02 ==================== -->
+    <h2 id="s2"><span class="no">02</span>目标用户与使用场景</h2>
+    <h3>2.1 角色定义</h3>
+    <table>
+      <tr><th>角色</th><th>系统身份</th><th>与本功能的关系</th></tr>
+      <tr><td>C 端消费者</td><td>mini-c 用户（Role=customer）</td><td>健康助手的唯一使用者：接收推送、设置移植日、确认清肠药物、查看今日任务</td></tr>
+      <tr><td>商家</td><td>mini-b 用户（Role=merchant）</td><td>移植服务的售出方：查看名下客户旅程、代设移植日、接收清肠未就绪预警并跟进</td></tr>
+      <tr><td>平台运营</td><td>admin 用户（Role=platform）</td><td>管理推送模板、查看全部旅程、手动补发/停用推送、处理异常</td></tr>
+      <tr><td>供应商</td><td>Role=supplier</td><td>仅作为清肠药物商品的供货方出现在购买链路中，不直接操作健康助手</td></tr>
+    </table>
+    <h3>2.2 典型场景</h3>
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">场景 A</span><span class="fr-name">首次移植的完整周期</span></div>
+      <p>王女士在商家门店购买「精准菌群移植服务」，订单支付成功 → 健康助手自动开通，提示她设置移植日 → 设置后，移植前第 7 天起每天早中晚收到饮食与用药禁忌提醒 → 移植前 2 天收到「请确认清肠药物已备好」提醒，她选择从平台一键下单聚乙二醇电解质散 → 移植前 1 天晚饭后收到清肠操作指引（剂量、冲水量、服用方法）→ 移植期 6 天每天 07:30 收到服药提醒 → 移植后第 35 天收到宏基因组复检提醒，旅程结束。</p>
+    </div>
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">场景 B</span><span class="fr-name">自购清肠药</span></div>
+      <p>李先生是药店会员，收到清肠药就绪提醒后选择「我已自行购买」，填写药品名并确认 → 系统记录就绪，清肠日当天正常收到操作指引，商家端不再出现预警。</p>
+    </div>
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">场景 C</span><span class="fr-name">清肠药未就绪的商家介入</span></div>
+      <p>张先生直到移植前 1 天中午仍未确认清肠药 → 系统向他发送升级提醒（当日 12:00、19:30 各一次），同时向售出商家发送预警通知 → 商家电话联系后得知其已买到药，代为确认「已备好」，预警消除。</p>
+    </div>
+    <div class="fr">
+      <div class="fr-head"><span class="fr-id">场景 D</span><span class="fr-name">移植延期</span></div>
+      <p>陈女士移植前 3 天发热 37.8℃（文档禁忌：体温 ≥37℃ 不宜移植）→ 她在健康助手中暂停旅程并改期 → 未发送的推送任务按新移植日重建，已过的任务不重发。</p>
+    </div>
+
+    <!-- ==================== 03 ==================== -->
+    <h2 id="s3"><span class="num">03</span>核心功能与业务流程</h2>
+    <h3>3.1 功能总览</h3>
+    <table>
+      <tr><th>ID</th><th>功能</th><th>优先级</th><th>说明</th></tr>
+      <tr><td>FR-HA-01</td><td>健康助手自动开通</td><td><span class="tag">P0</span></td><td>含移植服务商品的订单支付成功后自动创建旅程</td></tr>
+      <tr><td>FR-HA-02</td><td>移植日排期</td><td><span class="tag">P0</span></td><td>用户或商家设置/修改移植日与服药方案，激活推送计划</td></tr>
+      <tr><td>FR-HA-03</td><td>旅程阶段推进</td><td><span class="tag">P0</span></td><td>按移植日推导阶段：准备期 / 移植期 / 恢复期 / 结束</td></tr>
+      <tr><td>FR-HA-04</td><td>三时段定时推送</td><td><span class="tag">P0</span></td><td>早 07:30 / 中 12:00 / 晚 19:30 生成站内通知</td></tr>
+      <tr><td>FR-HA-05</td><td>阶段化推送内容模板</td><td><span class="tag">P0</span></td><td>内容 1:1 映射服务流程文档注意事项（见 4.3）</td></tr>
+      <tr><td>FR-HA-06</td><td>清肠药平台购买路径</td><td><span class="tag">P0</span></td><td>健康助手内一键下单清肠药，复用现有订单/支付链路</td></tr>
+      <tr><td>FR-HA-07</td><td>清肠药自购确认路径</td><td><span class="tag">P0</span></td><td>用户自行购买后回填确认，系统视为就绪</td></tr>
+      <tr><td>FR-HA-08</td><td>清肠就绪判定与升级提醒</td><td><span class="tag">P0</span></td><td>D-2/D-1 未就绪升级推送 + 商家预警</td></tr>
+      <tr><td>FR-HA-09</td><td>mini-c 健康助手页</td><td><span class="tag">P0</span></td><td>阶段卡、今日任务、时间线、清肠确认入口</td></tr>
+      <tr><td>FR-HA-10</td><td>商家跟进视图</td><td><span class="tag">P0</span></td><td>mini-b 客户旅程列表、清肠预警列表、代确认</td></tr>
+      <tr><td>FR-HA-11</td><td>admin 旅程与推送管理</td><td><span class="tag p1">P1</span></td><td>旅程查询、推送记录审计、手动补发、模板维护</td></tr>
+      <tr><td>FR-HA-12</td><td>服药打卡 / 依从性记录</td><td><span class="tag p1">P1</span></td><td>用户对每次服药打勾；本期仅预留字段，不做交互</td></tr>
+      <tr><td>FR-HA-13</td><td>微信订阅消息通道</td><td><span class="tag p1">P1</span></td><td>依赖既有遗留项 FR-16；本期推送一律走站内通知</td></tr>
+    </table>
+
+    <h3>3.2 健康助手生命周期</h3>
+    <div class="flow">
+      <span class="step">订单支付成功</span><span class="arr">→</span>
+      <span class="step hl">自动开通（待排期）</span><span class="arr">→</span>
+      <span class="step hl">设置移植日（激活）</span><span class="arr">→</span>
+      <span class="step">准备期 D-7~D-1</span><span class="arr">→</span>
+      <span class="step">清肠日 D-1 晚</span><span class="arr">→</span>
+      <span class="step">移植期 D0~D5</span><span class="arr">→</span>
+      <span class="step">恢复期 D6~D35</span><span class="arr">→</span>
+      <span class="step hl">复检提醒后结束</span>
+    </div>
+    <div class="note"><b>开通时点的产品判断：</b>需求描述为「接受移植服务后获得健康助手」，但清肠提醒发生在移植执行前 1 天，准备期注意事项从移植前 7 天即需执行。因此开通时点定为<b>移植服务订单支付成功</b>（而非移植执行完毕），支付后立即开通并进入「待排期」状态，设置移植日后才激活推送计划。这与「凡购买者均可获得」的授权语义一致，且覆盖了清肠提醒的时间窗。</div>
+
+    <h3>3.3 主业务流程</h3>
+    <ol>
+      <li><b>触发开通（FR-HA-01）：</b>订单含「移植服务」类商品且支付成功（订单状态进入 <code>paid</code>）→ 系统为每个移植服务商品行创建一条 TransplantJourney，状态 <code>pending_schedule</code> → C 端「我的服务」出现「健康助手」入口，并发送一条开通欢迎通知。</li>
+      <li><b>排期（FR-HA-02）：</b>用户在健康助手页设置移植日（默认建议至少为 8 天后，保证完整准备期）与服药方案（首选：每日 1 次晨起空腹 10 粒；次选：每日 2 次、每次 5 粒，早空腹 + 晚饭后 1 小时）→ 系统生成全量推送任务 → 状态转 <code>active</code>。商家可代设。</li>
+      <li><b>阶段推进（FR-HA-03）：</b>系统按「今天 − 移植日」的天数偏移 dayOffset 推导阶段：<code>-7~-1</code> 准备期（含 D-1 清肠）、<code>0~5</code> 移植期、<code>6~35</code> 恢复期、<code>&gt;35</code> 自动完成。阶段不手工维护，由日期推导，避免状态漂移。</li>
+      <li><b>推送执行（FR-HA-04/05）：</b>调度器每 5 分钟扫描到点任务，生成站内通知；内容按「阶段 × 时段 × 服药方案」从模板库取（见 4.3）。</li>
+      <li><b>清肠闭环（FR-HA-06/07/08）：</b>D-2 起系统检查清肠药就绪状态；用户在健康助手中选择平台购买或自购确认；D-1 中午仍未就绪 → 升级提醒用户并预警商家。</li>
+      <li><b>结束：</b>dayOffset &gt; 35 且复检提醒已发送 → 状态转 <code>completed</code>，推送停止，历史可查。</li>
+    </ol>
+
+    <h3>3.4 旅程状态机</h3>
+    <table>
+      <tr><th>状态</th><th>进入条件</th><th>允许操作</th><th>出口</th></tr>
+      <tr><td><code>pending_schedule</code> 待排期</td><td>订单支付成功自动创建</td><td>设置移植日；取消（订单退款联动）</td><td>→ active（设置移植日）；→ cancelled（退款）</td></tr>
+      <tr><td><code>active</code> 进行中</td><td>已设置移植日</td><td>改期、暂停、恢复、清肠确认、接收推送</td><td>→ paused；→ completed（dayOffset&gt;35）；→ cancelled</td></tr>
+      <tr><td><code>paused</code> 已暂停</td><td>用户/商家暂停（发热、生理期、个人原因）</td><td>恢复（必须重设移植日）；取消</td><td>→ active（恢复并重建未发任务）；→ cancelled</td></tr>
+      <tr><td><code>completed</code> 已完成</td><td>dayOffset&gt;35 且复检提醒已发</td><td>仅查看历史</td><td>终态</td></tr>
+      <tr><td><code>cancelled</code> 已取消</td><td>订单全额退款 / 平台取消</td><td>仅查看</td><td>终态</td></tr>
+    </table>
+    <div class="callout"><b>约束：</b>同一用户同一时刻最多存在一条 <code>active</code> 状态的旅程。购买多疗程产生多条旅程时，后续旅程停留在 <code>pending_schedule</code>，待前一条 <code>completed</code> 后才允许排期激活，防止推送叠加。<span class="src">[Assumption, TBD：多疗程是否允许并行见 11]</span></div>
+
+    <!-- ==================== 04 ==================== -->
+    <h2 id="s4"><span class="num">04</span>消息推送规则与时机</h2>
+    <h3>4.1 推送时段定义</h3>
+    <table>
+      <tr><th>时段</th><th>触发时刻（Asia/Shanghai）</th><th>定位</th></tr>
+      <tr><td>早 morning</td><td>07:30</td><td>晨起服药提醒、空腹要求、当日饮食基调</td></tr>
+      <tr><td>中 noon</td><td>12:00</td><td>午餐饮食指导、注意事项强化、状态检查（如清肠药就绪检查）</td></tr>
+      <tr><td>晚 evening</td><td>19:30</td><td>晚饭后服药（次选方案）、清肠操作指引、次日准备、助眠建议</td></tr>
+    </table>
+    <ul>
+      <li>时段固定，本期不开放用户自定义。<span class="src">[Assumption, TBD]</span></li>
+      <li>到点判定以服务器调度扫描为准，允许 ±5 分钟投递偏差；超过原定时刻 2 小时未投递的任务标记 <code>skipped(expired)</code>，不补发（避免深夜打扰）。</li>
+      <li>同一天同一时段最多 1 条健康助手推送；清肠升级提醒属于额外通道，不计入三时段配额。</li>
+    </ul>
+
+    <h3>4.2 阶段与推送日历</h3>
+    <table>
+      <tr><th>阶段</th><th>dayOffset</th><th>天数</th><th>每日推送数</th><th>备注</th></tr>
+      <tr><td>准备期</td><td>-7 ~ -2</td><td>6</td><td>3（早/中/晚）</td><td>饮食与用药禁忌逐日强化</td></tr>
+      <tr><td>清肠前检查</td><td>-2</td><td>含于上</td><td>+1（晚 20:30 就绪检查）</td><td>未就绪才发送</td></tr>
+      <tr><td>清肠日</td><td>-1</td><td>1</td><td>3 + 2（升级提醒条件触发）</td><td>晚 19:30 清肠操作指引为关键推送</td></tr>
+      <tr><td>移植期</td><td>0 ~ 5</td><td>6</td><td>3（早/中/晚）</td><td>早=服药主提醒；晚内容随服药方案分流</td></tr>
+      <tr><td>恢复期</td><td>6 ~ 35</td><td>30</td><td>3（早/中/晚）</td><td>前 14 天侧重饮食禁忌与不良反应应对；后 16 天侧重运动/益生菌/复检铺垫</td></tr>
+      <tr><td>复检日</td><td>+35</td><td>含于上</td><td>早场发送复检提醒</td><td>发送后旅程完成</td></tr>
+    </table>
+    <p>单条旅程全量推送任务约 <b>129 条</b>（43 天 × 3），排期时一次性生成，支持 C 端时间线预览「未来会收到什么」。</p>
+
+    <h3>4.3 推送内容矩阵（与文档注意事项 1:1 映射）</h3>
+    <p>以下为模板库的内容基准，<code>模板Code = 阶段_天数偏移_时段</code>，文案终稿由运营在 admin 维护，技术按 code 装配。每条推送 = 标题 + ≤120 字正文 + 可选跳转（健康助手对应日的时间线节点）。</p>
+
+    <h4>准备期 D-7 ~ D-1（依据：移植前 7 天管理）</h4>
+    <table>
+      <tr><th>时段</th><th>内容要点</th><th>文档依据</th></tr>
+      <tr><td>早</td><td>用药禁忌提醒：禁止使用抗生素类药物；类固醇类激素每日剂量不得大于 20mg；如在用药请与医生确认</td><td>移植前 7 天管理 第 1、2 条</td></tr>
+      <tr><td>中</td><td>饮食调整：今日起忌烟、酒、咖啡、浓茶、碳酸饮料、辛辣、油腻、熏烤食物，避免影响菌群定植与存活</td><td>移植前 7 天管理 第 3 条</td></tr>
+      <tr><td>晚</td><td>轮换提醒：① 胶囊保存检查（收货后 4℃ 冷藏层保存，60 天有效）② 禁忌人群自查（怀孕/哺乳、严重免疫抑制、严重营养不良、严重低蛋白血症、体温≥37℃ 发热 —— 命中任一请暂停并联系商家改期）③ 次日准备预告</td><td>移植前 7 天管理 第 4 条、胶囊保存说明</td></tr>
+    </table>
+
+    <h4>清肠日 D-1（依据：移植前 1 天管理）</h4>
+    <table>
+      <tr><th>时段</th><th>内容要点</th><th>文档依据</th></tr>
+      <tr><td>早 07:30</td><td>今日清肠日预告：全天少渣饮食——可用白米、白面、鱼、鸡蛋、低纤维蔬菜（花菜、冬瓜、土豆、去皮胡萝卜等）；禁用粗粮、多纤维蔬菜（芹菜、韭菜、笋类等）</td><td>移植前 1 天管理·饮食</td></tr>
+      <tr><td>中 12:00</td><td>清肠药就绪检查（未就绪时升级为催办语气）：聚乙二醇电解质散是否已备好？备好请点「已备好」；未备好可一键平台购买或标记自购</td><td>清肠前置条件（产品化检查点）</td></tr>
+      <tr><td>晚 19:30</td><td><b>清肠操作指引（关键推送）：</b>晚餐清淡后口服聚乙二醇电解质散——2 袋加 2000mL 水或脉动冲开，少量多次服用；服后多走动、按摩腹部促进排泄；至大便呈无渣清水状即可；清肠后当晚不可再进食；今晚起空腹 8~10 小时</td><td>移植前 1 天管理·清肠 全文</td></tr>
+      <tr><td>升级 12:00/19:30</td><td>未就绪时追加：「明早即开始移植，清肠药尚未确认备好」+ 同步商家预警</td><td>FR-HA-08</td></tr>
+    </table>
+
+    <h4>移植期 D0 ~ D5（依据：移植期·服用胶囊 6 天）</h4>
+    <table>
+      <tr><th>时段</th><th>内容要点（按服药方案分流）</th><th>文档依据</th></tr>
+      <tr><td>早 07:30</td><td><b>服药主提醒。</b>首选方案：晨起空腹服用 10 粒——从铝塑板取出检查完好，室温静置复温约 10 分钟，≤37℃ 温凉水送服，10~20 分钟内服完；服完 1 小时后再进食。次选方案：晨起空腹服 5 粒（同上法），另 5 粒晚饭后 1 小时服用</td><td>胶囊服用方法 01~04</td></tr>
+      <tr><td>中 12:00</td><td>饮食与行为提醒：以易消化饮食为主，忌辛辣刺激、油腻/油炸、腌制、熏烤、重盐；忌烟酒、茶、咖啡、碳酸饮料；禁止剧烈运动；避免使用抗生素</td><td>移植期·生活方式/饮食指导</td></tr>
+      <tr><td>晚 19:30</td><td>次选方案：晚饭后 1 小时服用 5 粒提醒（服完不建议再进食）。首选方案：注意事项回顾——每次仅解冻当次剂量避免重复解冻损失活性；肠溶胶囊不可打开胶囊壳；明日服药预告</td><td>胶囊服用注意 1、2</td></tr>
+    </table>
+
+    <h4>恢复期 D6 ~ D35（依据：移植后 30 天管理）</h4>
+    <table>
+      <tr><th>时段</th><th>内容要点</th><th>文档依据</th></tr>
+      <tr><td>早 07:30</td><td>轮换：① 益生菌/益生元增服提醒（便于菌群定植）② 建立排便习惯（晨起或餐后 1 小时）③ 晨起户外散步或室内慢走 20~30 分钟</td><td>移植后·辅助/便秘处理</td></tr>
+      <tr><td>中 12:00</td><td>前 14 天：饮食禁忌（忌烟酒、浓茶、咖啡、饮料）+ 不良反应应对卡（腹泻：补充水分少量多次；腹胀：避产气食物；轻度发热＜38℃：物理降温多喝温水；赫氏消亡反应属自限性、说明移植在起作用）。后 16 天：恢复食物多样性（同移植前菌衡饮食）</td><td>移植后·饮食/不良反应处理</td></tr>
+      <tr><td>晚 19:30</td><td>轮换：① 运动提醒（每周 3 次 30 分钟以上中等强度）② 腹式呼吸 10 分钟（吸气鼓腹放松肛门会阴，呼气收腹紧缩，6~8 次）③ 39~42℃ 热水泡脚 30 分钟联合足底按摩</td><td>移植后·运动/便秘处理</td></tr>
+      <tr><td>+35 早</td><td>复检提醒：移植结束已满 30 天，请进行宏基因组复检以指导后续方案 → 跳转报告/复检入口</td><td>移植后·检测</td></tr>
+    </table>
+
+    <h3>4.4 触达通道与降级</h3>
+    <table>
+      <tr><th>通道</th><th>本期策略</th></tr>
+      <tr><td>站内通知（in_app）</td><td><b>唯一保底通道</b>：写入 Notification 表，mini-c 通知中心 + 健康助手页未读角标展示</td></tr>
+      <tr><td>微信订阅消息（subscription）</td><td>P1，依赖既有遗留项 FR-16（需真实小程序 AppID 与消息模板）；通道接入后按用户订阅状态双发，站内通知始终保留</td></tr>
+    </table>
+    <ul>
+      <li><b>幂等去重：</b>每条推送任务对应唯一 <code>dedupeKey</code>，调度器重复扫描、多实例并发均不会产生重复通知。</li>
+      <li><b>免打扰：</b>21:30 后不发送任何健康助手推送（含升级提醒），到点任务顺延至次日 07:30 合并为一条。<span class="src">[Assumption, TBD：免打扰时段]</span></li>
+    </ul>
+
+    <!-- ==================== 05 ==================== -->
+    <h2 id="s5"><span class="num">05</span>清肠药物双路径</h2>
+    <h3>5.1 药物与就绪定义</h3>
+    <ul>
+      <li>清肠药物 = <b>聚乙二醇电解质散</b>（文档指定，2 袋 + 2000mL 水冲服）。平台上架为普通商品，供应商供货，走既有商品/订单/支付/佣金体系，不新增支付逻辑。</li>
+      <li><b>就绪（ready）</b>判定：平台购买路径——关联订单已支付且用户点击「已备好」（或订单状态进入 <code>shipped</code> 后用户确认收货）；自购路径——用户提交自购确认即视为就绪。就绪状态冗余存储于旅程的 <code>bowelPrepStatus</code>。</li>
+      <li>两条路径<b>互斥可切换</b>：未就绪前可任意切换；任一路径达成就绪后锁定，不再展示另一路径入口（保留记录）。</li>
+    </ul>
+
+    <h3>5.2 路径 A：平台购买</h3>
+    <div class="flow">
+      <span class="step">健康助手清肠卡</span><span class="arr">→</span>
+      <span class="step">「从平台购买」</span><span class="arr">→</span>
+      <span class="step">确认商品/收货信息</span><span class="arr">→</span>
+      <span class="step hl">生成销售订单（服务端取价）</span><span class="arr">→</span>
+      <span class="step">支付（现有链路）</span><span class="arr">→</span>
+      <span class="step">商家发货</span><span class="arr">→</span>
+      <span class="step hl">用户点「已备好」→ 就绪</span>
+    </div>
+    <ul>
+      <li>下单入口固定在健康助手清肠卡与 D-2/D-1 推送的跳转落地页；商品由平台运营配置为「清肠药」专用商品（SKU 标记 <code>bowel_prep</code> 用途），价格、库存、佣金完全复用现有体系，金额单位沿用 <code>*Cents</code>。</li>
+      <li>生成的订单与正常商城订单同构（SalesOrder + SalesOrderItem），只是在 BowelPrepRecord 中回填 <code>orderId</code> 建立关联；该订单的退款按既有售后规则处理，退款成功会联动清除就绪状态并重新触发提醒（见 8.6）。</li>
+      <li>为保证时效，下单页提示「建议在移植日前 3 天 24:00 前完成购买」。<span class="src">[Assumption, TBD：物流时效承诺]</span></li>
+    </ul>
+
+    <h3>5.3 路径 B：用户自购</h3>
+    <div class="flow">
+      <span class="step">健康助手清肠卡</span><span class="arr">→</span>
+      <span class="step">「我已自行购买」</span><span class="arr">→</span>
+      <span class="step">填写药品名（默认聚乙二醇电解质散）+ 购买渠道说明（选填）+ 凭证照片（选填）</span><span class="arr">→</span>
+      <span class="step hl">提交确认 → 立即就绪</span>
+    </div>
+    <ul>
+      <li>自购确认是声明式动作，不做真实性校验；提交后展示清肠操作指引预告，强化「移植前 1 天晚饭后服用」的预期。</li>
+      <li>商家可查看自购备注与凭证，用于线下跟进核实；商家无权修改用户填写内容，只能在用户授权后代为点击「已备好」。</li>
+    </ul>
+
+    <h3>5.4 就绪状态机与升级提醒</h3>
+    <table>
+      <tr><th>bowelPrepStatus</th><th>含义</th><th>迁移条件</th></tr>
+      <tr><td><code>none</code></td><td>未选择路径/未就绪</td><td>初始；或平台订单全额退款后回退</td></tr>
+      <tr><td><code>platform_ordered</code></td><td>平台已下单待确认备好</td><td>平台订单支付成功</td></tr>
+      <tr><td><code>self_confirmed</code></td><td>自购已确认（就绪）</td><td>提交自购确认</td></tr>
+      <tr><td><code>ready</code></td><td>平台路径已备好（就绪）</td><td>用户/商家点「已备好」</td></tr>
+    </table>
+    <table>
+      <tr><th>检查点</th><th>条件</th><th>动作</th></tr>
+      <tr><td>D-2 20:30</td><td>未就绪（none / platform_ordered）</td><td>向用户发就绪检查推送（含双路径入口）</td></tr>
+      <tr><td>D-1 12:00</td><td>仍未就绪</td><td>升级推送用户（催办语气）+ 向商家发预警通知（客户姓名/移植日/当前状态/联系方式）</td></tr>
+      <tr><td>D-1 19:30</td><td>仍未就绪</td><td>再次升级推送用户 + 商家预警未消除标记；清肠指引照常发送（指引中前置「若药物未备好请立即联系商家」）</td></tr>
+      <tr><td>D0 07:30</td><td>仍未就绪</td><td>服药提醒照常发送；向商家发送「旅程可能受影响」最终预警</td></tr>
+    </table>
+
+    <!-- ==================== 06 ==================== -->
+    <h2 id="s6"><span class="num">06</span>数据结构与接口设计</h2>
+    <h3>6.1 新增数据模型（Prisma，追加至 schema.prisma 末尾新区块）</h3>
+    <pre><code>enum JourneyStatus {
+  pending_schedule
+  active
+  paused
+  completed
+  cancelled
+}
+
+enum DosingScheme {
+  morning_once   // 首选：10 粒/次/天，晨起空腹
+  twice_daily    // 次选：5 粒×2 次，早空腹 + 晚饭后 1h
+}
+
+enum PushSlot {
+  morning        // 07:30
+  noon           // 12:00
+  evening        // 19:30
+}
+
+enum PushTaskStatus {
+  pending
+  sent
+  skipped        // 附 skipReason：expired / paused / cancelled / merged_quiet_hours
+  failed
+}
+
+enum BowelPrepStatus {
+  none
+  platform_ordered
+  self_confirmed
+  ready
+}
+
+model TransplantJourney {
+  id              String          @id @default(cuid())
+  journeyNo       String          @unique            // 如 J202610270001
+  orderId         String
+  orderItemId     String                             // 一个移植服务商品行一条旅程
+  customerId      String
+  merchantId      String
+  transplantDate  DateTime?                          // 移植日 D0（本地日期，存当日 00:00）
+  dosingScheme    DosingScheme    @default(morning_once)
+  status          JourneyStatus   @default(pending_schedule)
+  bowelPrepStatus BowelPrepStatus @default(none)
+  pauseReason     String?
+  templateVersion Int             @default(1)
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  pushTasks       JourneyPushTask[]
+  bowelPrep       BowelPrepRecord?
+
+  @@unique([orderId, orderItemId])                   // 防重复开通
+  @@index([customerId, status])
+  @@index([merchantId, status])
+}
+
+model JourneyPushTask {
+  id             String         @id @default(cuid())
+  journeyId      String
+  journey        TransplantJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  dayOffset      Int                               // 相对移植日：-7 ~ +35
+  slot           PushSlot
+  scheduledAt    DateTime                          // 绝对触发时刻（由移植日+时段换算）
+  templateCode   String                            // 如 PRE_D-1_EVENING
+  templateVersion Int           @default(1)
+  title          String
+  body           String
+  status         PushTaskStatus @default(pending)
+  notificationId String?                           // 发送后关联 Notification.id
+  skipReason     String?
+  sentAt         DateTime?
+  createdAt      DateTime       @default(now())
+
+  @@unique([journeyId, dayOffset, slot])
+  @@index([status, scheduledAt])
+}
+
+model BowelPrepRecord {
+  id               String   @id @default(cuid())
+  journeyId        String   @unique
+  journey          TransplantJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  path             String?                  // platform / self（就绪前可为空）
+  productId        String?                  // 平台路径：清肠药商品
+  orderId          String?                  // 平台路径：关联 SalesOrder
+  selfDrugName     String?                  // 自购路径：药品名（默认聚乙二醇电解质散）
+  selfNote         String?                  // 自购路径：购买渠道说明
+  selfPhotoUrl     String?                  // 自购路径：凭证照片（/uploads 相对路径）
+  readyAt          DateTime?                // 「已备好」确认时刻
+  readyBy          String?                  // customer / merchant
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}</code></pre>
+    <ul>
+      <li>推送内容同时冗余在 JourneyPushTask（title/body）与模板库两处：任务生成时快照文案，模板后续修改不影响已生成任务；模板版本升级时未发送任务整体重建（<code>templateVersion+1</code>）。</li>
+      <li>推送发送复用现有 <code>Notification</code> 模型：<code>type='journey_push'</code>、<code>subjectType='TransplantJourney'</code>、<code>channel=in_app</code>、<code>dedupeKey='jpt:' + pushTaskId</code>（依赖现有 unique 约束幂等）。</li>
+      <li>清肠药商品不建新表，复用 <code>Product</code>，在结构化分类中新增 <code>bowel_prep</code> 类目 key（packages/shared 的 PRODUCT_CATEGORIES），运营配置一个上架商品即可。</li>
+      <li>模板库：P0 以代码常量表落地（<code>journey-templates.ts</code>，含 code/slot/title/body/版本），admin 可视化编辑为 P1。</li>
+      <li>状态标签中文化：packages/shared/src/status.ts 新增 JOURNEY_STATUS_LABELS、BOWEL_PREP_STATUS_LABELS 及对应 TONES，三端统一引用。</li>
+      <li>双 schema 同步：schema.prisma 与 schema.mysql.prisma / schema.sqlite.prisma 同步追加，migration 由 API 分支统一生成。</li>
+    </ul>
+
+    <h3>6.2 接口设计（REST，/api 前缀；沿用项目惯例：无响应包装、无分页、列表直接返回数组）</h3>
+    <table>
+      <tr><th>方法</th><th>路径</th><th>角色</th><th>说明</th></tr>
+      <tr><td>POST</td><td><code>/api/journeys</code></td><td>system / platform</td><td>创建旅程。正常由订单支付成功钩子自动调用；platform 可手动补建（幂等：<code>@@unique(orderId, orderItemId)</code>）</td></tr>
+      <tr><td>GET</td><td><code>/api/journeys/mine</code></td><td>customer</td><td>我的旅程数组（含当前 phase 推导值、今日三条任务、清肠状态）</td></tr>
+      <tr><td>GET</td><td><code>/api/journeys/:id</code></td><td>customer(本人) / merchant(名下) / platform</td><td>旅程详情 + 清肠记录 + 阶段推导</td></tr>
+      <tr><td>PATCH</td><td><code>/api/journeys/:id/schedule</code></td><td>customer(本人) / merchant(名下)</td><td>设置/修改移植日与服药方案；body: <code>{ transplantDate, dosingScheme }</code>；active 状态下修改触发未发任务重建</td></tr>
+      <tr><td>POST</td><td><code>/api/journeys/:id/pause</code></td><td>customer / merchant / platform</td><td>暂停；body: <code>{ reason }</code></td></tr>
+      <tr><td>POST</td><td><code>/api/journeys/:id/resume</code></td><td>同上</td><td>恢复；body: <code>{ transplantDate }</code>（必须重设移植日，未发任务重建）</td></tr>
+      <tr><td>GET</td><td><code>/api/journeys/:id/timeline</code></td><td>customer(本人) / merchant / platform</td><td>推送任务时间线，query: <code>?from=-7&amp;to=5</code> 按 dayOffset 过滤</td></tr>
+      <tr><td>POST</td><td><code>/api/journeys/:id/bowel-prep/platform-order</code></td><td>customer(本人)</td><td>一键下单清肠药：内部复用下单服务生成 SalesOrder（服务端取价，含收货信息），返回订单号供跳转支付；重复调用幂等返回既有未支付订单</td></tr>
+      <tr><td>POST</td><td><code>/api/journeys/:id/bowel-prep/self-confirm</code></td><td>customer(本人)</td><td>自购确认；body: <code>{ drugName?, note?, photoUrl? }</code>；提交即就绪</td></tr>
+      <tr><td>POST</td><td><code>/api/journeys/:id/bowel-prep/ready</code></td><td>customer(本人) / merchant(名下)</td><td>平台路径「已备好」确认；记录 readyBy</td></tr>
+      <tr><td>GET</td><td><code>/api/journeys</code></td><td>merchant(名下) / platform(全部)</td><td>列表，query: <code>?status=&amp;bowelPrepStatus=&amp;transplantDateFrom=&amp;transplantDateTo=</code>；商家预警列表 = <code>bowelPrepStatus in (none, platform_ordered) 且 dayOffset ≥ -2</code></td></tr>
+      <tr><td>POST</td><td><code>/api/journeys/:id/cancel</code></td><td>platform</td><td>手动取消（自动取消由退款钩子触发）</td></tr>
+      <tr><td>POST</td><td><code>/api/journeys/:id/push-tasks/:taskId/resend</code></td><td>platform</td><td>手动补发失败/跳过任务（P1）</td></tr>
+    </table>
+
+    <h3>6.3 推送调度实现</h3>
+    <pre><code>// apps/api/src/journeys/journey-dispatch.service.ts
+@Cron(CronExpression.EVERY_5_MINUTES)
+async dispatch() {
+  // 1. 到点任务：status=pending 且 scheduledAt &lt;= now 且 journey.status=active
+  // 2. 逐条在事务内：创建 Notification(dedupeKey='jpt:'+taskId) → 任务置 sent
+  //    dedupeKey 冲突 = 已发过，直接置 sent（多实例并发安全）
+  // 3. 过期处理：scheduledAt &lt; now-2h 的 pending 任务置 skipped(expired)
+  // 4. 免打扰：21:30~07:30 窗口内到点任务顺延/合并（merged_quiet_hours）
+}
+@Cron(CronExpression.EVERY_DAY_AT_1AM)
+async rollover() {
+  // 阶段推进推导、dayOffset&gt;35 旅程置 completed、D-2/D-1 就绪检查任务动态生成
+}</code></pre>
+    <ul>
+      <li>复用现有 <code>@nestjs/schedule</code>（reminders.service 已有同款 Cron 模式），无新增基础设施。</li>
+      <li>升级提醒（D-2/D-1 检查点）不预生成，由每日 rollover 任务按就绪状态动态判定生成，避免「已就绪却仍收到催办」。 </li>
+      <li>服务器默认 UTC 运行时，<code>scheduledAt</code> 在排期生成任务时即按 Asia/Shanghai 换算为绝对时间存储，调度比较无需时区计算。</li>
+    </ul>
+
+    <h3>6.4 订单系统联动点</h3>
+    <ul>
+      <li><b>开通钩子：</b><code>sales-orders.service</code> 支付成功事务内，检测订单项商品类目是否为移植服务（新增类目 key <code>transplant_service</code>），是则同事务创建旅程（失败回滚保护：旅程创建失败不阻断支付，改为事务后补偿重试 + 告警）。</li>
+      <li><b>取消钩子：</b>订单全额退款完成（<code>refunded</code>）→ 关联旅程置 <code>cancelled</code>，未发任务置 <code>skipped(cancelled)</code>；部分退款不取消旅程。</li>
+      <li><b>清肠药订单：</b>由 <code>bowel-prep/platform-order</code> 生成，支付成功后 bowelPrepStatus → <code>platform_ordered</code>；该订单全额退款 → bowelPrepStatus 回退 <code>none</code> 并清除 readyAt，重新纳入提醒。</li>
+    </ul>
+
+    <!-- ==================== 07 ==================== -->
+    <h2 id="s7"><span class="num">07</span>权限与状态判定</h2>
+    <h3>7.1 角色权限矩阵</h3>
+    <table>
+      <tr><th>能力</th><th>customer</th><th>merchant</th><th>platform</th></tr>
+      <tr><td>查看旅程</td><td>仅本人</td><td>仅名下客户（订单归属 merchantId）</td><td>全部</td></tr>
+      <tr><td>设置/修改移植日、服药方案</td><td>本人</td><td>名下（代设）</td><td>全部</td></tr>
+      <tr><td>暂停 / 恢复</td><td>本人</td><td>名下</td><td>全部</td></tr>
+      <tr><td>平台购买清肠药下单</td><td>本人</td><td>—</td><td>—</td></tr>
+      <tr><td>自购确认填写</td><td>本人</td><td>仅查看，不可改</td><td>仅查看</td></tr>
+      <tr><td>「已备好」确认</td><td>本人</td><td>名下（代确认，readyBy=merchant）</td><td>全部</td></tr>
+      <tr><td>接收推送</td><td>本人旅程</td><td>预警类通知</td><td>—</td></tr>
+      <tr><td>手动补建 / 取消 / 补发</td><td>—</td><td>—</td><td>是</td></tr>
+      <tr><td>推送模板维护</td><td>—</td><td>—</td><td>是（P1）</td></tr>
+    </table>
+    <ul>
+      <li>鉴权沿用现有 AuthGuard + <code>@Roles()</code> 装饰器；数据归属校验在 service 层比对 <code>journey.customerId === currentUser.id</code> 或 <code>journey.merchantId === currentUser.id</code>，不满足抛 403。</li>
+    </ul>
+
+    <h3>7.2 关键判定规则汇总（唯一定义处）</h3>
+    <table>
+      <tr><th>判定</th><th>规则</th></tr>
+      <tr><td>开通资格</td><td>订单含类目为 <code>transplant_service</code> 的商品行 且 订单支付成功；每商品行一条旅程；重复触发幂等</td></tr>
+      <tr><td>推送资格</td><td>旅程 <code>status=active</code> 且 任务 <code>status=pending</code> 且 <code>scheduledAt ≤ now</code> 且未过 2 小时过期窗；pending_schedule / paused / completed / cancelled 一律不推送</td></tr>
+      <tr><td>阶段推导</td><td>dayOffset = 今日 − transplantDate（自然日）；-7~-1 准备期（-1 同时为清肠日）、0~5 移植期、6~35 恢复期、&gt;35 完成；transplantDate 为空 = 待排期</td></tr>
+      <tr><td>清肠就绪</td><td>bowelPrepStatus ∈ {self_confirmed, ready}；platform_ordered 不算就绪（药未确认备好）</td></tr>
+      <tr><td>排期约束</td><td>transplantDate ≥ 明日；建议 ≥ 今日+8 天（不足时提示准备期将压缩，允许确认后继续）；同用户已有 active 旅程时禁止激活新旅程</td></tr>
+    </table>
+
+    <!-- ==================== 08 ==================== -->
+    <h2 id="s8"><span class="num">08</span>异常与边界情况</h2>
+    <table>
+      <tr><th>#</th><th>场景</th><th>处理规则</th></tr>
+      <tr><td>8.1</td><td>订单支付成功但旅程创建失败（DB 异常等）</td><td>不阻断支付；事务后补偿任务每 10 分钟重试，连续失败写 SystemAlert 告警平台</td></tr>
+      <tr><td>8.2</td><td>支付后用户一直未设置移植日</td><td>pending_schedule 期间每 2 天晚场发一次排期引导通知（最多 5 次）；商家列表显示「待排期」供线下跟进</td></tr>
+      <tr><td>8.3</td><td>移植日改期</td><td>已发送任务不动；未发送任务按新日期全量重建（templateVersion+1）；dayOffset 已越过的新阶段任务直接置 skipped</td></tr>
+      <tr><td>8.4</td><td>暂停（发热 ≥37℃ / 生理期 / 个人原因）</td><td>暂停时刻起未发任务挂起（skipped(paused)）；恢复时必须重设移植日并重建任务；暂停跨不过清肠就绪逻辑——就绪记录保留</td></tr>
+      <tr><td>8.5</td><td>订单全额退款</td><td>旅程 cancelled，未发任务 skipped(cancelled)，清肠药关联订单若在途一并走售后流程</td></tr>
+      <tr><td>8.6</td><td>清肠药平台订单退款</td><td>bowelPrepStatus 回退 none、清 readyAt；若 dayOffset ≤ -1 重新触发就绪检查与升级提醒</td></tr>
+      <tr><td>8.7</td><td>调度器多实例/重复扫描</td><td>Notification.dedupeKey 唯一约束兜底，重复投递幂等；任务置 sent 与通知创建同事务</td></tr>
+      <tr><td>8.8</td><td>任务过期（服务停机、用户长期未打开）</td><td>超过 2 小时未投递置 skipped(expired) 不补发；停药类关键提醒由次日早场合并提示「昨日提醒已过期，请查看时间线」</td></tr>
+      <tr><td>8.9</td><td>用户购买多疗程</td><td>每商品行一条旅程；已有 active 旅程时新旅程禁止激活，UI 提示「完成当前疗程后可排期」</td></tr>
+      <tr><td>8.10</td><td>自购确认后又说没买到</td><td>就绪后允许用户「撤销就绪」（回到 none），撤销动作记录审计日志；D-1 后撤销会即时触发商家预警</td></tr>
+      <tr><td>8.11</td><td>移植日设置为过去日期</td><td>接口拒绝（transplantDate ≥ 明日）；前端日期选择器同步禁用</td></tr>
+      <tr><td>8.12</td><td>跨时区用户</td><td>本期固定按 Asia/Shanghai 计算与投递，海外用户感知偏差在文案中不做承诺<span class="src">[Assumption, TBD]</span></td></tr>
+      <tr><td>8.13</td><td>账号注销/退款后历史数据</td><td>旅程与推送记录保留（审计需要），C 端不再展示入口</td></tr>
+      <tr><td>8.14</td><td>清肠药商品下架/无库存</td><td>平台购买入口置灰并提示「暂不可购，请选择自行购买」；自购路径始终可用（保底路径）</td></tr>
+    </table>
+
+    <!-- ==================== 09 ==================== -->
+    <h2 id="s9"><span class="num">09</span>worktree 开发与分支协作规范</h2>
+    <h3>9.1 分支拓扑</h3>
+    <pre><code>main
+ └── feature/health-assistant            ← 集成分支（禁直接 push，只收 PR）
+      ├── feature/health-assistant-shared   ← packages/shared：类目 key、状态标签、类型
+      ├── feature/health-assistant-api      ← schema/迁移、journeys 模块、调度、订单钩子
+      ├── feature/health-assistant-mini-c   ← C 端健康助手页、通知入口、清肠确认
+      ├── feature/health-assistant-mini-b   ← 商家客户旅程列表、预警视图
+      └── feature/health-assistant-admin    ← 平台旅程管理、推送记录（P1）</code></pre>
+    <h3>9.2 worktree 建立与隔离</h3>
+    <pre><code># 以 API 子分支为例（仓库根目录执行）
+git fetch origin
+git worktree add ../mds-ha-shared -b feature/health-assistant-shared origin/main
+git worktree add ../mds-ha-api    -b feature/health-assistant-api    origin/main
+git worktree add ../mds-ha-mini-c -b feature/health-assistant-mini-c origin/main
+# 每个 worktree 独立安装依赖
+cd ../mds-ha-api && pnpm install</code></pre>
+    <table>
+      <tr><th>资源</th><th>主工作区</th><th>ha-api worktree</th><th>ha-mini-c worktree</th><th>规则</th></tr>
+      <tr><td>API 端口</td><td>3000</td><td>3010</td><td>—</td><td>各 worktree 用独立 .env 覆盖 PORT，禁止占用主线端口</td></tr>
+      <tr><td>admin dev 端口</td><td>5173</td><td>5183</td><td>—</td><td>同上</td></tr>
+      <tr><td>mini-c dev 端口</td><td>10087</td><td>—</td><td>10097</td><td>Taro dev 端口在 config/index.ts 内按环境变量切换</td></tr>
+      <tr><td>SQLite 库</td><td>dev.db</td><td>dev-ha.db</td><td>—</td><td>DATABASE_URL 指向独立文件，互不污染种子数据</td></tr>
+      <tr><td>node_modules / dist</td><td colspan="3">各自独立</td><td>禁止跨 worktree 共享（pnpm 硬链接机制按目录隔离）</td></tr>
+    </table>
+    <h3>9.3 协作规则</h3>
+    <ul>
+      <li><b>合并顺序：</b>shared → api → mini-c → mini-b → admin。下游分支在对应上游合入集成分支后，执行 <code>git merge feature/health-assistant</code> 同步再继续开发。</li>
+      <li><b>schema 冲突规避：</b>新模型统一追加在 schema.prisma 末尾「新增模型区」（本文档 6.1 内容即追加基准）；migration 文件名时间戳序，仅 API 分支 owner 生成 migration；schema.mysql.prisma / schema.sqlite.prisma 双写同步随同一 PR 提交。</li>
+      <li><b>PR 规范：</b>标题 <code>feat(ha-api): ...</code> / <code>feat(ha-mini-c): ...</code>；描述必须关联本 PRD 的 FR-ID；CI 门禁 = <code>pnpm -r typecheck</code> + <code>pnpm build</code> + 既有 <code>scripts/e2e-flow.py</code>（69 断言）不回归。</li>
+      <li><b>禁止事项：</b>不跨 worktree 直接编辑其他分支文件；不对集成分支 force push；不在 mini dev watch 运行时执行 build:h5（既有踩坑 #5）；重跑 seed 会更换用户 ID（既有踩坑 #6），各 worktree 用独立库规避。</li>
+      <li><b>验收环境：</b>集成分支合并完成后，在主工作区切出 <code>release/health-assistant</code> 起全栈做 UAT，通过后合回 main。</li>
+    </ul>
+
+    <!-- ==================== 10 ==================== -->
+    <h2 id="s10"><span class="num">10</span>里程碑与验收标准</h2>
+    <h3>10.1 里程碑</h3>
+    <table>
+      <tr><th>里程碑</th><th>内容</th><th>出口标准</th></tr>
+      <tr><td><b>M1 数据与开通</b><br>shared + api</td><td>schema 三模型 + migration；类目 key 与状态标签入 shared；支付成功钩子自动建旅程；退款钩子取消旅程；POST/GET journeys 骨架接口</td><td>支付含移植服务商品的订单后 5 秒内旅程可查；重复支付回调不产生重复旅程；退款后旅程 cancelled</td></tr>
+      <tr><td><b>M2 推送引擎</b><br>api</td><td>模板常量库（4.3 全量内容）；排期生成 ~129 条任务；5 分钟调度器投递站内通知；过期/免打扰/合并规则</td><td>mock 时间推进可收到对应阶段对应时段通知；双实例并发无重复；停机恢复后过期任务 skipped 不补发</td></tr>
+      <tr><td><b>M3 清肠双路径</b><br>api</td><td>清肠药商品配置；platform-order / self-confirm / ready 接口；就绪状态机；D-2/D-1 动态检查与商家预警</td><td>两条路径均可走通并就绪；平台订单退款后就绪回退并重触发提醒；未就绪时商家按时收到预警</td></tr>
+      <tr><td><b>M4 三端 UI</b><br>mini-c / mini-b / admin</td><td>mini-c 健康助手页（阶段卡、今日任务、时间线、清肠卡、排期设置）；通知中心入口角标；mini-b 客户旅程列表 + 预警列表 + 代确认；admin 旅程查询与推送记录（P1 可后置）</td><td>场景 A~D 全部可在 UI 走通；状态标签全部中文化（shared/status.ts）</td></tr>
+      <tr><td><b>M5 联调验收</b><br>集成</td><td>e2e 脚本扩展健康助手断言；全量回归；release 分支 UAT</td><td>10.2 验收标准全过；既有 e2e-flow.py 69 断言 + finance-probe.py 25 断言不回归</td></tr>
+    </table>
+    <h3>10.2 验收标准（可测断言）</h3>
+    <ol>
+      <li><b>AC-01 开通：</b>C 端注册 → 下单含移植服务商品 → 支付成功 → 5 秒内 <code>GET /journeys/mine</code> 返回 1 条 <code>pending_schedule</code> 旅程；重复支付回调仍只有 1 条。</li>
+      <li><b>AC-02 排期：</b>设置移植日 = 明日 + dosingScheme=morning_once → 生成任务数 = 覆盖天数 × 3（准备期 7 天 × 3 + 移植期 6 天 × 3 + 恢复期 30 天 × 3 = 129）；时间线接口按 dayOffset 过滤正确。</li>
+      <li><b>AC-03 推送时点：</b>mock 服务器时间至 D0 07:31 → 用户收到早场服药提醒，正文含「晨起空腹」「10 粒」「≤37℃ 温凉水」；dosingScheme=twice_daily 时晚场含第二次服药提醒，morning_once 时晚场不含。</li>
+      <li><b>AC-04 内容映射：</b>D-1 晚场正文含「2 袋」「2000mL」「少量多次」「无渣清水状」「当晚不可再进食」「空腹 8~10 小时」；准备期中场含「抗生素」「20mg」禁忌要点。</li>
+      <li><b>AC-05 幂等：</b>双开 API 实例运行调度器 30 分钟，Notification 表中 <code>jpt:*</code> 无重复 dedupeKey。</li>
+      <li><b>AC-06 过期与免打扰：</b>停机 3 小时后恢复，过期任务全部 skipped(expired) 且无补发；21:35 到点任务合并至次日 07:30 一条。</li>
+      <li><b>AC-07 平台购买路径：</b>健康助手发起 platform-order → 生成订单（金额为服务端取价）→ 支付 → bowelPrepStatus=platform_ordered → 点「已备好」→ ready 且 readyBy=customer。</li>
+      <li><b>AC-08 自购路径：</b>提交 self-confirm → bowelPrepStatus=self_confirmed；商家端可见备注，不可编辑。</li>
+      <li><b>AC-09 升级提醒：</b>D-1 12:00 未就绪 → 用户收到催办推送且商家收到预警通知；就绪后预警消除；D0 仍未就绪 → 商家收到最终预警。</li>
+      <li><b>AC-10 取消与退款：</b>订单全额退款 → 旅程 cancelled、未发任务 skipped、不再收到任何推送；清肠药订单退款 → 就绪回退 none。</li>
+      <li><b>AC-11 权限：</b>customer 访问他人旅程 403；merchant 访问非名下旅程 403；platform 全量可查。</li>
+      <li><b>AC-12 回归：</b><code>pnpm -r typecheck</code>、<code>pnpm build</code>、e2e-flow.py 69 断言、finance-probe.py 25 断言全部通过。</li>
+    </ol>
+
+    <!-- ==================== 11 ==================== -->
+    <h2 id="s11"><span class="num">11</span>开放问题</h2>
+    <table>
+      <tr><th>问题</th><th>影响</th><th>当前处理</th></tr>
+      <tr><td>微信订阅消息模板与真实推送通道</td><td>站外触达率</td><td><code>[TBD]</code> 依赖既有遗留 FR-16；本期站内通知保底</td></tr>
+      <tr><td>清肠药商品定价、供应商归属、物流时效承诺</td><td>平台购买路径转化</td><td><code>[TBD]</code> 运营配置；技术不耦合</td></tr>
+      <tr><td>多疗程是否允许并行激活</td><td>推送叠加体验</td><td><code>[Assumption, TBD]</code> 本期串行（同用户最多一条 active）</td></tr>
+      <tr><td>服药打卡 / 依从性数据是否采集</td><td>疗效追踪、商家服务深度</td><td><code>[Assumption, TBD]</code> P1 预留（FR-HA-12），本期不做</td></tr>
+      <tr><td>推送时段是否开放用户自定义</td><td>个性化 vs 推送纪律</td><td><code>[Assumption, TBD]</code> 本期固定 07:30 / 12:00 / 19:30</td></tr>
+      <tr><td>禁忌人群命中后的线上处置（如发热申报）</td><td>医疗安全责任边界</td><td><code>[TBD]</code> 本期仅提示暂停 + 联系商家，需业务方法务确认告知文案</td></tr>
+    </table>
+  </main>
+</div>
+<script>
+  // TOC 高亮
+  const links=[...document.querySelectorAll('.toc a')];
+  const secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+  const obs=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){
+      links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));
+    }});
+  },{rootMargin:'-10% 0px -80% 0px'});
+  secs.forEach(s=>s&&obs.observe(s));
+</script>
+</body>
+</html>

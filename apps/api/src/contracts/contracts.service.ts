@@ -18,6 +18,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { Role } from '@mall/shared'
 import { AuditService } from '../audit/audit.service'
 import { NotificationsService } from '../notifications/notifications.service'
+import { asRoleArray, asStringArray } from '../prisma/array-values'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreateContractDto } from './dto/create-contract.dto'
 import { CreateTemplateDto } from './dto/create-template.dto'
@@ -88,7 +89,7 @@ export class ContractsService {
     if (!subject) {
       throw new NotFoundException('签署主体不存在')
     }
-    if (!subject.roles.includes(template.partyType)) {
+    if (!asStringArray(subject.roles).includes(template.partyType)) {
       throw new BadRequestException('签署主体不具备该合同所需角色')
     }
 
@@ -282,7 +283,7 @@ export class ContractsService {
       throw new BadRequestException('该合同类型必须走电子签')
     }
     const subject = await this.prisma.user.findUnique({ where: { id: dto.subjectUserId } })
-    if (!subject || !subject.roles.includes(template.partyType)) {
+    if (!subject || !asStringArray(subject.roles).includes(template.partyType)) {
       throw new BadRequestException('签署主体不存在或角色不匹配')
     }
 
@@ -344,14 +345,14 @@ export class ContractsService {
     let canList = false
     let canSupply = false
 
-    if (user.roles.includes(PrismaRole.merchant)) {
+    if (asRoleArray(user.roles).includes(Role.MERCHANT)) {
       const contract = await this.findActiveContract(userId, CONTRACT_CODES.MERCHANT_ONBOARDING)
       canList = Boolean(contract)
       if (!contract) {
         reasons.push('未完成入驻与供货合作协议，暂不能上架')
       }
     }
-    if (user.roles.includes(PrismaRole.supplier)) {
+    if (asRoleArray(user.roles).includes(Role.SUPPLIER)) {
       const contract = await this.findActiveContract(userId, CONTRACT_CODES.SUPPLIER_SUPPLY)
       canSupply = Boolean(contract)
       if (!contract) {
@@ -384,7 +385,8 @@ export class ContractsService {
     return this.esignService.setProvider(provider)
   }
 
-  private async findActiveContract(userId: string, templateCode: string) {
+  /** 查询用户某模板下当前有效的合同（未过期且 active）；供其他模块做强校验（如 FR-11 结清拦截） */
+  async findActiveContract(userId: string, templateCode: string) {
     const now = new Date()
     return this.prisma.contract.findFirst({
       where: {

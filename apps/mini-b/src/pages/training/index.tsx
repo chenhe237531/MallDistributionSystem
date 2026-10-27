@@ -10,6 +10,7 @@ import {
   Tag,
   Toast,
 } from '@nutui/nutui-react-taro'
+import { useTheme } from '../../lib/theme'
 
 type Record = {
   id: string
@@ -24,6 +25,7 @@ const toast = (title: string, icon?: 'success' | 'fail') =>
   Toast.show('b-toast', { title, icon })
 
 export default function Training() {
+  const { themeClass } = useTheme()
   const [records, setRecords] = useState<Record[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -64,7 +66,7 @@ export default function Training() {
   }
 
   return (
-    <View className="page">
+    <View className={`page ${themeClass}`}>
       <View className="section">
         <Text className="section-title">我的学习</Text>
         {records.length === 0 ? <Empty description="暂无学习任务" /> : null}

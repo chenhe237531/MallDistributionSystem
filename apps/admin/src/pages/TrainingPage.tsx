@@ -266,17 +266,17 @@ export default function TrainingPage() {
       <Card title="销售团队学习档案" style={{ marginTop: 16 }}>
         {sales ? (
           <Row gutter={[16, 16]}>
-            <Col span={6}>
+            <Col xs={12} md={6}>
               <Statistic
                 title="整体完成率（通过 / 全部记录）"
                 value={sales.completionRate}
                 suffix="%"
               />
             </Col>
-            <Col span={6}>
+            <Col xs={12} md={6}>
               <Statistic title="学习记录总数" value={sales.records.length} suffix="条" />
             </Col>
-            <Col span={6}>
+            <Col xs={12} md={6}>
               <Statistic
                 title="待考试人数次"
                 value={sales.failed?.length ?? 0}
@@ -284,7 +284,7 @@ export default function TrainingPage() {
                 valueStyle={{ color: (sales.failed?.length ?? 0) > 0 ? 'var(--ant-color-warning)' : undefined }}
               />
             </Col>
-            <Col span={6}>
+            <Col xs={12} md={6}>
               <Statistic
                 title="30 天内到期"
                 value={sales.expiring?.length ?? 0}
@@ -496,7 +496,7 @@ export default function TrainingPage() {
         title={courseDetail ? `课程详情 · ${courseDetail.name}` : '课程详情'}
       >
         {courseDetail ? (
-          <Descriptions column={2} size="small" bordered>
+          <Descriptions column={{ xs: 1, sm: 2 }} size="small" bordered>
             <Descriptions.Item label="编码">{courseDetail.code}</Descriptions.Item>
             <Descriptions.Item label="分类">{courseDetail.category}</Descriptions.Item>
             <Descriptions.Item label="面向角色" span={2}>

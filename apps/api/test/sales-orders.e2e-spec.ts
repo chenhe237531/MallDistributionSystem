@@ -200,6 +200,29 @@ describe('Sales orders, snapshots and refunds (e2e)', () => {
     expect(storefront.body[0].listingId).toBe(listingId)
     expect(storefront.body[0].retailPriceCents).toBe(21900)
     expect(storefront.body[0].available).toBe(10)
+    // 与商家端同源的商品内容：图片 / 分类 / 规格字段均下发
+    expect(storefront.body[0]).toMatchObject({
+      productId,
+      categoryLabel: '未分类',
+      images: [],
+      sampleType: '指尖血',
+      samplingMethod: '自行采样',
+      priceSource: 'merchant',
+    })
+  })
+
+  it('returns the same product content from the storefront detail endpoint', async () => {
+    const detail = await request(app.getHttpServer())
+      .get(`/api/sales-orders/storefront/${listingId}`)
+      .expect(200)
+    expect(detail.body).toMatchObject({
+      listingId,
+      productId,
+      retailPriceCents: 21900,
+      samplingMethod: '自行采样',
+      storageCondition: '常温',
+    })
+    expect(detail.body.testItems).toEqual(['维生素D'])
   })
 
   it('creates an order with frozen price and commission snapshots', async () => {

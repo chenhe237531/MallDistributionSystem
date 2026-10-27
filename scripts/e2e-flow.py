@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """全链路 E2E：交易 → 履约 → 归属 → 佣金 → 对账 → 结清 → 退款 → 权限 → 幂等"""
 import json, urllib.request, urllib.error, sys, time
+from datetime import datetime, timezone
 
 API = 'http://localhost:3000/api'
 results = []
@@ -115,8 +116,15 @@ check('C8 盒码数量与采购数一致', len(codes) == 2, str(codes))
 
 # ---------- D. 销售单（带渠道码）→ 履约 → 报告 ----------
 s, sf = req('GET', f'/sales-orders/storefront?channelCode={chan1}')
-listing = (sf[0] if isinstance(sf, list) and sf else (sf.get('items') or [None])[0] if isinstance(sf, dict) else None)
-check('D1 渠道码 storefront 可见在售', bool(listing), str(sf)[:200])
+sf_items = sf if isinstance(sf, list) else (sf.get('items') or [])
+# 必须选 MT 自己商家的 listing：跨商家订单会被 403（隔离正常），避免环境漂移（新商家上架后占据首位）导致误报
+s_merchant, m_body = req('GET', '/auth/me', MT)
+MID = (m_body.get('sub') or m_body.get('id')) if isinstance(m_body, dict) else None
+if not MID:
+    accs = req('GET', '/accounts', PT)[1]
+    MID = next((a['id'] for a in accs if a.get('phone') == '13900000001'), None)
+listing = next((l for l in sf_items if l.get('merchantId') == MID), sf_items[0] if sf_items else None)
+check('D1 渠道码 storefront 可见在售（限 MT 本商家）', bool(listing) and listing.get('merchantId') == MID, f"listing_merchant={listing and listing.get('merchantId')} MT={MID}")
 s, b = req('POST', '/auth/register', body={'phone': '13911113333', 'password': 'Test@123', 'name': '王五', 'deviceId': 'e2e-device'})
 CT2 = b.get('token') if isinstance(b, dict) and b.get('token') else login('13911113333', 'Test@123')
 check('D2-prep C端账号就绪', bool(CT2))
@@ -136,7 +144,7 @@ check('D6 确认送达', s in (200, 201), str(b)[:150])
 BOX = codes[0]
 s, pv = req('GET', f'/box-codes/preview/{BOX}', CT2)
 check('D7 盒码预览', s == 200 and pv.get('status') == 'generated', str(pv)[:120])
-s, act = req('POST', '/box-codes/activate', CT2, {'boxCode': BOX, 'questionnaire': {'gender': 'male', 'age': 30}, 'consentGiven': True, 'reportAuthorization': True, 'samplingMethod': 'self_mail', 'orderId': OID, 'device': 'e2e'})
+s, act = req('POST', '/box-codes/activate', CT2, {'boxCode': BOX, 'questionnaire': {'gender': 'male', 'age': 30}, 'consentGiven': True, 'reportAuthorization': True, 'samplingMethod': 'self_mail', 'sampledAt': datetime.now(timezone.utc).isoformat(), 'contactPhone': '13800001234', 'relationship': 'self', 'examineeAge': 30, 'orderId': OID, 'device': 'e2e'})
 SID_ = act.get('sample', {}).get('id') if isinstance(act, dict) else None
 own = act.get('ownership', {}) if isinstance(act, dict) else {}
 check('D8 扫码激活建立归属', s in (200, 201) and bool(SID_), str(act)[:150])
@@ -235,6 +243,14 @@ if STID:
     s, b = req('POST', f'/statements/{STID}/vouchers', PT, {'voucherNo': f'INV-E2E-002-{stamp}', 'title': '服务费补票', 'amountCents': 1, 'issuedAt': '2026-10-21T00:00:00.000Z'})
     s, b = req('POST', f'/statements/{STID}/reconcile', PT, {})
     check('F9 对账', s in (200, 201), str(b)[:150])
+    # FR-11：分销合作协议为线下签署 + 后台登记，未登记不得结清
+    s, b = req('POST', f'/statements/{STID}/settle', PT, {})
+    check('F10a 分销协议未登记不可结清（FR-11）', s >= 400 and '协议' in str(b), f'status={s} {str(b)[:120]}')
+    s, tpl = req('GET', '/contracts/templates', PT)
+    pd_tpl = next((t for t in (tpl if isinstance(tpl, list) else []) if t.get('code') == 'partner_distribution'), None)
+    if pd_tpl:
+        s, b = req('POST', '/contracts/offline', PT, {'templateId': pd_tpl['id'], 'subjectUserId': p3, 'contractNo': f'CT-E2E-{stamp}', 'validFrom': '2026-01-01T00:00:00.000Z', 'scanFileUrl': '/uploads/e2e-partner-agreement.png'})
+        check('F10b 登记分销合作协议', s in (200, 201), str(b)[:150])
     s, b = req('POST', f'/statements/{STID}/settle', PT, {})
     check('F10 票证足额后结清', s in (200, 201), f'status={s} {str(b)[:150]}')
     s, b = req('POST', f'/statements/{STID}/reopen', PT, {})

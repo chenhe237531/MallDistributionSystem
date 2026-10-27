@@ -201,7 +201,7 @@ export default function AccountsPage() {
         ]}
         expandable={{
           expandedRowRender: (record) => (
-            <Descriptions size="small" column={2} bordered>
+            <Descriptions size="small" column={{ xs: 1, sm: 2 }} bordered>
               <Descriptions.Item label="组织">
                 {record.organization?.name ?? '—'}
               </Descriptions.Item>
@@ -262,7 +262,7 @@ export default function AccountsPage() {
         title="新建账号"
         width={480}
         open={createOpen}
-        modalProps={{ destroyOnClose: true, onCancel: () => setCreateOpen(false) }}
+        modalProps={{ destroyOnHidden: true, onCancel: () => setCreateOpen(false) }}
         onOpenChange={setCreateOpen}
         initialValues={{ primaryRole: Role.MERCHANT }}
         submitter={{ searchConfig: { submitText: '创建账号', resetText: '取消' } }}

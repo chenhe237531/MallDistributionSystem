@@ -21,6 +21,11 @@ export const palette = {
   blue2: '#bae0ff',
   green6: '#00b42a',
   green1: '#e8ffea',
+  violet6: '#6E5CFF',
+  violet7: '#4C3ED9',
+  violet5: '#8F85FF',
+  violet1: '#EFECFF',
+  violet2: '#DDD9FF',
   orange6: '#ff7d00',
   orange1: '#fff7e8',
   red6: '#f53f3f',
@@ -111,6 +116,103 @@ export const NUTUI_THEME_VAR_MAP: Record<string, string> = {
   '--nutui-color-border': designTokens.colorBorder,
   '--nutui-color-background': designTokens.colorBgLayout,
   '--nutui-button-border-radius': `${designTokens.radiusMd}px`,
+}
+
+/* ===== 主题包（黑金 / 经典），商家端主题切换的唯一来源 =====
+   落地：apps/mini-b/src/app.scss 的 .theme-gold / .theme-classic 变量块与本表逐项同步；
+   页面样式只引用 var(--mall-*)，不得写死色值。 */
+
+export type ThemeKey = 'gold' | 'classic'
+
+/** 默认主题：黑金（产品需求：黑金为默认，经典保留为可选） */
+export const DEFAULT_THEME: ThemeKey = 'gold'
+
+export type ThemePack = {
+  key: ThemeKey
+  name: string
+  description: string
+  /** 主题预览色（入口卡片使用：[底色, 主色, 文字色]） */
+  swatch: [string, string, string]
+  vars: Record<string, string>
+}
+
+export const themePacks: Record<ThemeKey, ThemePack> = {
+  gold: {
+    key: 'gold',
+    name: '曜石黑金',
+    description: '黑曜石底 + 香槟金，高端专业',
+    swatch: ['#08080A', '#D4AF37', '#F4EFE4'],
+    vars: {
+      '--mall-primary': '#d4af37',
+      '--mall-primary-hover': '#e3c173',
+      '--mall-primary-pressed': '#b8952b',
+      '--mall-primary-light': 'rgba(212, 175, 55, 0.14)',
+      '--mall-primary-light-pressed': 'rgba(212, 175, 55, 0.22)',
+      '--mall-on-primary': '#14110a',
+      '--mall-color-price': '#f0c86a',
+      '--mall-color-gold': '#d4af37',
+      '--mall-success': '#3fbf7f',
+      '--mall-success-light': 'rgba(63, 191, 127, 0.14)',
+      '--mall-warning': '#e8a33d',
+      '--mall-warning-light': 'rgba(232, 163, 61, 0.14)',
+      '--mall-danger': '#e4685c',
+      '--mall-danger-light': 'rgba(228, 104, 92, 0.14)',
+      '--mall-text': '#f4efe4',
+      '--mall-text-secondary': '#b3a995',
+      '--mall-text-tertiary': '#7c7466',
+      '--mall-border': '#2f2a22',
+      '--mall-border-light': '#221e18',
+      '--mall-card-border': 'rgba(212, 175, 55, 0.14)',
+      '--mall-bg': '#08080a',
+      '--mall-card': '#141217',
+      '--mall-surface-2': '#1b181f',
+      '--mall-brand-dark': '#8c6f1e',
+      '--mall-hero-text': '#f7edcf',
+      '--mall-hero-grad': 'linear-gradient(135deg, #1a1509 0%, #241b0b 55%, #3a2a0e 100%)',
+      '--mall-banner-grad': 'linear-gradient(120deg, #141109 0%, #33270f 100%)',
+      '--mall-shadow': '0 6px 20px rgba(0, 0, 0, 0.55)',
+      '--mall-glow': '0 0 20px rgba(212, 175, 55, 0.18)',
+      '--mall-nav-bg': '#08080a',
+    },
+  },
+  classic: {
+    key: 'classic',
+    name: '经典蓝紫',
+    description: '品牌紫 + 浅色卡片，原主题',
+    swatch: ['#F7F8FA', '#6E5CFF', '#1F2329'],
+    vars: {
+      '--mall-primary': '#6e5cff',
+      '--mall-primary-hover': '#8f85ff',
+      '--mall-primary-pressed': '#4c3ed9',
+      '--mall-primary-light': '#efecff',
+      '--mall-primary-light-pressed': '#ddd9ff',
+      '--mall-on-primary': '#ffffff',
+      '--mall-color-price': '#ff4d4f',
+      '--mall-color-gold': '#f7c945',
+      '--mall-success': '#00b42a',
+      '--mall-success-light': '#e8ffea',
+      '--mall-warning': '#ff7d00',
+      '--mall-warning-light': '#fff7e8',
+      '--mall-danger': '#f53f3f',
+      '--mall-danger-light': '#ffece8',
+      '--mall-text': '#1f2329',
+      '--mall-text-secondary': '#646a73',
+      '--mall-text-tertiary': '#8f959e',
+      '--mall-border': '#e5e6eb',
+      '--mall-border-light': '#f2f3f5',
+      '--mall-card-border': 'rgba(31, 35, 41, 0.06)',
+      '--mall-bg': '#f7f8fa',
+      '--mall-card': '#ffffff',
+      '--mall-surface-2': '#ffffff',
+      '--mall-brand-dark': '#4c3ed9',
+      '--mall-hero-text': '#ffffff',
+      '--mall-hero-grad': 'linear-gradient(135deg, #4c3ed9 0%, #6e5cff 100%)',
+      '--mall-banner-grad': 'linear-gradient(120deg, #2b2350 0%, #4c3ed9 100%)',
+      '--mall-shadow': '0 1px 3px rgba(31, 35, 41, 0.05)',
+      '--mall-glow': '0 6px 16px rgba(110, 92, 255, 0.28)',
+      '--mall-nav-bg': '#4c3ed9',
+    },
+  },
 }
 
 /** 语义令牌 → --mall-* 自定义属性（小程序页面样式引用这一层，不得写死色值） */

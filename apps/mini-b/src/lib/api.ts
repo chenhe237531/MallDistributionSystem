@@ -1,8 +1,21 @@
 import Taro from '@tarojs/taro'
 import { handleAuthExpired } from '../components/feedback'
 
-const BASE = 'http://localhost:3000/api'
+const IS_H5 = Taro.getEnv() === Taro.ENV_TYPE.WEB
+const BASE = IS_H5 ? '/api' : 'http://localhost:3000/api'
+const ASSET_BASE = IS_H5 ? '' : BASE.replace(/\/api$/, '')
 const TOKEN_KEY = 'mall_token'
+
+/** 商品图片存相对 URL（/uploads/...），H5/weapp 统一补全为可访问地址 */
+export function resolveAsset(url?: string | null): string {
+  if (!url) {
+    return ''
+  }
+  if (/^(https?:)?\/\//.test(url) || url.startsWith('data:')) {
+    return url
+  }
+  return `${ASSET_BASE}${url.startsWith('/') ? '' : '/'}${url}`
+}
 
 export function getToken(): string {
   return Taro.getStorageSync(TOKEN_KEY) ?? ''
@@ -36,7 +49,7 @@ export async function api<T>(
     const text = Array.isArray(message) ? message.join('；') : message ?? '请求失败'
     // FR-X：登录失效 / 账号不存在时统一提示并跳登录页，不留白屏
     if (response.statusCode === 401 || response.statusCode === 404) {
-      handleAuthExpired(text)
+      handleAuthExpired(text, response.statusCode)
     }
     throw new Error(text)
   }

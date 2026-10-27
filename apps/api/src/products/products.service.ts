@@ -10,7 +10,7 @@ import {
   ProductStatus as PrismaProductStatus,
   Role as PrismaRole,
 } from '@prisma/client'
-import { Role } from '@mall/shared'
+import { defaultRetailPriceCents, isProductCategoryKey, Role } from '@mall/shared'
 import { ContractsService } from '../contracts/contracts.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreateBatchDto } from './dto/create-batch.dto'
@@ -60,14 +60,17 @@ export class ProductsService {
     })
   }
 
-  async list(actor: AuthUser) {
+  async list(actor: AuthUser, category?: string) {
     const isPlatform = actor.roles.includes(Role.PLATFORM)
     const isSupplier = actor.roles.includes(Role.SUPPLIER)
-    const where = isPlatform
+    const where: Prisma.ProductWhereInput = isPlatform
       ? {}
       : isSupplier
         ? { supplierId: actor.sub }
         : { status: PrismaProductStatus.active }
+    if (category) {
+      where.category = category
+    }
 
     return this.prisma.product.findMany({
       where,
@@ -89,7 +92,19 @@ export class ProductsService {
         listings: true,
         relatedLinks: {
           orderBy: { sort: 'asc' },
-          select: { related: { select: { id: true, name: true, skuCode: true } } },
+          select: {
+            related: {
+              select: {
+                id: true,
+                name: true,
+                skuCode: true,
+                images: true,
+                category: true,
+                supplyPriceCents: true,
+                retailPriceCents: true,
+              },
+            },
+          },
         },
         courseBindings: {
           select: { course: { select: { id: true, name: true, category: true } } },
@@ -103,6 +118,42 @@ export class ProductsService {
     const boundCourses = product.courseBindings.map((binding) => binding.course)
     if (this.canSeeSupplySide(actor, product.supplierId)) {
       return { ...product, relatedProducts, boundCourses }
+    }
+    // 商家采购视角：需要供货价与商品内容（详情页规格参数/图文/视频），但不暴露费率与佣金字段
+    if (actor.roles.includes(Role.MERCHANT)) {
+      if (product.status !== PrismaProductStatus.active) {
+        throw new NotFoundException('商品不存在')
+      }
+      const now = new Date()
+      const availableStock = product.batches
+        .filter((batch) => batch.expiresAt > now)
+        .reduce((sum, batch) => sum + batch.remaining, 0)
+      return {
+        id: product.id,
+        skuCode: product.skuCode,
+        name: product.name,
+        testItems: product.testItems,
+        sampleType: product.sampleType,
+        samplingMethod: product.samplingMethod,
+        storageCondition: product.storageCondition,
+        shelfLifeDays: product.shelfLifeDays,
+        questionnaireFields: product.questionnaireFields,
+        supplyPriceCents: product.supplyPriceCents,
+        retailPriceCents: product.retailPriceCents,
+        suggestedRetailPriceCents: product.suggestedRetailPriceCents,
+        distributable: product.distributable,
+        status: product.status,
+        images: product.images,
+        category: product.category,
+        intro: product.intro,
+        guideVideoUrl: product.guideVideoUrl,
+        supplier: product.supplier,
+        createdAt: product.createdAt,
+        availableStock,
+        batches: product.batches,
+        relatedProducts,
+        boundCourses,
+      }
     }
     // 非平台/供货侧视角：未上架商品不可见，且不暴露供货价与费率等敏感字段
     if (product.status !== PrismaProductStatus.active) {
@@ -121,6 +172,10 @@ export class ProductsService {
       retailPriceCents: product.retailPriceCents,
       distributable: product.distributable,
       status: product.status,
+      images: product.images,
+      category: product.category,
+      intro: product.intro,
+      guideVideoUrl: product.guideVideoUrl,
       supplier: product.supplier,
       createdAt: product.createdAt,
       relatedProducts,
@@ -135,6 +190,9 @@ export class ProductsService {
     const product = await this.prisma.product.findUnique({ where: { id } })
     if (!product) {
       throw new NotFoundException('商品不存在')
+    }
+    if (dto.category && !isProductCategoryKey(dto.category)) {
+      throw new BadRequestException('商品分类不合法')
     }
     const relatedProductIds = dto.relatedProductIds ?? []
     if (relatedProductIds.includes(id)) {
@@ -164,6 +222,8 @@ export class ProductsService {
         data: {
           guideVideoUrl: dto.guideVideoUrl,
           intro: dto.intro,
+          ...(dto.images !== undefined ? { images: dto.images } : {}),
+          ...(dto.category !== undefined ? { category: dto.category || null } : {}),
         },
       })
       if (dto.relatedProductIds !== undefined) {
@@ -237,8 +297,10 @@ export class ProductsService {
     if (!product.distributable) {
       throw new BadRequestException('该商品不允许分销')
     }
-    if (!product.retailPriceCents || dto.retailPriceCents < product.retailPriceCents) {
-      throw new BadRequestException('售价不能低于平台底价')
+    // C 端售价：未指定时按「采购价 × 2」生成默认价；指定即视为商家自定义
+    const retailPriceCents = dto.retailPriceCents ?? defaultRetailPriceCents(product.supplyPriceCents)
+    if (retailPriceCents < product.supplyPriceCents) {
+      throw new BadRequestException('售价不能低于采购价')
     }
 
     const existing = await this.prisma.merchantProduct.findUnique({
@@ -252,7 +314,8 @@ export class ProductsService {
       data: {
         merchantId: actor.sub,
         productId: product.id,
-        retailPriceCents: dto.retailPriceCents,
+        retailPriceCents,
+        priceCustomized: dto.retailPriceCents !== undefined,
       },
       include: { product: true },
     })
@@ -284,19 +347,37 @@ export class ProductsService {
     if (listing.merchantId !== actor.sub && !actor.roles.includes(Role.PLATFORM)) {
       throw new ForbiddenException('无权修改该上架记录')
     }
+    const defaultPrice = defaultRetailPriceCents(listing.product.supplyPriceCents)
+    // 恢复默认：清除自定义价，回到「采购价 × 2」
+    if (dto.resetToDefault) {
+      return this.prisma.merchantProduct.update({
+        where: { id: listingId },
+        data: {
+          retailPriceCents: defaultPrice,
+          priceCustomized: false,
+          ...(dto.status ? { status: dto.status } : {}),
+        },
+        include: { product: true },
+      })
+    }
     if (
       dto.retailPriceCents !== undefined &&
-      listing.product.retailPriceCents &&
-      dto.retailPriceCents < listing.product.retailPriceCents
+      dto.retailPriceCents < listing.product.supplyPriceCents
     ) {
-      throw new BadRequestException('售价不能低于平台底价')
+      throw new BadRequestException('售价不能低于采购价')
     }
 
     return this.prisma.merchantProduct.update({
       where: { id: listingId },
       data: {
-        retailPriceCents: dto.retailPriceCents,
-        status: dto.status,
+        ...(dto.retailPriceCents !== undefined
+          ? {
+              retailPriceCents: dto.retailPriceCents,
+              // 与默认价一致时仍按默认规则处理，便于后续随采购价联动
+              priceCustomized: dto.retailPriceCents !== defaultPrice,
+            }
+          : {}),
+        ...(dto.status ? { status: dto.status } : {}),
       },
       include: { product: true },
     })

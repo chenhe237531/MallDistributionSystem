@@ -1,13 +1,20 @@
 import { useState } from 'react'
 import Taro from '@tarojs/taro'
-import { Text, View } from '@tarojs/components'
+import { Image, Text, View } from '@tarojs/components'
 import { Button as NutButton, Input as NutInput } from '@nutui/nutui-react-taro'
 import { api, setToken } from '../../lib/api'
+import { BRAND, REPORT_DISCLAIMER } from '../../lib/content'
+import logo from '../../assets/logo.png'
 
 type AuthResponse = {
   token: string
   user: { id: string; name: string; role: string }
 }
+
+/** C 端演示账号：点击自动填充，再点登录即可进入该用户 */
+const DEMO_ACCOUNTS = [
+  { label: '演示客户', phone: '13900000003', password: 'Customer@123' },
+]
 
 function deviceId(): string {
   const key = 'mall_c_device'
@@ -27,6 +34,13 @@ export default function Login() {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const fillDemo = (account: (typeof DEMO_ACCOUNTS)[number]) => {
+    setMode('login')
+    setPhone(account.phone)
+    setPassword(account.password)
+    setError('')
+  }
 
   const submit = async () => {
     setLoading(true)
@@ -53,11 +67,17 @@ export default function Login() {
 
   return (
     <View className="page">
-      <View className="hero">
-        <Text className="hero-role">C 端</Text>
-        <Text className="hero-title">检测商城</Text>
-        <Text className="hero-status">居家采样、扫码激活、查看报告与解读</Text>
+      <View className="brand-hero">
+        <View className="brand-logo-row">
+          <Image className="brand-logo" src={logo} mode="aspectFit" />
+          <Text className="brand-name">
+            {BRAND.nameEn} · {BRAND.name}
+          </Text>
+        </View>
+        <Text className="brand-title">{BRAND.title}</Text>
+        <Text className="brand-subtitle">居家采样 · 扫码绑定 · 查看报告与解读</Text>
       </View>
+
       <View className="card" style={{ marginTop: '12px' }}>
         <Text className="section-title">{mode === 'login' ? '登录' : '注册'}</Text>
         {mode === 'register' ? (
@@ -100,9 +120,28 @@ export default function Login() {
         >
           {mode === 'login' ? '没有账号，去注册' : '已有账号，去登录'}
         </NutButton>
+        <View className="login-demo">
+          <Text className="login-demo-title">演示账号 · 点击自动填充</Text>
+          {DEMO_ACCOUNTS.map((account) => (
+            <View
+              key={account.phone}
+              className="login-demo-item"
+              onClick={() => fillDemo(account)}
+            >
+              <View className="login-demo-main">
+                <Text className="login-demo-role">{account.label}</Text>
+                <Text className="login-demo-account">
+                  {account.phone} / {account.password}
+                </Text>
+              </View>
+              <Text className="login-demo-action">填充</Text>
+            </View>
+          ))}
+          <Text className="login-demo-hint">填充后点击「登录」即可进入该用户</Text>
+        </View>
       </View>
       <View className="notice">
-        <Text>本报告仅用于健康风险提示，不作为临床诊断依据。</Text>
+        <Text>{REPORT_DISCLAIMER}</Text>
       </View>
     </View>
   )

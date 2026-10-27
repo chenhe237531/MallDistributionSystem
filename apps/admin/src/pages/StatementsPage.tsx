@@ -244,7 +244,7 @@ export default function StatementsPage() {
     >
       <VolumeAlert total={listVolume} />
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-        <Col span={5}>
+        <Col xs={12} sm={8} lg={5}>
           <Card size="small">
             <Statistic
               title="应付总额"
@@ -253,7 +253,7 @@ export default function StatementsPage() {
             />
           </Card>
         </Col>
-        <Col span={5}>
+        <Col xs={12} sm={8} lg={5}>
           <Card size="small">
             <Statistic
               title="未取得票证"
@@ -262,7 +262,7 @@ export default function StatementsPage() {
             />
           </Card>
         </Col>
-        <Col span={5}>
+        <Col xs={12} sm={8} lg={5}>
           <Card size="small">
             <Statistic
               title="差异金额"
@@ -271,12 +271,12 @@ export default function StatementsPage() {
             />
           </Card>
         </Col>
-        <Col span={4}>
+        <Col xs={12} sm={8} lg={4}>
           <Card size="small">
             <Statistic title="待对账" value={overview?.pendingCount ?? 0} suffix="单" valueStyle={{ fontSize: 20 }} />
           </Card>
         </Col>
-        <Col span={5}>
+        <Col xs={12} sm={8} lg={5}>
           <Card size="small">
             <Statistic
               title="有差异"
@@ -362,7 +362,7 @@ export default function StatementsPage() {
       >
         {detail ? (
           <Space direction="vertical" size={16} style={{ display: 'flex' }}>
-            <Descriptions column={2} size="small" bordered>
+            <Descriptions column={{ xs: 1, sm: 2 }} size="small" bordered>
               <Descriptions.Item label="状态">
                 <Tag color={STATUS_META[detail.status]?.color ?? 'default'}>
                   {STATUS_META[detail.status]?.label ?? detail.status}

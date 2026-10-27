@@ -7,7 +7,11 @@ export default defineAppConfig({
     'pages/pay-result/index',
     'pages/order-detail/index',
     'pages/orders/index',
+    'pages/journey/index',
     'pages/activate/index',
+    'pages/questionnaire/index',
+    'pages/progress/index',
+    'pages/tech-intro/index',
     'pages/reports/index',
     'pages/share/index',
     'pages/profile/index',
@@ -16,7 +20,7 @@ export default defineAppConfig({
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#ffffff',
-    navigationBarTitleText: '检测商城',
+    navigationBarTitleText: '菌群检测',
     navigationBarTextStyle: 'black',
   },
 })

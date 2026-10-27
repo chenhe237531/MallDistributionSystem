@@ -49,7 +49,7 @@ export default function ChannelsPage() {
       content="按渠道码查询归属与有效性，对异常渠道执行停用、恢复或重发渠道码。"
     >
       <Row gutter={[16, 16]}>
-        <Col span={12}>
+        <Col xs={24} lg={12}>
           <Card title="渠道码查询">
             <ProForm<{ code: string }>
               layout="horizontal"
@@ -115,7 +115,7 @@ export default function ChannelsPage() {
             ) : null}
           </Card>
         </Col>
-        <Col span={12}>
+        <Col xs={24} lg={12}>
           <Card title="渠道处置">
             <Paragraph type="secondary">
               停用、恢复需输入渠道 ID（后台数据库标识）；重发渠道码会生成新码并停用旧码，

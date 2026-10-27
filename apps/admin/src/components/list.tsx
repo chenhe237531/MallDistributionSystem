@@ -11,13 +11,14 @@ export const LIST_PAGE_SIZE_OPTIONS = ['20', '50', '100', '200']
 /** 超过该条数开启虚拟滚动（渲染层面），并提示筛选 */
 export const LIST_VIRTUAL_THRESHOLD = 2000
 
-/** ProTable 通用 props：列记忆 + 前端分页 */
+/** ProTable 通用 props：列记忆 + 前端分页 + 小屏横向滚动（H5 兼容） */
 export function listTableProps(key: string) {
   return {
     columnsState: {
       persistenceKey: `admin-table-${key}`,
       persistenceType: 'localStorage' as const,
     },
+    scroll: { x: 'max-content' as const },
     pagination: {
       pageSize: LIST_PAGE_SIZE,
       pageSizeOptions: LIST_PAGE_SIZE_OPTIONS,
@@ -31,7 +32,7 @@ export function listTableProps(key: string) {
 export function virtualTableProps() {
   return {
     virtual: true,
-    scroll: { y: 480 },
+    scroll: { x: 'max-content' as const, y: 480 },
     pagination: {
       pageSize: LIST_PAGE_SIZE,
       pageSizeOptions: LIST_PAGE_SIZE_OPTIONS,

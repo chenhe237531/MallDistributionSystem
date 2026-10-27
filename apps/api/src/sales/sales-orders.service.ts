@@ -10,16 +10,55 @@ import {
 } from '@prisma/client'
 import { Cron, CronExpression } from '@nestjs/schedule'
 import { randomBytes } from 'node:crypto'
-import { Role } from '@mall/shared'
+import { Role, productCategoryLabel } from '@mall/shared'
 import { AuditService } from '../audit/audit.service'
 import { ChannelsService } from '../channels/channels.service'
 import { CommissionsService } from '../commissions/commissions.service'
+import { JourneysService } from '../journeys/journeys.service'
 import { NotificationsService } from '../notifications/notifications.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { ProductsService } from '../products/products.service'
 import { StatementsService } from '../statements/statements.service'
 import { CreateSalesOrderDto, RefundSalesOrderDto } from './dto/sales-order.dto'
 import type { AuthUser } from '../auth/auth-user.type'
+
+/**
+ * C 端商品统一查询字段：列表与详情共用，避免两端字段漂移。
+ * 库存仅统计未过期且有余量的批次。
+ */
+const STOREFRONT_INCLUDE = (now: Date) =>
+  ({
+    merchant: { select: { id: true, name: true, organization: true } },
+    product: {
+      include: {
+        batches: {
+          where: { remaining: { gt: 0 }, expiresAt: { gt: now } },
+        },
+        relatedLinks: {
+          orderBy: { sort: 'asc' },
+          select: {
+            related: { select: { id: true, name: true, skuCode: true, images: true } },
+          },
+        },
+      },
+    },
+  }) satisfies Prisma.MerchantProductInclude
+
+type StorefrontListing = Prisma.MerchantProductGetPayload<{
+  include: {
+    merchant: { select: { id: true; name: true; organization: true } }
+    product: {
+      include: {
+        batches: true
+        relatedLinks: {
+          select: {
+            related: { select: { id: true; name: true; skuCode: true; images: true } }
+          }
+        }
+      }
+    }
+  }
+}>
 
 @Injectable()
 export class SalesOrdersService {
@@ -31,66 +70,40 @@ export class SalesOrdersService {
     private readonly auditService: AuditService,
     private readonly channelsService: ChannelsService,
     private readonly notificationsService: NotificationsService,
+    private readonly journeysService: JourneysService,
   ) {}
 
-  async storefront(channelCode?: string) {
-    let merchantId: string | undefined
-    if (channelCode) {
-      const channel = await this.prisma.channelIdentity.findUnique({ where: { code: channelCode } })
-      if (!channel || channel.status !== 'active') {
-        throw new BadRequestException('渠道码无效或已停用')
-      }
-      if (channel.type === 'merchant') {
-        merchantId = channel.userId
-      }
+  /** 渠道码 → 商家 ID（仅 merchant 类型渠道限定商家，其他渠道返回全部商家） */
+  private async resolveChannelMerchantId(channelCode?: string): Promise<string | undefined> {
+    if (!channelCode) {
+      return undefined
+    }
+    const channel = await this.prisma.channelIdentity.findUnique({ where: { code: channelCode } })
+    if (!channel || channel.status !== 'active') {
+      throw new BadRequestException('渠道码无效或已停用')
+    }
+    return channel.type === 'merchant' ? channel.userId : undefined
+  }
+
+  /**
+   * 搭配推荐：解析关联商品在各商家 active 上架中的最低价（优先当前渠道商家）。
+   * 该价格同样是「商家定价」结果，C 端展示保持一致。
+   */
+  private async relatedPriceMap(productIds: string[], merchantId?: string) {
+    const relatedIds = [...new Set(productIds)]
+    const result = new Map<string, { listingId: string; retailPriceCents: number }>()
+    if (relatedIds.length === 0) {
+      return result
     }
 
-    const now = new Date()
-    const listings = await this.prisma.merchantProduct.findMany({
+    const relatedListings = await this.prisma.merchantProduct.findMany({
       where: {
         status: 'active',
-        ...(merchantId ? { merchantId } : {}),
+        productId: { in: relatedIds },
         product: { status: 'active' },
       },
-      include: {
-        merchant: { select: { id: true, name: true, organization: true } },
-        product: {
-          include: {
-            batches: {
-              where: { remaining: { gt: 0 }, expiresAt: { gt: now } },
-            },
-            relatedLinks: {
-              orderBy: { sort: 'asc' },
-              select: { related: { select: { id: true, name: true, skuCode: true } } },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
+      select: { id: true, merchantId: true, productId: true, retailPriceCents: true },
     })
-
-    // 搭配推荐：解析关联商品在各商家 active 上架中的最低价（优先当前渠道商家）
-    const relatedIds = [
-      ...new Set(
-        listings.flatMap((listing) => listing.product.relatedLinks.map((link) => link.related.id)),
-      ),
-    ]
-    const relatedListings =
-      relatedIds.length > 0
-        ? await this.prisma.merchantProduct.findMany({
-            where: {
-              status: 'active',
-              productId: { in: relatedIds },
-              product: { status: 'active' },
-            },
-            select: {
-              id: true,
-              merchantId: true,
-              productId: true,
-              retailPriceCents: true,
-            },
-          })
-        : []
     const bestRelatedListing = new Map<string, (typeof relatedListings)[number]>()
     for (const related of relatedListings) {
       const current = bestRelatedListing.get(related.productId)
@@ -109,40 +122,95 @@ export class SalesOrdersService {
         bestRelatedListing.set(related.productId, related)
       }
     }
-    const relatedPriceById = new Map(
-      relatedIds.map((productId) => {
-        const listing = bestRelatedListing.get(productId)
-        return [
-          productId,
-          listing
-            ? { listingId: listing.id, retailPriceCents: listing.retailPriceCents }
-            : { listingId: null, retailPriceCents: null },
-        ]
-      }),
-    )
 
-    return listings.map((listing) => ({
+    for (const productId of relatedIds) {
+      const listing = bestRelatedListing.get(productId)
+      if (listing) {
+        result.set(productId, {
+          listingId: listing.id,
+          retailPriceCents: listing.retailPriceCents,
+        })
+      }
+    }
+    return result
+  }
+
+  /** 统一映射 C 端商品卡 / 详情字段，保证列表与详情完全一致 */
+  private mapStorefrontListing(
+    listing: StorefrontListing,
+    relatedPriceById: Map<string, { listingId: string; retailPriceCents: number }>,
+  ) {
+    const product = listing.product
+    return {
       listingId: listing.id,
       merchantId: listing.merchantId,
       merchantName: listing.merchant.organization?.name ?? listing.merchant.name,
       productId: listing.productId,
-      productName: listing.product.name,
-      skuCode: listing.product.skuCode,
+      productName: product.name,
+      skuCode: product.skuCode,
+      category: product.category,
+      categoryLabel: productCategoryLabel(product.category),
+      images: product.images,
+      intro: product.intro,
+      guideVideoUrl: product.guideVideoUrl,
+      testItems: product.testItems,
+      sampleType: product.sampleType,
+      samplingMethod: product.samplingMethod,
+      storageCondition: product.storageCondition,
+      shelfLifeDays: product.shelfLifeDays,
       retailPriceCents: listing.retailPriceCents,
-      available: listing.product.batches.reduce((sum, batch) => sum + batch.remaining, 0),
-      guideVideoUrl: listing.product.guideVideoUrl,
-      intro: listing.product.intro,
-      related: listing.product.relatedLinks.map((link) => {
+      /** default = 按采购价 2 倍默认规则；merchant = 商家自定义价 */
+      priceSource: listing.priceCustomized ? ('merchant' as const) : ('default' as const),
+      available: product.batches.reduce((sum, batch) => sum + batch.remaining, 0),
+      related: product.relatedLinks.map((link) => {
         const price = relatedPriceById.get(link.related.id)
         return {
           productId: link.related.id,
           name: link.related.name,
           skuCode: link.related.skuCode,
+          images: link.related.images,
           listingId: price?.listingId ?? null,
           retailPriceCents: price?.retailPriceCents ?? null,
         }
       }),
-    }))
+    }
+  }
+
+  async storefront(channelCode?: string) {
+    const merchantId = await this.resolveChannelMerchantId(channelCode)
+    const now = new Date()
+    const listings = await this.prisma.merchantProduct.findMany({
+      where: {
+        status: 'active',
+        ...(merchantId ? { merchantId } : {}),
+        product: { status: 'active' },
+      },
+      include: STOREFRONT_INCLUDE(now),
+      orderBy: { createdAt: 'desc' },
+    })
+
+    const relatedPriceById = await this.relatedPriceMap(
+      listings.flatMap((listing) => listing.product.relatedLinks.map((link) => link.related.id)),
+      merchantId,
+    )
+    return listings.map((listing) => this.mapStorefrontListing(listing, relatedPriceById))
+  }
+
+  /** C 端商品详情：与列表同一数据源，一屏返回图片 / 规格 / 图文介绍 / 搭配推荐 */
+  async storefrontDetail(listingId: string) {
+    const now = new Date()
+    const listing = await this.prisma.merchantProduct.findFirst({
+      where: { id: listingId, status: 'active', product: { status: 'active' } },
+      include: STOREFRONT_INCLUDE(now),
+    })
+    if (!listing) {
+      throw new NotFoundException('商品已下架或不存在')
+    }
+    const relatedPriceById = await this.relatedPriceMap(
+      listing.product.relatedLinks.map((link) => link.related.id),
+      listing.merchantId,
+    )
+    return this.mapStorefrontListing(listing, relatedPriceById)
   }
 
   async create(actor: AuthUser, dto: CreateSalesOrderDto) {
@@ -357,6 +425,20 @@ export class SalesOrdersService {
       dedupeKey: `order_paid_merchant:${order.id}`,
       payload: { orderId: order.id, orderNo: order.orderNo },
     })
+    // 健康助手：移植服务订单支付成功即开通旅程（失败不阻断支付，转系统告警）
+    try {
+      await this.journeysService.onOrderPaid(order.id)
+    } catch (cause) {
+      await this.prisma.systemAlert.create({
+        data: {
+          type: 'journey_open_failed',
+          subjectType: 'order',
+          subjectId: order.id,
+          message: `订单 ${order.orderNo} 支付成功但健康助手旅程开通失败：${String(cause)}`,
+          severity: 'warning',
+        },
+      })
+    }
     const commissions = await this.prisma.commission.findMany({
       where: { orderId: order.id },
     })
@@ -495,7 +577,7 @@ export class SalesOrdersService {
 
     const result = await this.prisma.$transaction(async (tx) => {
       // 行锁串行化同一订单的并发退款，避免快照校验失效导致超退
-      await tx.$queryRaw`SELECT "id" FROM "SalesOrder" WHERE "id" = ${id} FOR UPDATE`
+      await this.prisma.lockRow(tx, 'SalesOrder', id)
       const fresh = await tx.salesOrder.findUniqueOrThrow({
         where: { id },
         include: { items: true },
@@ -628,6 +710,23 @@ export class SalesOrdersService {
       detail: { reason: dto.reason, requested },
     })
     await this.evaluateChannelRefundRate(order)
+    // 健康助手：服务订单全额退款取消旅程；清肠药订单退款回退就绪状态
+    try {
+      await this.journeysService.onOrderRefund(
+        order.id,
+        refunded.status === PrismaSalesOrderStatus.refunded,
+      )
+    } catch (cause) {
+      await this.prisma.systemAlert.create({
+        data: {
+          type: 'journey_refund_sync_failed',
+          subjectType: 'order',
+          subjectId: order.id,
+          message: `订单 ${order.orderNo} 退款后健康助手状态同步失败：${String(cause)}`,
+          severity: 'warning',
+        },
+      })
+    }
     return refunded
   }
 

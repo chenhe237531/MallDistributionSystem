@@ -37,7 +37,18 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsArray()
-  questionnaireFields?: Array<{ key: string; label?: string; required?: boolean }>
+  questionnaireFields?: Array<{
+    key: string
+    label?: string
+    /** 缺省 text（向后兼容旧配置） */
+    type?: 'text' | 'number' | 'radio' | 'checkbox' | 'textarea'
+    required?: boolean
+    options?: string[]
+    exclusiveOptions?: string[]
+    remarkOn?: string[]
+    unit?: string
+    placeholder?: string
+  }>
 
   @IsInt()
   @Min(1)

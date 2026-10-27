@@ -18,6 +18,7 @@ import * as bcrypt from 'bcryptjs'
 import { randomBytes } from 'node:crypto'
 import { Role } from '@mall/shared'
 import { AuditService } from '../audit/audit.service'
+import { asRoleArray } from '../prisma/array-values'
 import { PrismaService } from '../prisma/prisma.service'
 import { AddQualificationDto } from './dto/add-qualification.dto'
 import { CreateAccountDto } from './dto/create-account.dto'
@@ -126,7 +127,7 @@ export class AccountsService {
       throw new BadRequestException('已拒绝的账号不能直接通过，请重新提交')
     }
 
-    const roles = user.roles as unknown as Role[]
+    const roles = asRoleArray(user.roles)
     const pendingChannels: Array<{ type: PrismaChannelType; code: string }> = []
 
     if (roles.includes(Role.MERCHANT) && !user.channels.some((channel) => channel.type === PrismaChannelType.merchant)) {
@@ -169,10 +170,11 @@ export class AccountsService {
         [Role.SALES, Role.PARTNER, Role.NUTRITIONIST].includes(role),
       )
       if (trainingRoles.length > 0) {
-        const courses = await tx.course.findMany({
-          where: { audience: { hasSome: trainingRoles as unknown as PrismaRole[] } },
-        })
-        for (const course of courses) {
+        const courses = await tx.course.findMany()
+        const matched = courses.filter((course) =>
+          asRoleArray(course.audience).some((role) => trainingRoles.includes(role)),
+        )
+        for (const course of matched) {
           await tx.learningRecord.upsert({
             where: { userId_courseId: { userId: id, courseId: course.id } },
             update: {},
@@ -222,7 +224,7 @@ export class AccountsService {
 
   async createSales(actor: AuthUser, dto: CreateSalesDto) {
     const merchant = await this.prisma.user.findUnique({ where: { id: actor.sub } })
-    if (!merchant?.roles.includes(PrismaRole.merchant)) {
+    if (!merchant || !asRoleArray(merchant.roles).includes(Role.MERCHANT)) {
       throw new ForbiddenException('只有商家可以创建销售')
     }
     if (!merchant.organizationId) {
@@ -244,10 +246,9 @@ export class AccountsService {
         organizationId: merchant.organizationId,
       },
     })
-    const courses = await this.prisma.course.findMany({
-      where: { audience: { has: PrismaRole.sales } },
-    })
-    for (const course of courses) {
+    const courses = await this.prisma.course.findMany()
+    const salesCourses = courses.filter((course) => asRoleArray(course.audience).includes(Role.SALES))
+    for (const course of salesCourses) {
       await this.prisma.learningRecord.upsert({
         where: { userId_courseId: { userId: sales.id, courseId: course.id } },
         update: {},
@@ -312,14 +313,14 @@ export class AccountsService {
       throw new BadRequestException('不能邀请自己')
     }
     const partner = await this.prisma.user.findUnique({ where: { id: partnerId } })
-    if (!partner || !partner.roles.includes(PrismaRole.partner)) {
+    if (!partner || !asRoleArray(partner.roles).includes(Role.PARTNER)) {
       throw new BadRequestException('下级主体不是合伙人')
     }
     if (partner.status !== PrismaAccountStatus.active) {
       throw new BadRequestException('下级合伙人账号未启用')
     }
     const inviter = await this.prisma.user.findUnique({ where: { id: inviterId } })
-    if (!inviter || !inviter.roles.includes(PrismaRole.partner)) {
+    if (!inviter || !asRoleArray(inviter.roles).includes(Role.PARTNER)) {
       throw new BadRequestException('上级主体不是合伙人')
     }
     if (inviter.status !== PrismaAccountStatus.active) {

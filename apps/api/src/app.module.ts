@@ -11,6 +11,7 @@ import { CommissionsModule } from './commissions/commissions.module'
 import { ContractsModule } from './contracts/contracts.module'
 import { CustomersModule } from './customers/customers.module'
 import { HealthController } from './health/health.controller'
+import { JourneysModule } from './journeys/journeys.module'
 import { MaterialsModule } from './materials/materials.module'
 import { NotificationsModule } from './notifications/notifications.module'
 import { PrepaidModule } from './prepaid/prepaid.module'
@@ -46,6 +47,7 @@ import { TrainingModule } from './training/training.module'
     ProcurementModule,
     SalesOrdersModule,
     SalesWorkbenchModule,
+    JourneysModule,
     SamplesModule,
     ReportsModule,
     StatementsModule,

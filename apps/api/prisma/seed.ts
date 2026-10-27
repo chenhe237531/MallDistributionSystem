@@ -1,7 +1,37 @@
 import { PrismaClient } from '@prisma/client'
 import * as bcrypt from 'bcryptjs'
+import { defaultRetailPriceCents } from '@mall/shared'
 
 const prisma = new PrismaClient()
+
+/**
+ * 演示商家上架（C 端售价默认 = 采购价 × 2）。
+ * 已由商家自定义过价格的记录保留原价，避免重复 seed 覆盖运营配置。
+ */
+async function upsertDemoListing(
+  merchantId: string,
+  productId: string,
+  supplyPriceCents: number,
+): Promise<void> {
+  const existing = await prisma.merchantProduct.findUnique({
+    where: { merchantId_productId: { merchantId, productId } },
+    select: { priceCustomized: true },
+  })
+  const retailPriceCents = defaultRetailPriceCents(supplyPriceCents)
+  await prisma.merchantProduct.upsert({
+    where: { merchantId_productId: { merchantId, productId } },
+    update: {
+      status: 'active',
+      ...(existing?.priceCustomized ? {} : { retailPriceCents }),
+    },
+    create: {
+      merchantId,
+      productId,
+      retailPriceCents,
+      priceCustomized: false,
+    },
+  })
+}
 
 async function main(): Promise<void> {
   await prisma.systemConfig.upsert({
@@ -546,10 +576,70 @@ async function main(): Promise<void> {
     },
   })
 
+  const partner = await prisma.user.upsert({
+    where: { phone: '13900000010' },
+    update: {
+      name: '演示合伙人',
+      roles: ['partner'],
+      primaryRole: 'partner',
+      status: 'active',
+    },
+    create: {
+      phone: '13900000010',
+      passwordHash: await bcrypt.hash('Partner@123', 10),
+      name: '演示合伙人',
+      roles: ['partner'],
+      primaryRole: 'partner',
+      status: 'active',
+    },
+  })
+
+  await prisma.user.upsert({
+    where: { phone: '13900000004' },
+    update: {
+      name: '演示实验室',
+      roles: ['lab'],
+      primaryRole: 'lab',
+      status: 'active',
+    },
+    create: {
+      phone: '13900000004',
+      passwordHash: await bcrypt.hash('Lab@123', 10),
+      name: '演示实验室',
+      roles: ['lab'],
+      primaryRole: 'lab',
+      status: 'active',
+    },
+  })
+
+  await prisma.user.upsert({
+    where: { phone: '13900000005' },
+    update: {
+      name: '演示营养师',
+      roles: ['nutritionist'],
+      primaryRole: 'nutritionist',
+      status: 'active',
+    },
+    create: {
+      phone: '13900000005',
+      passwordHash: await bcrypt.hash('Nutritionist@123', 10),
+      name: '演示营养师',
+      roles: ['nutritionist'],
+      primaryRole: 'nutritionist',
+      status: 'active',
+    },
+  })
+
   await prisma.channelIdentity.upsert({
     where: { code: 'MDEMO001' },
     update: { userId: merchant.id, status: 'active' },
     create: { code: 'MDEMO001', type: 'merchant', userId: merchant.id },
+  })
+
+  await prisma.channelIdentity.upsert({
+    where: { code: 'PDEMO001' },
+    update: { userId: partner.id, status: 'active' },
+    create: { code: 'PDEMO001', type: 'partner', userId: partner.id },
   })
 
   const merchantTemplate = await prisma.contractTemplate.findUnique({
@@ -604,6 +694,13 @@ async function main(): Promise<void> {
   const demoVideoUrl =
     'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4'
 
+  /** 商品图片相对 URL（静态服务 /uploads，见 scripts/build_product_images.py） */
+  const productImages = (skuCode: string, count = 1): string[] =>
+    Array.from(
+      { length: count },
+      (_, index) => `/uploads/products/${skuCode}/${String(index + 1).padStart(2, '0')}.jpg`,
+    )
+
   const demoProducts = [
     {
       skuCode: 'DEMO-BASIC-001',
@@ -615,6 +712,10 @@ async function main(): Promise<void> {
       samplingMethod: '居家采血卡',
       storageCondition: '常温干燥保存',
       shelfLifeDays: 365,
+      category: 'gut_test',
+      images: productImages('DEMO-BASIC-001'),
+      intro:
+        '居家指尖血采样，覆盖维生素 D、铁蛋白、同型半胱氨酸 3 项常见营养与代谢指标。按说明完成采血并寄回，实验室收样后出具检测报告，可在小程序内查看结果与解读建议。本检测仅用于健康风险提示，不作为临床诊断依据。',
       batchNo: 'DEMO-B001',
       quantity: 500,
     },
@@ -628,6 +729,10 @@ async function main(): Promise<void> {
       samplingMethod: '居家采血卡',
       storageCondition: '常温干燥保存',
       shelfLifeDays: 365,
+      category: 'gut_test',
+      images: productImages('DEMO-PLUS-001'),
+      intro:
+        '居家指尖血采样，在基础版之上增加维生素 A、维生素 B12、叶酸、锌、镁等指标，适合关注营养均衡与代谢状态的人群。采样寄回后出具检测报告，并提供指标解读与膳食建议。本检测仅用于健康风险提示，不作为临床诊断依据。',
       batchNo: 'DEMO-P001',
       quantity: 300,
     },
@@ -646,6 +751,10 @@ async function main(): Promise<void> {
     shelfLifeDays: number
     guideVideoUrl?: string
     intro: string
+    /** 结构化分类（@mall/shared PRODUCT_CATEGORIES） */
+    category: string
+    /** 商品图片，images[0] 为列表主图 */
+    images: string[]
     relatedSkuCodes: string[]
     courseCodes: string[]
   }
@@ -664,6 +773,8 @@ async function main(): Promise<void> {
       guideVideoUrl: demoVideoUrl,
       intro:
         '高通量宏基因组测序，可检出细菌、真菌、病毒等 3 万多种肠道微生物，报告约 70 页，收样后 7-10 个工作日出具，京东快递上门取件。含 AI 智能解读与专业报告解读服务。本报告仅用于健康风险提示，不作为临床诊断依据。',
+      category: 'gut_test',
+      images: productImages('KIT-GUT-STD-001', 2),
       relatedSkuCodes: ['KIT-GUT-EXP-001'],
       courseCodes: ['sampling_ops'],
     },
@@ -680,6 +791,8 @@ async function main(): Promise<void> {
       guideVideoUrl: demoVideoUrl,
       intro:
         '极速版收样后 3-5 个工作日出报告，报告约 130 页，健康评估与代谢评估维度更全面，疾病风险预测多达 39 项。本报告仅用于健康风险提示，不作为临床诊断依据。',
+      category: 'gut_test',
+      images: productImages('KIT-GUT-EXP-001'),
       relatedSkuCodes: ['KIT-GUT-STD-001'],
       courseCodes: ['sampling_ops'],
     },
@@ -695,6 +808,8 @@ async function main(): Promise<void> {
       shelfLifeDays: 60,
       intro:
         '同济医院共建菌库供体，GMP 生产质量管理规范及 P2 实验室环境制备，新型包埋肠溶胶囊技术直达肠道。单次移植活菌数≥2.5 万亿 CFU，远高于国内外共识要求。须在执业医师指导下使用，严禁自行服用。',
+      category: 'fmt',
+      images: productImages('FMT-CAP-001'),
       relatedSkuCodes: ['FMT-ADJ-001'],
       courseCodes: ['product_knowledge', 'sampling_ops'],
     },
@@ -710,8 +825,165 @@ async function main(): Promise<void> {
       shelfLifeDays: 15,
       intro:
         '同济医院专家团队自主研发的院线级专供制剂，优选动物双歧杆菌 BB-12、鼠李糖乳杆菌 GG 等菌株，不添加任何防腐剂。可单独使用（6 天/疗程），也可配合菌群移植使用，增强移植菌群定植率。',
+      category: 'adjunct',
+      images: productImages('FMT-ADJ-001'),
       relatedSkuCodes: ['FMT-CAP-001'],
       courseCodes: ['product_knowledge'],
+    },
+    {
+      skuCode: 'FMT-CAP-002',
+      name: 'FMT 健康人源肠道菌群胶囊·升级版',
+      supplyPriceCents: 399900,
+      retailPriceCents: 799900,
+      testItems: ['单次移植活菌数≥3万亿CFU/瓶'],
+      sampleType: '口服肠溶胶囊（独立瓶装）',
+      samplingMethod: '遵医嘱温水吞服',
+      storageCondition: '0-4℃ 冷藏，2 个月',
+      shelfLifeDays: 60,
+      intro:
+        '独立瓶装，无需铝塑板热封工艺，出厂活性零损失；新型包埋技术实现活菌数指数倍增，每瓶 ≥3 万亿 CFU，远高于国内外共识要求。瓶身可体现客户信息，支持 6 次 / 8 次治疗方案灵活定制。须在执业医师指导下使用。',
+      category: 'fmt',
+      images: productImages('FMT-CAP-002'),
+      relatedSkuCodes: ['FMT-ADJ-001', 'FMT-CAP-001'],
+      courseCodes: ['product_knowledge'],
+    },
+    {
+      skuCode: 'FMT-PASTE-001',
+      name: 'FMT 菌泥（置管移植剂型）',
+      supplyPriceCents: 199900,
+      retailPriceCents: 399900,
+      testItems: ['置管移植用菌泥 5ml/瓶'],
+      sampleType: '菌泥（上/下消化道置管移植）',
+      samplingMethod: '生理盐水溶解后经鼻肠管或结肠镜置管移植',
+      storageCondition: '-20℃ 冷冻，2 个月',
+      shelfLifeDays: 60,
+      intro:
+        '置管移植高效剂型。GMP 生产质量管理规范 + P2 实验室环境制备，可按生理盐水溶解等多种方式恢复菌群状态，满足上 / 下消化道置管移植需求。规格 5ml/瓶，-20℃ 储存 2 个月，下单后 1-3 天发货。须由医疗机构按操作规范使用。',
+      category: 'fmt',
+      images: productImages('FMT-PASTE-001', 2),
+      relatedSkuCodes: ['FMT-ADJ-001'],
+      courseCodes: ['product_knowledge', 'sampling_ops'],
+    },
+    {
+      skuCode: 'FMT-CAP-CUST-001',
+      name: '定制化活菌胶囊',
+      supplyPriceCents: 599900,
+      retailPriceCents: 1099900,
+      testItems: ['一人一菌方定制', '10粒/瓶，8瓶/盒'],
+      sampleType: '口服肠溶胶囊（定制）',
+      samplingMethod: '遵医嘱温水吞服',
+      storageCondition: '0-4℃ 冷藏，2 个月',
+      shelfLifeDays: 60,
+      intro:
+        '自研菌株，基于个人菌群检测报告定制微生态调控方案，覆盖体态管理、肠道舒适与屏障功能、睡眠与情绪状态等需求。一人一菌方，10 粒/瓶、8 瓶/盒，下单后 1-3 天发货。属高端健康医疗定制服务，须经专业评估后使用。',
+      category: 'customized',
+      images: productImages('FMT-CAP-CUST-001', 2),
+      relatedSkuCodes: ['FMT-FLUID-001'],
+      courseCodes: ['product_knowledge'],
+    },
+    {
+      skuCode: 'FMT-FLUID-001',
+      name: '益生菌元液',
+      supplyPriceCents: 89900,
+      retailPriceCents: 179900,
+      testItems: ['益生元 + 益生菌代谢产物', '100ml/瓶'],
+      sampleType: '口服液态',
+      samplingMethod: '遵医嘱饮用，开瓶后冷藏保存',
+      storageCondition: '0-4℃ 冷藏，15 天',
+      shelfLifeDays: 15,
+      intro:
+        '新鲜制备，富含益生元，助力肠道菌群定植；益生菌代谢产物丰富。规格 100ml/瓶，0-4℃ 储存 15 天，随其他货品一起发送。适合亚健康人群日常滋养，配合定制化活菌胶囊使用。',
+      category: 'customized',
+      images: productImages('FMT-FLUID-001'),
+      relatedSkuCodes: ['FMT-CAP-CUST-001'],
+      courseCodes: ['product_knowledge'],
+    },
+    {
+      skuCode: 'INNO-HENG-001',
+      name: '英诺衡益生菌冻干粉',
+      supplyPriceCents: 12900,
+      retailPriceCents: 25900,
+      testItems: ['6 株专利菌株', '出厂活菌 ≥600 亿 CFU/袋', '3g×10 袋/盒'],
+      sampleType: '固体饮料（特殊膳食）',
+      samplingMethod: '温水冲调或直接食用，每日 1-2 袋',
+      storageCondition: '常温阴凉干燥保存',
+      shelfLifeDays: 730,
+      intro:
+        '全效型复合益生菌特殊膳食，含鼠李糖乳酪杆菌 JYLR-127、动物双歧杆菌乳亚种 JYBR-390 等 6 株专利菌株，出厂活菌 ≥600 亿 CFU/袋，冲调 / 即食两用。SC 认证，普通食品，不能替代药物。',
+      category: 'consumer_health',
+      images: productImages('INNO-HENG-001'),
+      relatedSkuCodes: ['INNO-CHANG-001', 'INNO-XIAN-001'],
+      courseCodes: ['product_knowledge'],
+    },
+    {
+      skuCode: 'INNO-CHANG-001',
+      name: '英诺畅益生元',
+      supplyPriceCents: 9900,
+      retailPriceCents: 19900,
+      testItems: ['低聚木糖、菊粉等多重益生元', '15g×10 袋/盒'],
+      sampleType: '固体饮料（益生元）',
+      samplingMethod: '温水冲调或直接食用',
+      storageCondition: '常温阴凉干燥保存',
+      shelfLifeDays: 730,
+      intro:
+        '多重益生元科学组合（低聚木糖、菊粉等），增殖肠道益生菌；0 脂肪、低钠，控糖人群友好，即食 / 冲调方便。搭配英诺纤膳食纤维调理效果更佳。普通食品，不能替代药物。',
+      category: 'consumer_health',
+      images: productImages('INNO-CHANG-001'),
+      relatedSkuCodes: ['INNO-XIAN-001', 'INNO-HENG-001'],
+      courseCodes: ['product_knowledge'],
+    },
+    {
+      skuCode: 'INNO-XIAN-001',
+      name: '英诺纤膳食纤维',
+      supplyPriceCents: 9900,
+      retailPriceCents: 19900,
+      testItems: ['菊粉、魔芋粉、车前子壳复合高纤配方', '10g×10 袋/盒'],
+      sampleType: '固体饮料（膳食纤维）',
+      samplingMethod: '温水冲调，每日 1-2 袋',
+      storageCondition: '常温阴凉干燥保存',
+      shelfLifeDays: 730,
+      intro:
+        '菊粉、魔芋粉、车前子壳复合高纤配方，高纤维、低升糖、0 脂肪，促进肠道蠕动、改善排便；小袋便携，冲调简单。适合膳食纤维缺乏、久坐上班族与体重管理人群。普通食品，不能替代药物。',
+      category: 'consumer_health',
+      images: productImages('INNO-XIAN-001'),
+      relatedSkuCodes: ['INNO-CHANG-001', 'INNO-HENG-001'],
+      courseCodes: ['product_knowledge'],
+    },
+    {
+      // 健康助手开通触发商品：购买后自动创建 TransplantJourney（PRD FR-HA-01）
+      skuCode: 'FMT-SVC-001',
+      name: '精准菌群移植服务（含移植后健康管理）',
+      supplyPriceCents: 199900,
+      retailPriceCents: 299900,
+      testItems: ['移植前评估与清肠指导', '6 天移植期用药管理', '30 天恢复期随访'],
+      sampleType: '服务类（按预约执行）',
+      samplingMethod: '商家对接预约时间与地点',
+      storageCondition: '不适用',
+      shelfLifeDays: 365,
+      intro:
+        '含移植前 7 天准备指导、移植前 1 天清肠管理、6 天移植期用药提醒与 30 天恢复期随访。购买并支付后自动开通「健康助手」，按早、中、晚三时段推送注意事项；清肠药可从平台购买或自行购买后确认。',
+      category: 'transplant_service',
+      images: productImages('FMT-SVC-001'),
+      relatedSkuCodes: ['FMT-CAP-001', 'MED-PEG-001'],
+      courseCodes: ['product_knowledge'],
+    },
+    {
+      // 清肠药平台购买路径的专用商品（PRD FR-HA-06）
+      skuCode: 'MED-PEG-001',
+      name: '聚乙二醇电解质散（清肠用）',
+      supplyPriceCents: 2900,
+      retailPriceCents: 5900,
+      testItems: ['聚乙二醇 4000 散剂', '2 袋/盒'],
+      sampleType: '口服散剂',
+      samplingMethod: '2 袋加 2000mL 水或脉动冲开，少量多次服用',
+      storageCondition: '常温阴凉干燥保存',
+      shelfLifeDays: 730,
+      intro:
+        '移植前 1 天肠道准备用药。晚餐后 2 袋加 2000mL 水冲开，少量多次服用，服后多走动并按摩腹部，至大便呈无渣清水状即可；清肠后当晚不可再进食。请在医生或商家指导下使用。',
+      category: 'bowel_prep',
+      images: productImages('MED-PEG-001'),
+      relatedSkuCodes: [],
+      courseCodes: [],
     },
   ]
 
@@ -734,6 +1006,9 @@ async function main(): Promise<void> {
         distributable: true,
         status: 'active',
         guideVideoUrl: demoVideoUrl,
+        intro: item.intro,
+        category: item.category,
+        images: item.images,
       },
       create: {
         skuCode: item.skuCode,
@@ -752,6 +1027,9 @@ async function main(): Promise<void> {
         distributable: true,
         status: 'active',
         guideVideoUrl: demoVideoUrl,
+        intro: item.intro,
+        category: item.category,
+        images: item.images,
       },
     })
 
@@ -768,15 +1046,7 @@ async function main(): Promise<void> {
       },
     })
 
-    await prisma.merchantProduct.upsert({
-      where: { merchantId_productId: { merchantId: merchant.id, productId: product.id } },
-      update: { retailPriceCents: item.retailPriceCents, status: 'active' },
-      create: {
-        merchantId: merchant.id,
-        productId: product.id,
-        retailPriceCents: item.retailPriceCents,
-      },
-    })
+    await upsertDemoListing(merchant.id, product.id, item.supplyPriceCents)
   }
 
   // 资料转化方案商品：创建后回填搭配推荐（ProductRelated）与课程绑定（ProductCourse）
@@ -806,6 +1076,8 @@ async function main(): Promise<void> {
         status: 'active',
         guideVideoUrl: item.guideVideoUrl ?? null,
         intro: item.intro,
+        category: item.category,
+        images: item.images,
       },
       create: {
         skuCode: item.skuCode,
@@ -825,6 +1097,8 @@ async function main(): Promise<void> {
         status: 'active',
         guideVideoUrl: item.guideVideoUrl ?? null,
         intro: item.intro,
+        category: item.category,
+        images: item.images,
       },
     })
     productIdBySku.set(item.skuCode, product.id)
@@ -842,15 +1116,7 @@ async function main(): Promise<void> {
       },
     })
 
-    await prisma.merchantProduct.upsert({
-      where: { merchantId_productId: { merchantId: merchant.id, productId: product.id } },
-      update: { retailPriceCents: item.retailPriceCents, status: 'active' },
-      create: {
-        merchantId: merchant.id,
-        productId: product.id,
-        retailPriceCents: item.retailPriceCents,
-      },
-    })
+    await upsertDemoListing(merchant.id, product.id, item.supplyPriceCents)
   }
 
   for (const item of contentProducts) {
@@ -902,7 +1168,10 @@ async function main(): Promise<void> {
     })
   }
 
-  const salesCourses = await prisma.course.findMany({ where: { audience: { has: 'sales' } } })
+  const allCourses = await prisma.course.findMany()
+  const salesCourses = allCourses.filter(
+    (course) => Array.isArray(course.audience) && course.audience.includes('sales'),
+  )
   for (const course of salesCourses) {
     await prisma.learningRecord.upsert({
       where: { userId_courseId: { userId: sales.id, courseId: course.id } },
@@ -912,7 +1181,7 @@ async function main(): Promise<void> {
   }
 
   console.log(
-    'Seed completed: platform admin 13800000000 / Admin@123, merchant 13900000001 / Merchant@123, sales 13900000002 / Sales@123, supplier 13900000009 / Supplier@123, demo products, contracts and prepaid balance',
+    'Seed completed: platform 13800000000 / Admin@123, merchant 13900000001 / Merchant@123, sales 13900000002 / Sales@123, customer 13900000003 / Customer@123, lab 13900000004 / Lab@123, nutritionist 13900000005 / Nutritionist@123, supplier 13900000009 / Supplier@123, partner 13900000010 / Partner@123, demo products, contracts and prepaid balance',
   )
 }
 

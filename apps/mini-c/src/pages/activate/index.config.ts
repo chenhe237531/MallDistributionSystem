@@ -1,3 +1,3 @@
 export default definePageConfig({
-  navigationBarTitleText: '扫码激活',
+  navigationBarTitleText: '样本绑定流程',
 })

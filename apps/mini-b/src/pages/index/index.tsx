@@ -1,13 +1,20 @@
-import { useState } from 'react'
-import Taro, { useDidShow } from '@tarojs/taro'
-import { Text, View } from '@tarojs/components'
+import { useRef, useState } from 'react'
+import Taro, { useDidShow, getCurrentInstance } from '@tarojs/taro'
+import { Swiper, SwiperItem, ScrollView, Text, View } from '@tarojs/components'
 import { ROLE_LABELS, Role, formatCents } from '@mall/shared'
-import { api, clearToken, ensureLogin, go } from '../../lib/api'
+import { api, ensureLogin, go } from '../../lib/api'
 import { PageToast, toast } from '../../components/feedback'
+import { AppTabbar } from '../../components/AppTabbar'
+import { Icon } from '../../components/Icon'
+import { GoodsThumb } from '../../components/goods/GoodsThumb'
+import { BrandIntro, ContactCard } from '../../components/home/BrandIntro'
 import {
-  Button as NutButton,
-  Dialog,
-} from '@nutui/nutui-react-taro'
+  BANNERS,
+  HOME_ENTRIES,
+  NOTICE_TEXT,
+  SERVICE_HOTLINE,
+} from '../../config/home'
+import { useTheme } from '../../lib/theme'
 
 type Me = {
   name: string
@@ -33,6 +40,15 @@ type TrainingRecord = { status: string }
 
 type Contract = { status: string }
 
+type HotProduct = {
+  id: string
+  name: string
+  images?: string[]
+  category?: string | null
+  supplyPriceCents: number
+  retailPriceCents?: number | null
+}
+
 type TodoItem = {
   key: string
   label: string
@@ -41,23 +57,11 @@ type TodoItem = {
   unit: string
   hint?: string
   url: string
-  icon: string
+  icon: 'upload' | 'book' | 'edit' | 'card'
   tone: EntryTone
 }
 
 type EntryTone = 'primary' | 'success' | 'warning' | 'danger'
-
-const ENTRIES: Array<{ label: string; icon: string; tone: EntryTone; url: string }> = [
-  { label: '采购商城', icon: '🛒', tone: 'primary', url: '/pages/procurement/index' },
-  { label: '预付款', icon: '💰', tone: 'warning', url: '/pages/prepaid/index' },
-  { label: '我的客户', icon: '🤝', tone: 'success', url: '/pages/customers/index' },
-  { label: '报告与解读', icon: '📋', tone: 'primary', url: '/pages/reports/index' },
-  { label: '我的生意', icon: '📈', tone: 'success', url: '/pages/business/index' },
-  { label: '素材与培训', icon: '🎨', tone: 'warning', url: '/pages/materials/index' },
-  { label: '课程与考试', icon: '📚', tone: 'primary', url: '/pages/training/index' },
-  { label: '消息中心', icon: '🔔', tone: 'danger', url: '/pages/notifications/index' },
-  { label: '客户认领', icon: '🙋', tone: 'primary', url: '/pages/claims/index' },
-]
 
 /** 预付款余额偏低阈值：100 元 */
 const PREPAID_LOW_THRESHOLD_CENTS = 10000
@@ -90,6 +94,7 @@ function aggregateToday(orders: MerchantOrder[]): { orderCount: number; incomeCe
 }
 
 export default function Index() {
+  const { themeClass } = useTheme()
   const [me, setMe] = useState<Me | null>(null)
   const [balance, setBalance] = useState<number | null>(null)
   const [todayOrders, setTodayOrders] = useState<number | null>(null)
@@ -97,6 +102,9 @@ export default function Index() {
   const [reminders, setReminders] = useState(0)
   const [unread, setUnread] = useState(0)
   const [todos, setTodos] = useState<TodoItem[]>([])
+  const [hotProducts, setHotProducts] = useState<HotProduct[]>([])
+  // Taro View 实例类型跨端不一致，此处仅读取 H5 的 offsetTop 做锚点滚动
+  const brandRef = useRef<any>(null)
 
   const load = async () => {
     const profile = await api<Me>('/auth/me')
@@ -109,6 +117,10 @@ export default function Index() {
     setReminders(reminderList.length)
     const notifications = await api<{ unread: number }>('/notifications/me')
     setUnread(notifications.unread)
+
+    // 热销推荐（方案 §3.4）：首页直接露出带图商品卡，进入详情仅 1 次点击
+    const productList = await api<HotProduct[]>('/products').catch(() => [])
+    setHotProducts(productList.filter((product) => product.id).slice(0, 6))
 
     const [reportRes, trainingRes, contractRes, prepaidRes, ordersRes] = await Promise.allSettled([
       api<ReportTaskGroup[]>('/notifications/report-tasks'),
@@ -133,7 +145,7 @@ export default function Index() {
         label: '待转发报告',
         unit: '份',
         url: '/pages/notifications/index',
-        icon: '📤',
+        icon: 'upload',
         tone: 'warning',
         count:
           reportRes.status === 'fulfilled'
@@ -145,7 +157,7 @@ export default function Index() {
         label: '待学课程',
         unit: '门',
         url: '/pages/training/index',
-        icon: '📚',
+        icon: 'book',
         tone: 'primary',
         count:
           trainingRes.status === 'fulfilled'
@@ -157,7 +169,7 @@ export default function Index() {
         label: '待签合同',
         unit: '份',
         url: '/pages/business/index',
-        icon: '✍️',
+        icon: 'edit',
         tone: 'success',
         count:
           contractRes.status === 'fulfilled'
@@ -173,7 +185,7 @@ export default function Index() {
         label: '预付款提示',
         unit: '条',
         url: '/pages/prepaid/index',
-        icon: '💳',
+        icon: 'card',
         tone: 'danger',
         count: prepaidRes.status === 'fulfilled' ? 1 : null,
         hint:
@@ -194,40 +206,140 @@ export default function Index() {
     void load().catch((cause) => {
       toast(cause instanceof Error ? cause.message : '加载失败', 'fail')
     })
+    // 「我的」页「关于百英诺」入口：跳回首页并滚动到品牌介绍区
+    if (getCurrentInstance().router?.params?.anchor === 'brand') {
+      setTimeout(scrollToBrand, 300)
+    }
   })
 
   const roleLabel = me
     ? ROLE_LABELS[me.primaryRole as Role] ?? me.primaryRole
     : ''
 
-  const confirmLogout = () => {
-    Dialog.open('b-logout', {
-      title: '退出登录',
-      content: '确定要退出当前账号吗？',
-      confirmText: '退出',
-      cancelText: '取消',
-      onConfirm: () => {
-        Dialog.close('b-logout')
-        clearToken()
-        void Taro.redirectTo({ url: '/pages/login/index' })
-      },
-      onCancel: () => Dialog.close('b-logout'),
+  const scrollToBrand = () => {
+    try {
+      const node = brandRef.current as { offsetTop?: number } | null
+      const scrollTop = node?.offsetTop ?? 0
+      void Taro.pageScrollTo({ scrollTop: Math.max(scrollTop - 8, 0), duration: 300 })
+    } catch {
+      // H5 shadow DOM 下取不到 offsetTop 时静默降级
+    }
+  }
+
+  const openEntry = (entry: (typeof HOME_ENTRIES)[number]) => {
+    if (entry.url) {
+      go(entry.url)
+    } else {
+      scrollToBrand()
+    }
+  }
+
+  const openMallWithCategory = (category: string) => {
+    go(`/pages/procurement/index?cat=${category}`)
+  }
+
+  const copyWechat = (wechatId: string) => {
+    void Taro.setClipboardData({
+      data: wechatId,
+      success: () => toast('微信号已复制', 'success'),
     })
   }
 
   return (
-    <View className="page">
+    <View className={`page page-tabbar ${themeClass}`}>
       <PageToast />
-      <View className="hero">
-        <Text className="hero-role">{roleLabel}端 · 商家工作台</Text>
-        <Text className="hero-title">你好，{me?.name ?? '商户'}</Text>
-        <Text className="hero-balance">
-          {balance === null ? '预付款 —' : `可用预付款 ${formatCents(balance)} 元`}
+
+      <View className="hero b-hero">
+        <View
+          className="b-hero-bell"
+          onClick={() => go('/pages/notifications/index')}
+        >
+          <Icon name="bell" size={20} />
+          {unread > 0 ? <View className="b-hero-bell-badge">{unread > 99 ? '99+' : unread}</View> : null}
+        </View>
+        <Text className="b-hero-brand">百英诺 · 商家中心</Text>
+        <Text className="b-hero-sub">
+          你好，{me?.name ?? '商户'} · {roleLabel} · {me?.organizationName ?? '—'}
         </Text>
-        <Text className="hero-status">
-          {me?.organizationName ?? '—'} · {reminders} 条待办 · {unread} 条未读
+        <Text className="b-hero-sub">
+          {balance === null ? '可用预付款 —' : `可用预付款 ${formatCents(balance)} 元`}
         </Text>
+        <View className="b-search" onClick={() => go('/pages/procurement/index')}>
+          <Icon name="search" size={15} />
+          <Text className="b-search-text">搜索商品 / 功能</Text>
+        </View>
       </View>
+
+      <Swiper
+        className="b-banner"
+        autoplay
+        circular
+        interval={3600}
+        indicatorDots
+        indicatorColor="rgba(255,255,255,0.4)"
+        indicatorActiveColor="#ffffff"
+      >
+        {BANNERS.map((banner) => (
+          <SwiperItem key={banner.title}>
+            <View className="b-banner-slide">
+              <Text className="b-banner-title">{banner.title}</Text>
+              <Text className="b-banner-sub">{banner.subtitle}</Text>
+              <View className="b-banner-hotline">服务热线 {SERVICE_HOTLINE}</View>
+            </View>
+          </SwiperItem>
+        ))}
+      </Swiper>
+
+      <View className="card" style={{ marginTop: 12 }}>
+        <View className="b-grid">
+          {HOME_ENTRIES.map((entry) => (
+            <View
+              key={entry.label}
+              className="b-grid-item"
+              onClick={() => openEntry(entry)}
+            >
+              <View className={`b-grid-icon tone-${entry.tone}`}>
+                <Icon name={entry.icon} size={22} />
+              </View>
+              <Text className="b-grid-name">{entry.label}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View className="b-notice">
+        <Icon name="horn" size={14} />
+        <View className="b-notice-text-wrap">
+          <Text className="b-notice-text">{NOTICE_TEXT}</Text>
+        </View>
+      </View>
+
+      {hotProducts.length > 0 ? (
+        <View className="section">
+          <View className="home-goods-head">
+            <Text className="section-title">热销推荐</Text>
+            <Text className="home-goods-more" onClick={() => go('/pages/procurement/index')}>
+              查看全部 ›
+            </Text>
+          </View>
+          <ScrollView className="home-goods-scroll" scrollX>
+            {hotProducts.map((product) => (
+              <View
+                key={product.id}
+                className="home-goods-card"
+                onClick={() => go(`/pages/product-detail/index?id=${product.id}`)}
+              >
+                <GoodsThumb src={product.images?.[0]} name={product.name} size="lg" />
+                <Text className="home-goods-name">{product.name}</Text>
+                <View className="home-goods-price-row">
+                  <Text className="home-goods-price">¥{formatCents(product.supplyPriceCents)}</Text>
+                  <Text className="home-goods-tag">渠道价</Text>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
 
       <View className="section">
         <Text className="section-title">今日经营</Text>
@@ -261,7 +373,7 @@ export default function Index() {
               onClick={() => go(item.url)}
             >
               <View className={`index-todo-icon tone-${item.tone}`}>
-                <Text className="index-todo-emoji">{item.icon}</Text>
+                <Icon name={item.icon} size={18} />
               </View>
               <View className="index-todo-main">
                 <Text className="index-todo-label">{item.label}</Text>
@@ -276,31 +388,16 @@ export default function Index() {
         </View>
       </View>
 
-      <View className="section">
-        <Text className="section-title">快捷入口</Text>
-        <View className="card index-grid-card">
-          <View className="index-grid">
-            {ENTRIES.map((entry) => (
-              <View
-                key={entry.url}
-                className="index-entry"
-                onClick={() => go(entry.url)}
-              >
-                <View className={`index-entry-icon tone-${entry.tone}`}>
-                  <Text className="index-entry-emoji">{entry.icon}</Text>
-                </View>
-                <Text className="index-entry-name">{entry.label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+      <View ref={brandRef}>
+        <BrandIntro
+          onOpenCategory={openMallWithCategory}
+          onOpenGuide={() => go('/pages/guide/index')}
+        />
       </View>
 
-      <NutButton className="index-logout" block type="danger" fill="outline" onClick={confirmLogout}>
-        退出登录
-      </NutButton>
+      <ContactCard onCopy={copyWechat} />
 
-      <Dialog id="b-logout" />
+      <AppTabbar active="home" />
     </View>
   )
 }

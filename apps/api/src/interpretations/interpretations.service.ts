@@ -17,6 +17,7 @@ import {
 } from '@mall/shared'
 import { AuditService } from '../audit/audit.service'
 import { NotificationsService } from '../notifications/notifications.service'
+import { asStringArray } from '../prisma/array-values'
 import { PrismaService } from '../prisma/prisma.service'
 import { MockAiAdapter } from './ai.adapter'
 import {
@@ -117,6 +118,9 @@ export class InterpretationsService {
 
   async adopt(id: string, actor: AuthUser) {
     const interpretation = await this.getWritable(id, actor)
+    if (interpretation.status === PrismaInterpretationStatus.published) {
+      throw new BadRequestException('解读已发布，如需修改请重新生成新版本')
+    }
     if (interpretation.status === PrismaInterpretationStatus.blocked) {
       throw new BadRequestException('命中敏感表述，需修改后才能复核通过')
     }
@@ -136,6 +140,9 @@ export class InterpretationsService {
 
   async edit(id: string, dto: EditInterpretationDto, actor: AuthUser) {
     const interpretation = await this.getWritable(id, actor)
+    if (interpretation.status === PrismaInterpretationStatus.published) {
+      throw new BadRequestException('解读已发布，如需修改请重新生成新版本')
+    }
     validateSections(dto.sections)
     const hits = findSensitiveWords(dto.sections)
     const status = hits.length
@@ -172,7 +179,10 @@ export class InterpretationsService {
   }
 
   async reject(id: string, dto: RejectInterpretationDto, actor: AuthUser) {
-    await this.getWritable(id, actor)
+    const interpretation = await this.getWritable(id, actor)
+    if (interpretation.status === PrismaInterpretationStatus.published) {
+      throw new BadRequestException('解读已发布，不可驳回')
+    }
     return this.prisma.interpretation.update({
       where: { id },
       data: {
@@ -192,7 +202,7 @@ export class InterpretationsService {
     }
     const published = await this.prisma.interpretation.update({
       where: { id },
-      data: { publishedAt: new Date() },
+      data: { status: PrismaInterpretationStatus.published, publishedAt: new Date() },
     })
     await this.notificationsService.notifyReportReady(interpretation.reportId)
     const report = await this.prisma.report.findUnique({
@@ -412,7 +422,7 @@ export class InterpretationsService {
       version: number
       status: string
       sections: unknown
-      sensitiveHits: string[]
+      sensitiveHits: unknown
       reviewNote: string | null
       reviewedBy: string | null
       reviewedAt: Date | null
@@ -428,7 +438,8 @@ export class InterpretationsService {
     const visible =
       isReviewer ||
       actor.roles.includes(Role.LAB) ||
-      (interpretation.status === 'reviewed' && Boolean(interpretation.publishedAt))
+      (['reviewed', 'published'].includes(interpretation.status) &&
+        Boolean(interpretation.publishedAt))
 
     if (!access.full || !visible) {
       return {
@@ -457,7 +468,7 @@ export class InterpretationsService {
       publishedAt: interpretation.publishedAt,
       modelVersion: interpretation.modelVersion,
       promptVersion: interpretation.promptVersion,
-      sensitiveHits: isReviewer ? interpretation.sensitiveHits : undefined,
+      sensitiveHits: isReviewer ? asStringArray(interpretation.sensitiveHits) : undefined,
       reviewNote: isReviewer ? interpretation.reviewNote : undefined,
       contentHidden: false,
       disclaimer: AI_DISCLAIMER,

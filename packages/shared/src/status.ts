@@ -160,3 +160,47 @@ export const TRAINING_STATUS_TONES: Record<string, StatusTone> = {
   passed: 'success',
   expired: 'default',
 }
+
+export const JOURNEY_STATUS_LABELS: Record<string, string> = {
+  pending_schedule: '待排期',
+  active: '进行中',
+  paused: '已暂停',
+  completed: '已完成',
+  cancelled: '已取消',
+}
+
+export const JOURNEY_STATUS_TONES: Record<string, StatusTone> = {
+  pending_schedule: 'warning',
+  active: 'primary',
+  paused: 'default',
+  completed: 'success',
+  cancelled: 'default',
+}
+
+export const BOWEL_PREP_STATUS_LABELS: Record<string, string> = {
+  none: '未准备',
+  platform_ordered: '已下单待备好',
+  self_confirmed: '自购已确认',
+  ready: '已备好',
+}
+
+export const BOWEL_PREP_STATUS_TONES: Record<string, StatusTone> = {
+  none: 'danger',
+  platform_ordered: 'warning',
+  self_confirmed: 'success',
+  ready: 'success',
+}
+
+export const PUSH_TASK_STATUS_LABELS: Record<string, string> = {
+  pending: '待发送',
+  sent: '已发送',
+  skipped: '已跳过',
+  failed: '发送失败',
+}
+
+export const PUSH_TASK_STATUS_TONES: Record<string, StatusTone> = {
+  pending: 'warning',
+  sent: 'success',
+  skipped: 'default',
+  failed: 'danger',
+}

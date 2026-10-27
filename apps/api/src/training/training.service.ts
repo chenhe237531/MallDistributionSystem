@@ -13,6 +13,7 @@ import {
 import { Role } from '@mall/shared'
 import { AuditService } from '../audit/audit.service'
 import { NotificationsService } from '../notifications/notifications.service'
+import { asRoleArray, asStringArray } from '../prisma/array-values'
 import { PrismaService } from '../prisma/prisma.service'
 import {
   CreateChapterDto,
@@ -79,14 +80,18 @@ export class TrainingService {
   async listCourses(actor: AuthUser) {
     const isPlatform = actor.roles.includes(Role.PLATFORM)
     const courses = await this.prisma.course.findMany({
-      where: isPlatform ? {} : { audience: { hasSome: actor.roles as unknown as PrismaRole[] } },
       include: {
         chapters: { orderBy: { order: 'asc' } },
         questions: true,
       },
       orderBy: { createdAt: 'desc' },
     })
-    return courses.map((course) => this.toCourseView(course, isPlatform))
+    const visible = isPlatform
+      ? courses
+      : courses.filter((course) =>
+          asRoleArray(course.audience).some((role) => actor.roles.includes(role)),
+        )
+    return visible.map((course) => this.toCourseView(course, isPlatform))
   }
 
   async getCourse(id: string, actor: AuthUser) {
@@ -101,7 +106,7 @@ export class TrainingService {
       throw new NotFoundException('课程不存在')
     }
     const isPlatform = actor.roles.includes(Role.PLATFORM)
-    if (!isPlatform && !course.audience.some((role) => actor.roles.includes(role as unknown as Role))) {
+    if (!isPlatform && !asRoleArray(course.audience).some((role) => actor.roles.includes(role))) {
       throw new ForbiddenException('无权查看该课程')
     }
     return this.toCourseView(course, isPlatform)
@@ -109,7 +114,7 @@ export class TrainingService {
 
   async enroll(userId: string, roles: Role[], courseId: string) {
     const course = await this.getCourseRaw(courseId)
-    if (!course.audience.some((role) => roles.includes(role as unknown as Role))) {
+    if (!asRoleArray(course.audience).some((role) => roles.includes(role))) {
       throw new ForbiddenException('该课程不面向当前角色')
     }
     return this.prisma.learningRecord.upsert({
@@ -120,10 +125,11 @@ export class TrainingService {
   }
 
   async myRecords(userId: string, roles: Role[]) {
-    const courses = await this.prisma.course.findMany({
-      where: { audience: { hasSome: roles as unknown as PrismaRole[] } },
-    })
-    for (const course of courses) {
+    const courses = await this.prisma.course.findMany()
+    const matched = courses.filter((course) =>
+      asRoleArray(course.audience).some((role) => roles.includes(role)),
+    )
+    for (const course of matched) {
       await this.prisma.learningRecord.upsert({
         where: { userId_courseId: { userId, courseId: course.id } },
         update: {},
@@ -162,17 +168,18 @@ export class TrainingService {
     if (!chapter) {
       throw new BadRequestException('章节不属于该课程')
     }
-    if (record.completedChapterIds.includes(chapterId)) {
+    const completedChapterIds = asStringArray(record.completedChapterIds)
+    if (completedChapterIds.includes(chapterId)) {
       return record
     }
 
-    const completedChapterIds = [...record.completedChapterIds, chapterId]
-    const progress = Math.round((completedChapterIds.length / record.course.chapters.length) * 100)
-    const allCompleted = completedChapterIds.length === record.course.chapters.length
+    const nextChapterIds = [...completedChapterIds, chapterId]
+    const progress = Math.round((nextChapterIds.length / record.course.chapters.length) * 100)
+    const allCompleted = nextChapterIds.length === record.course.chapters.length
     return this.prisma.learningRecord.update({
       where: { id: recordId },
       data: {
-        completedChapterIds,
+        completedChapterIds: nextChapterIds,
         progress,
         status: allCompleted
           ? PrismaTrainingStatus.pending_exam
@@ -310,20 +317,23 @@ export class TrainingService {
     let userIds: string[] = []
     if (actor.roles.includes(Role.PLATFORM)) {
       const users = await this.prisma.user.findMany({
-        where: { roles: { has: PrismaRole.sales } },
-        select: { id: true },
+        select: { id: true, roles: true },
       })
-      userIds = users.map((user) => user.id)
+      userIds = users
+        .filter((user) => asRoleArray(user.roles).includes(Role.SALES))
+        .map((user) => user.id)
     } else if (actor.roles.includes(Role.MERCHANT)) {
       const merchant = await this.prisma.user.findUnique({ where: { id: actor.sub } })
       if (!merchant?.organizationId) {
         throw new BadRequestException('商家未绑定组织')
       }
       const users = await this.prisma.user.findMany({
-        where: { organizationId: merchant.organizationId, roles: { has: PrismaRole.sales } },
-        select: { id: true },
+        where: { organizationId: merchant.organizationId },
+        select: { id: true, roles: true },
       })
-      userIds = users.map((user) => user.id)
+      userIds = users
+        .filter((user) => asRoleArray(user.roles).includes(Role.SALES))
+        .map((user) => user.id)
     } else {
       throw new ForbiddenException('只有商家或平台可以查看团队学习情况')
     }
@@ -366,7 +376,7 @@ export class TrainingService {
       code: string
       name: string
       category: string
-      audience: PrismaRole[]
+      audience: unknown
       required: boolean
       validityMonths: number
       chapters: unknown[]

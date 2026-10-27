@@ -1,3 +1,6 @@
+// 多数据库兼容 Schema：本文件为 PostgreSQL 基准定义。
+// SQLite / MySQL 由 scripts/prisma-runtime.mjs 派生到 schema.<provider>.prisma，
+// 请统一通过 pnpm db:generate / pnpm db:push / pnpm db:seed 操作。
 generator client {
   provider = "prisma-client-js"
 }
@@ -246,6 +249,10 @@ model Product {
   status                   ProductStatus     @default(draft)
   guideVideoUrl            String?
   intro                    String?
+  /// 商品图片（有序，images[0] 为列表主图）；存相对 URL，静态服务前缀 /uploads
+  images                   String[]          @default([])
+  /// 结构化分类 key（@mall/shared PRODUCT_CATEGORIES），用于采购页侧栏过滤
+  category                 String?
   relatedLinks             ProductRelated[]  @relation("ProductRelatedMain")
   relatedOf                ProductRelated[]  @relation("ProductRelatedItem")
   courseBindings           ProductCourse[]
@@ -303,7 +310,10 @@ model MerchantProduct {
   merchant         User     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   productId        String
   product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// C 端展示价；默认按 product.supplyPriceCents × 2 生成（@mall/shared defaultRetailPriceCents）
   retailPriceCents Int
+  /// true = 商家自定义改价，后续不再随采购价自动换算；false = 使用默认 2 倍规则（可恢复）
+  priceCustomized  Boolean  @default(false)
   status           String   @default("active")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -518,6 +528,18 @@ model Sample {
   status         SampleStatus @default(activated)
   samplingMethod String
   questionnaire  Json
+  /// 绑定表单：采样时间（同时供实验室签收的采样时效校验复用）
+  sampledAt      DateTime?
+  /// 绑定表单：联系电话
+  contactPhone   String?
+  /// 绑定表单：与受检人关系 self/spouse/parent/child/other
+  relationship   String?
+  /// 绑定表单：受检人年龄
+  examineeAge    Int?
+  /// 绑定表单：备注信息（≤200 字）
+  remark         String?
+  /// 寄回运单号（结构化展示，本期不对接物流轨迹）
+  trackingNo     String?
   abnormalReason String?
   resampleOfId   String?
   resampleCount  Int          @default(0)
@@ -701,6 +723,7 @@ enum InterpretationStatus {
   generated
   blocked
   reviewed
+  published
   rejected
   failed
 }
@@ -1134,4 +1157,114 @@ model AuditLog {
   @@index([channelId])
   @@index([merchantId])
   @@index([createdAt])
+}
+
+/* ============================================================
+ * 移植后健康助手（doc/health-assistant-prd.html §6.1）
+ * 新增模型统一追加在本区块，避免与既有模型产生 diff 冲突。
+ * ============================================================ */
+
+enum JourneyStatus {
+  pending_schedule
+  active
+  paused
+  completed
+  cancelled
+}
+
+enum DosingScheme {
+  morning_once
+  twice_daily
+}
+
+enum PushSlot {
+  morning
+  noon
+  evening
+}
+
+enum PushTaskStatus {
+  pending
+  sent
+  skipped
+  failed
+}
+
+enum BowelPrepStatus {
+  none
+  platform_ordered
+  self_confirmed
+  ready
+}
+
+/// 一次移植服务的健康管理周期：移植服务订单支付成功后按商品行自动开通
+model TransplantJourney {
+  id              String          @id @default(cuid())
+  journeyNo       String          @unique
+  orderId         String
+  orderItemId     String
+  customerId      String
+  merchantId      String
+  /// 移植日 D0（本地日期，存当日 00:00）
+  transplantDate  DateTime?
+  dosingScheme    DosingScheme    @default(morning_once)
+  status          JourneyStatus   @default(pending_schedule)
+  bowelPrepStatus BowelPrepStatus @default(none)
+  pauseReason     String?
+  templateVersion Int             @default(1)
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  pushTasks       JourneyPushTask[]
+  bowelPrep       BowelPrepRecord?
+
+  /// 同一订单商品行只开通一条旅程，支付回调重复触发幂等
+  @@unique([orderId, orderItemId])
+  @@index([customerId, status])
+  @@index([merchantId, status])
+}
+
+/// 三时段推送任务：排期时一次性生成，调度器到点投递站内通知
+model JourneyPushTask {
+  id              String          @id @default(cuid())
+  journeyId       String
+  journey         TransplantJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  /// 相对移植日：-7 ~ +35
+  dayOffset       Int
+  slot            PushSlot
+  /// 绝对触发时刻（由移植日 + 时段换算为 Asia/Shanghai 时间）
+  scheduledAt     DateTime
+  templateCode    String
+  templateVersion Int             @default(1)
+  title           String
+  body            String
+  status          PushTaskStatus  @default(pending)
+  notificationId  String?
+  skipReason      String?
+  sentAt          DateTime?
+  createdAt       DateTime        @default(now())
+
+  @@unique([journeyId, dayOffset, slot])
+  @@index([status, scheduledAt])
+}
+
+/// 清肠药就绪记录：平台购买与自购两条路径互斥可切换
+model BowelPrepRecord {
+  id           String          @id @default(cuid())
+  journeyId    String          @unique
+  journey      TransplantJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  /// platform / self；就绪前可为空
+  path         String?
+  productId    String?
+  orderId      String?
+  selfDrugName String?
+  selfNote     String?
+  selfPhotoUrl String?
+  readyAt      DateTime?
+  /// customer / merchant
+  readyBy      String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 }

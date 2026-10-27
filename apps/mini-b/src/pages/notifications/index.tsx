@@ -3,6 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import { Text, View } from '@tarojs/components'
 import { api, ensureLogin } from '../../lib/api'
 import { Cell, CellGroup, Empty, Tag, Toast } from '@nutui/nutui-react-taro'
+import { useTheme } from '../../lib/theme'
 
 type Notification = {
   id: string
@@ -24,6 +25,7 @@ const toast = (title: string, icon?: 'success' | 'fail') =>
   Toast.show('b-toast', { title, icon })
 
 export default function Notifications() {
+  const { themeClass } = useTheme()
   const [items, setItems] = useState<Notification[]>([])
   const [unread, setUnread] = useState(0)
 
@@ -55,7 +57,7 @@ export default function Notifications() {
   }
 
   return (
-    <View className="page">
+    <View className={`page ${themeClass}`}>
       <View className="hero">
         <Text className="hero-role">消息中心</Text>
         <Text className="hero-title">{unread} 条未读</Text>

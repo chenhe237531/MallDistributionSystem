@@ -251,7 +251,7 @@ export default function MaterialsPage() {
       >
         {detail ? (
           <Space direction="vertical" size={16} style={{ display: 'flex' }}>
-            <Descriptions column={2} size="small" bordered>
+            <Descriptions column={{ xs: 1, sm: 2 }} size="small" bordered>
               <Descriptions.Item label="编码">{detail.code}</Descriptions.Item>
               <Descriptions.Item label="分类">{detail.category}</Descriptions.Item>
               <Descriptions.Item label="内容类型">

@@ -30,6 +30,8 @@ export const proLayoutToken = {
   header: {
     colorBgHeader: designTokens.colorBrandDark,
     colorTextRightActionsItem: '#e2e8f0',
+    /* 深色顶栏：标题与移动端汉堡按钮用浅色（H5 兼容，图标对比度） */
+    colorHeaderTitle: '#e2e8f0',
   },
   sider: {
     colorTextMenuSelected: designTokens.colorPrimary,

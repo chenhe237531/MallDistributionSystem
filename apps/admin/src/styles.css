@@ -25,5 +25,145 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  padding: 24px 16px;
   background: linear-gradient(135deg, #0f2540, #0958d9); /* colorBrandDark → colorPrimaryActive */
+}
+
+.login-card,
+.role-notice-card {
+  width: 480px;
+  max-width: 100%;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 22%);
+}
+
+.role-notice-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.login-logo {
+  display: block;
+  width: 176px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+.login-demo {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e6eb;
+}
+
+.login-demo-title {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.login-demo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.login-demo-role {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid #e5e6eb;
+  border-radius: 8px;
+  background: #f7f8fa;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.login-demo-role:hover {
+  border-color: #0958d9;
+  background: #f0f5ff;
+  box-shadow: 0 2px 8px rgb(9 88 217 / 12%);
+}
+
+.login-demo-role-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.login-demo-role-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.login-demo-role-badge {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: #e8f3ff;
+  color: #0958d9;
+  font-size: 10px;
+  line-height: 16px;
+}
+
+.login-demo-role-account {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 16px;
+  color: #4e5969;
+  white-space: nowrap;
+}
+
+.login-demo-role-hint {
+  font-size: 10px;
+  line-height: 14px;
+  color: #86909c;
+}
+
+.login-demo-note {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+/*
+ * ===== H5（移动端）兼容 =====
+ * 布局壳的移动端行为由 ProLayout 内建（<768px 汉堡按钮 + 全屏浮层菜单），
+ * 这里补充：收起态侧栏彻底隐藏、表格横向滚动、弹层限宽与留白收紧。
+ */
+@media (max-width: 767px) {
+  /* fixSiderbar 的 -fixed 规则优先级高于 -hide-menu-collapsed，需显式隐藏收起态侧栏 */
+  .ant-pro-sider.ant-pro-sider-collapsed.ant-pro-sider-hide-menu-collapsed {
+    display: none;
+  }
+
+  /* 未声明 scroll.x 的表格：小屏横向滚动，避免列被挤压重叠 */
+  .ant-table-content,
+  .ant-table-body {
+    overflow-x: auto;
+  }
+
+  .ant-table table {
+    min-width: 640px;
+  }
+
+  /* 弹窗不超出屏幕（antd 已有 max-width，收窄留白） */
+  .ant-modal {
+    max-width: calc(100vw - 16px);
+  }
+
+  /* PageContainer 内容留白收紧 */
+  .ant-pro-page-container-children-container {
+    padding-inline: 12px;
+  }
+
+  /* 分页器允许换行，避免溢出 */
+  .ant-table-pagination.ant-pagination {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
 }

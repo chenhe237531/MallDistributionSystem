@@ -12,6 +12,7 @@ export class HealthController {
   async check(): Promise<{
     status: string
     database: string
+    databaseProvider: string
     service: string
     version: string
     roles: Role[]
@@ -30,6 +31,7 @@ export class HealthController {
     return {
       status: 'ok',
       database: 'up',
+      databaseProvider: this.prisma.databaseProvider,
       service: 'mall-distribution-api',
       version: '0.1.0',
       roles: Object.values(Role),

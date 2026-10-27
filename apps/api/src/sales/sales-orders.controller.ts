@@ -21,6 +21,13 @@ export class SalesOrdersController {
     return this.salesOrdersService.storefront(channelCode)
   }
 
+  /** C 端商品详情（与列表同源，含图片 / 规格 / 图文介绍 / 搭配推荐） */
+  @Public()
+  @Get('storefront/:listingId')
+  storefrontDetail(@Param('listingId') listingId: string) {
+    return this.salesOrdersService.storefrontDetail(listingId)
+  }
+
   @Post()
   @Roles(Role.CUSTOMER)
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateSalesOrderDto) {

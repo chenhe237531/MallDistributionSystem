@@ -44,12 +44,15 @@ export function toast(title: string, icon: 'success' | 'fail' | 'none' = 'none')
   }
 }
 
-/** 登录失效 / 账号不存在（如 seed 重跑后旧 token）：清 token、提示并跳登录页 */
-export function handleAuthExpired(message: string): boolean {
+/**
+ * 登录失效 / 账号不存在（如 seed 重跑后旧 token）：清 token、提示并跳登录页
+ * 401 一律按状态码判定（后端文案「登录已过期」「缺少登录凭证」等会随版本变化，避免漏匹配）
+ */
+export function handleAuthExpired(message: string, status?: number): boolean {
   if (!getToken()) {
     return false
   }
-  if (/账号不存在|登录状态|登录已失效|未登录|token/i.test(message)) {
+  if (status === 401 || /账号不存在|登录状态|登录已失效|未登录|token/i.test(message)) {
     clearToken()
     toast('登录已失效，请重新登录', 'fail')
     void Taro.redirectTo({ url: '/pages/login/index' })

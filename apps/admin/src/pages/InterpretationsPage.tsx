@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Card, Col, Drawer, Empty, Popconfirm, Row, Select, Space, Spin, Tag, Typography, message } from 'antd'
+import { Card, Col, Drawer, Empty, Popconfirm, Row, Select, Space, Spin, Tag, Tooltip, Typography, message } from 'antd'
 import type { ProColumns } from '@ant-design/pro-components'
 import {
   ModalForm,
@@ -51,6 +51,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   generated: { label: 'AI 已生成', color: 'blue' },
   blocked: { label: '命中敏感词', color: 'red' },
   reviewed: { label: '已复核', color: 'cyan' },
+  published: { label: '已发布', color: 'green' },
   rejected: { label: '已驳回', color: 'orange' },
   failed: { label: '生成失败', color: 'red' },
 }
@@ -155,6 +156,8 @@ export default function InterpretationsPage() {
     : STATUS_META.missing
 
   const canOperate = Boolean(interpretation?.id) && interpretation?.contentHidden !== true
+  const isPublished = interpretation?.status === 'published'
+  const canPublish = interpretation?.status === 'reviewed'
 
   const planColumns: ProColumns<NutritionPlan>[] = [
     { title: '方案周期', dataIndex: 'cycle', width: 120 },
@@ -257,33 +260,45 @@ export default function InterpretationsPage() {
               interpretation?.id ? (
                 <Space wrap>
                   <a onClick={() => void generate()}>重新生成</a>
-                  <a
-                    onClick={() =>
-                      void simpleAction(
-                        `/interpretations/${interpretation.id}/adopt`,
-                        '解读已采纳（复核通过）',
-                      )
-                    }
-                  >
-                    采纳
-                  </a>
-                  <a onClick={() => setEditOpen(true)}>编辑</a>
-                  <a onClick={() => setAnnotateOpen(true)}>批注</a>
-                  <a onClick={() => setRejectOpen(true)} style={{ color: 'var(--ant-color-warning)' }}>
-                    驳回
-                  </a>
-                  <Popconfirm
-                    title="确认发布该解读？"
-                    description="发布后用户端可见，需先完成复核"
-                    onConfirm={() =>
-                      void simpleAction(
-                        `/interpretations/${interpretation.id}/publish`,
-                        '解读已发布',
-                      )
-                    }
-                  >
-                    <a>发布</a>
-                  </Popconfirm>
+                  {!isPublished ? (
+                    <>
+                      <a
+                        onClick={() =>
+                          void simpleAction(
+                            `/interpretations/${interpretation.id}/adopt`,
+                            '解读已采纳（复核通过）',
+                          )
+                        }
+                      >
+                        采纳
+                      </a>
+                      <a onClick={() => setEditOpen(true)}>编辑</a>
+                      <a onClick={() => setAnnotateOpen(true)}>批注</a>
+                      <a onClick={() => setRejectOpen(true)} style={{ color: 'var(--ant-color-warning)' }}>
+                        驳回
+                      </a>
+                    </>
+                  ) : null}
+                  {canPublish ? (
+                    <Popconfirm
+                      title="确认发布该解读？"
+                      description="发布后状态变为「已发布」，客户与商家端即可查看"
+                      onConfirm={() =>
+                        void simpleAction(
+                          `/interpretations/${interpretation.id}/publish`,
+                          '解读已发布',
+                        )
+                      }
+                    >
+                      <a>发布</a>
+                    </Popconfirm>
+                  ) : !isPublished ? (
+                    <Tooltip title="解读需先完成复核（采纳或编辑）后才能发布">
+                      <span style={{ color: 'var(--ant-color-text-quaternary)', cursor: 'not-allowed' }}>
+                        发布
+                      </span>
+                    </Tooltip>
+                  ) : null}
                 </Space>
               ) : (
                 interpretation === null && reportId ? (

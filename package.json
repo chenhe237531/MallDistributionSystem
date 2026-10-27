@@ -18,6 +18,9 @@
     "typecheck": "pnpm -r typecheck",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @mall/api db:generate",
+    "db:push": "pnpm --filter @mall/api db:push",
+    "db:setup": "pnpm db:push && pnpm db:seed",
     "db:migrate": "pnpm --filter @mall/api prisma:migrate",
     "db:seed": "pnpm --filter @mall/api seed",
     "postinstall": "pnpm --filter @mall/shared build"

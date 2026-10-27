@@ -10,7 +10,7 @@ export default defineConfig({
     828: 1.81 / 2,
   },
   sourceRoot: 'src',
-  outputRoot: 'dist',
+  outputRoot: process.env.TARO_OUTPUT_ROOT || 'dist',
   plugins: [
     '@tarojs/plugin-framework-react',
     '@tarojs/plugin-platform-weapp',
@@ -32,10 +32,16 @@ export default defineConfig({
     },
   },
   h5: {
-    publicPath: '/',
+    publicPath: process.env.TARO_PUBLIC_PATH || '/',
+    router: { mode: 'hash' },
     staticDirectory: 'static',
     devServer: {
       port: 10087,
+      // H5 端 API 走相对路径 /api，开发态需代理到后端服务（否则登录等请求 404）
+      proxy: {
+        '/api': { target: 'http://localhost:3000', changeOrigin: true },
+        '/uploads': { target: 'http://localhost:3000', changeOrigin: true },
+      },
     },
     postcss: {
       autoprefixer: { enable: true, config: {} },

@@ -5,8 +5,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { ClaimStatus as PrismaClaimStatus, Role as PrismaRole } from '@prisma/client'
+import { ClaimStatus as PrismaClaimStatus } from '@prisma/client'
 import { Role } from '@mall/shared'
+import { asRoleArray } from '../prisma/array-values'
 import { PrismaService } from '../prisma/prisma.service'
 import { AssignSalesDto, CreateClaimDto } from './dto/workbench.dto'
 import type { AuthUser } from '../auth/auth-user.type'
@@ -90,17 +91,15 @@ export class SalesWorkbenchService {
     if (!sales?.organizationId) {
       throw new BadRequestException('销售未绑定商家组织')
     }
-    const merchant = await this.prisma.user.findFirst({
-      where: {
-        organizationId: sales.organizationId,
-        roles: { has: PrismaRole.merchant },
-      },
+    const merchants = await this.prisma.user.findMany({
+      where: { organizationId: sales.organizationId },
     })
+    const merchant = merchants.find((user) => asRoleArray(user.roles).includes(Role.MERCHANT))
     if (!merchant) {
       throw new BadRequestException('未找到所属商家')
     }
     const customer = await this.prisma.user.findUnique({ where: { phone: dto.customerPhone } })
-    if (!customer || !customer.roles.includes(PrismaRole.customer)) {
+    if (!customer || !asRoleArray(customer.roles).includes(Role.CUSTOMER)) {
       throw new NotFoundException('客户不存在')
     }
     const ownership = await this.prisma.customerOwnership.findUnique({
@@ -150,6 +149,11 @@ export class SalesWorkbenchService {
         where: { merchantId: actor.sub },
         orderBy: { createdAt: 'desc' },
       })
+    } else if (actor.roles.includes(Role.CUSTOMER)) {
+      claims = await this.prisma.salesCustomerClaim.findMany({
+        where: { customerId: actor.sub },
+        orderBy: { createdAt: 'desc' },
+      })
     } else {
       throw new ForbiddenException('无权查看认领申请')
     }
@@ -159,9 +163,15 @@ export class SalesWorkbenchService {
       select: { id: true, name: true, phone: true },
     })
     const customerById = new Map(customers.map((customer) => [customer.id, customer]))
+    const salesUsers = await this.prisma.user.findMany({
+      where: { id: { in: claims.map((claim) => claim.salesId) } },
+      select: { id: true, name: true, phone: true },
+    })
+    const salesById = new Map(salesUsers.map((sales) => [sales.id, sales]))
     return claims.map((claim) => ({
       ...claim,
       customer: customerById.get(claim.customerId) ?? null,
+      sales: salesById.get(claim.salesId) ?? null,
     }))
   }
 
@@ -213,7 +223,7 @@ export class SalesWorkbenchService {
     const sales = await this.prisma.user.findUnique({ where: { id: dto.salesId } })
     if (
       !sales ||
-      !sales.roles.includes(PrismaRole.sales) ||
+      !asRoleArray(sales.roles).includes(Role.SALES) ||
       sales.organizationId !== merchant.organizationId
     ) {
       throw new BadRequestException('销售不属于该商家')
