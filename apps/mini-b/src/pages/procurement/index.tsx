@@ -57,6 +57,7 @@ export default function Procurement() {
   const [cart, setCart] = useState<CartMap>(readCart)
   const [unread, setUnread] = useState(0)
   const [expandedOrder, setExpandedOrder] = useState('')
+  const [receivingOrder, setReceivingOrder] = useState('')
 
   const load = async () => {
     const [productList, orderList, notificationRes] = await Promise.all([
@@ -68,6 +69,22 @@ export default function Procurement() {
     setOrders(orderList)
     setUnread(notificationRes.unread)
     setLoaded(true)
+  }
+
+  const confirmReceive = async (orderId: string) => {
+    if (receivingOrder) {
+      return
+    }
+    setReceivingOrder(orderId)
+    try {
+      await api(`/procurement-orders/${orderId}/receive`, { method: 'POST' })
+      toast('已确认收货', 'success')
+      await load()
+    } catch (cause) {
+      toast(cause instanceof Error ? cause.message : '确认收货失败')
+    } finally {
+      setReceivingOrder('')
+    }
   }
 
   useDidShow(() => {
@@ -294,6 +311,22 @@ export default function Procurement() {
                             </Text>
                           ))}
                           {order.remark ? <Text className="proc-sku">备注：{order.remark}</Text> : null}
+                          {order.status === 'shipped' ? (
+                            <View
+                              className="proc-order-receive"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <Button
+                                variant="primary"
+                                size="md"
+                                loading={receivingOrder === order.id}
+                                onClick={() => confirmReceive(order.id)}
+                              >
+                                确认收货
+                              </Button>
+                              <Text className="proc-sku">请核对批次、效期与储运条件后再确认</Text>
+                            </View>
+                          ) : null}
                         </View>
                       ) : null}
                     </View>

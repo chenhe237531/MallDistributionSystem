@@ -2696,6 +2696,19 @@ page {
   color: var(--mall-text-secondary);
 }
 
+/* 确认收货操作区（已发货状态下展开可见） */
+.proc-order-receive {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.proc-order-receive .m-btn {
+  min-width: 160px;
+}
+
 /* ===== 首页热销推荐（§3.4） ===== */
 .home-goods-head {
   display: flex;
