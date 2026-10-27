@@ -2718,6 +2718,7 @@ page {
    ============================================================ */
 
 .profile-tool {
+  display: flex;
   flex-direction: row;
   align-items: center;
   gap: 10px;
@@ -2754,8 +2755,9 @@ page {
 }
 
 .profile-tool-arrow {
+  margin-left: auto;
   font-size: 18px;
-  color: var(--mall-border);
+  color: var(--mall-text-tertiary);
 }
 
 .proc-price-entry {
@@ -3299,17 +3301,12 @@ html.theme-gold ::-webkit-scrollbar-track {
   border: 1px solid rgba(212, 175, 55, 0.22);
 }
 
-.theme-gold .hero::after,
-.theme-gold .pricing-hero::after {
-  content: '';
-  position: absolute;
-  top: -46%;
-  right: -12%;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0) 68%);
-  pointer-events: none;
+/* 金色光晕用背景图层叠，避免 ::after 覆盖文字导致标题发暗 */
+.theme-gold .hero,
+.theme-gold .pricing-hero {
+  background-image:
+    radial-gradient(circle at 88% 10%, rgba(212, 175, 55, 0.22) 0%, rgba(212, 175, 55, 0) 46%),
+    var(--mall-hero-grad);
 }
 
 .theme-gold .hero-role {
@@ -3769,5 +3766,50 @@ html.theme-gold ::-webkit-scrollbar-track {
 }
 
 .theme-gold .login-checkbox {
+  color: var(--mall-on-primary);
+}
+
+/* 品牌 Logo：白底图片在黑金下改为"米金相框"，避免突兀白块 */
+.theme-gold .login-logo-img,
+.theme-gold .brand-logo-img {
+  padding: 8px 10px;
+  border: 1px solid rgba(212, 175, 55, 0.32);
+  border-radius: 12px;
+  background: #f7f0df;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  box-sizing: content-box;
+}
+
+/* 金色主填充元素统一深色文字（白字在金色上对比不足 2.2:1） */
+.theme-gold .detail-action-buy,
+.theme-gold .proc-settle-btn,
+.theme-gold .contact-btn,
+.theme-gold .biz-range-chip-active,
+.theme-gold .proc-sub-pill-active,
+.theme-gold .goods-card-add,
+.theme-gold .proc-progress-dot-active {
+  color: var(--mall-on-primary);
+}
+
+.theme-gold .detail-action-cart {
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  color: var(--mall-primary-hover);
+}
+
+/* Dialog 细节：黑底金边、圆角、取消键改为深色次按钮（默认白底会与白字重合） */
+.theme-gold .nut-dialog {
+  border-radius: 16px;
+}
+
+.theme-gold .nut-dialog-footer-cancel {
+  border: 1px solid var(--mall-border);
+  border-radius: 10px;
+  background: var(--mall-surface-2);
+  color: var(--mall-text-secondary);
+}
+
+.theme-gold .nut-dialog-footer-ok {
+  border-radius: 10px;
+  background: linear-gradient(135deg, #e3c173 0%, #d4af37 55%, #b8952b 100%);
   color: var(--mall-on-primary);
 }
