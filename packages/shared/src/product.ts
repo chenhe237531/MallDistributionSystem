@@ -7,6 +7,8 @@
 export type ProductCategoryKey =
   | 'gut_test'
   | 'fmt'
+  | 'transplant_service'
+  | 'bowel_prep'
   | 'adjunct'
   | 'consumer_health'
   | 'customized'
@@ -41,6 +43,18 @@ export const PRODUCT_CATEGORIES: ProductCategoryMeta[] = [
     ],
   },
   {
+    key: 'transplant_service',
+    label: '移植服务',
+    desc: '精准菌群移植服务（购买后开通移植后健康助手）',
+    subs: [],
+  },
+  {
+    key: 'bowel_prep',
+    label: '清肠用药',
+    desc: '移植前肠道准备用药（聚乙二醇电解质散）',
+    subs: [],
+  },
+  {
     key: 'adjunct',
     label: '配套辅剂',
     desc: '移植配套专用辅剂',
@@ -73,6 +87,11 @@ export const PRODUCT_CATEGORIES: ProductCategoryMeta[] = [
 export const PRODUCT_CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
   PRODUCT_CATEGORIES.map((item) => [item.key, item.label]),
 )
+
+/** 移植服务类目：购买后自动开通健康助手（TransplantJourney） */
+export const TRANSPLANT_SERVICE_CATEGORY = 'transplant_service'
+/** 清肠用药类目：健康助手清肠卡平台购买路径的商品来源 */
+export const BOWEL_PREP_CATEGORY = 'bowel_prep'
 
 export function productCategoryLabel(key?: string | null): string {
   if (!key) {

@@ -149,6 +149,11 @@ export class SalesWorkbenchService {
         where: { merchantId: actor.sub },
         orderBy: { createdAt: 'desc' },
       })
+    } else if (actor.roles.includes(Role.CUSTOMER)) {
+      claims = await this.prisma.salesCustomerClaim.findMany({
+        where: { customerId: actor.sub },
+        orderBy: { createdAt: 'desc' },
+      })
     } else {
       throw new ForbiddenException('无权查看认领申请')
     }
@@ -158,9 +163,15 @@ export class SalesWorkbenchService {
       select: { id: true, name: true, phone: true },
     })
     const customerById = new Map(customers.map((customer) => [customer.id, customer]))
+    const salesUsers = await this.prisma.user.findMany({
+      where: { id: { in: claims.map((claim) => claim.salesId) } },
+      select: { id: true, name: true, phone: true },
+    })
+    const salesById = new Map(salesUsers.map((sales) => [sales.id, sales]))
     return claims.map((claim) => ({
       ...claim,
       customer: customerById.get(claim.customerId) ?? null,
+      sales: salesById.get(claim.salesId) ?? null,
     }))
   }
 

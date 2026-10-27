@@ -18,6 +18,7 @@ import {
   FileDoneOutlined,
   FileProtectOutlined,
   FileTextOutlined,
+  HeartOutlined,
   PayCircleOutlined,
   ReadOutlined,
   ReconciliationOutlined,
@@ -50,6 +51,7 @@ import CommissionsPage from './pages/CommissionsPage'
 import ContractsPage from './pages/ContractsPage'
 import DashboardPage from './pages/DashboardPage'
 import InterpretationsPage from './pages/InterpretationsPage'
+import JourneysPage from './pages/JourneysPage'
 import LoginPage from './pages/LoginPage'
 import MaterialsPage from './pages/MaterialsPage'
 import OperationsPage from './pages/OperationsPage'
@@ -73,6 +75,7 @@ const MENU_ROUTE: ProLayoutProps['route'] = {
       icon: <ShoppingOutlined />,
       routes: [
         { path: '/orders', name: '销售订单', icon: <ShoppingOutlined /> },
+        { path: '/journeys', name: '健康助手', icon: <HeartOutlined /> },
         { path: '/procurement', name: '采购单', icon: <BoxPlotOutlined /> },
         { path: '/box-codes', name: '盒码管理', icon: <BarcodeOutlined /> },
         { path: '/channels', name: '渠道管理', icon: <ThunderboltOutlined /> },
@@ -320,6 +323,7 @@ function Shell() {
         <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/audit" element={<AuditPage />} />
         <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/journeys" element={<JourneysPage />} />
         <Route path="/procurement" element={<ProcurementPage />} />
         <Route path="/box-codes" element={<BoxCodesPage />} />
         <Route path="/channels" element={<ChannelsPage />} />

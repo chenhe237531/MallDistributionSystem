@@ -12,22 +12,26 @@ import {
   Tag,
   Toast,
 } from '@nutui/nutui-react-taro'
+import { useTheme } from '../../lib/theme'
 
 type Me = { roles: string[] }
 type Claim = {
   id: string
   status: string
   customer: { name: string; phone: string } | null
+  sales: { name: string; phone: string } | null
 }
 
 const toast = (title: string, icon?: 'success' | 'fail') =>
   Toast.show('b-toast', { title, icon })
 
 export default function Claims() {
+  const { themeClass } = useTheme()
   const [claims, setClaims] = useState<Claim[]>([])
   const [isSales, setIsSales] = useState(false)
   const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
+  const [resolving, setResolving] = useState('')
 
   const load = async () => {
     const me = await api<Me>('/auth/me')
@@ -61,8 +65,23 @@ export default function Claims() {
     }
   }
 
+  const resolve = async (claimId: string, confirm: boolean) => {
+    setResolving(claimId)
+    try {
+      await api(`/sales-workbench/claims/${claimId}/${confirm ? 'confirm' : 'reject'}`, {
+        method: 'POST',
+      })
+      toast(confirm ? '已确认认领' : '已拒绝认领', 'success')
+      await load()
+    } catch (cause) {
+      toast(cause instanceof Error ? cause.message : '操作失败')
+    } finally {
+      setResolving('')
+    }
+  }
+
   return (
-    <View className="page">
+    <View className={`page ${themeClass}`}>
       {isSales ? (
         <View className="section">
           <Text className="section-title">申请认领客户</Text>
@@ -92,16 +111,48 @@ export default function Claims() {
         ) : (
           <CellGroup>
             {claims.map((claim) => (
-              <Cell
-                key={claim.id}
-                title={claim.customer?.name ?? '客户'}
-                description={<Text className="muted">{claim.customer?.phone ?? ''}</Text>}
-                extra={
-                  <Tag type={CLAIM_STATUS_TONES[claim.status] ?? 'default'}>
-                    {statusLabel(CLAIM_STATUS_LABELS, claim.status)}
-                  </Tag>
-                }
-              />
+              <View key={claim.id}>
+                <Cell
+                  title={claim.customer?.name ?? '客户'}
+                  description={
+                    <Text className="muted">
+                      {claim.customer?.phone ?? ''}
+                      {!isSales && claim.sales ? ` · 申请销售：${claim.sales.name}` : ''}
+                    </Text>
+                  }
+                  extra={
+                    <Tag type={CLAIM_STATUS_TONES[claim.status] ?? 'default'}>
+                      {statusLabel(CLAIM_STATUS_LABELS, claim.status)}
+                    </Tag>
+                  }
+                />
+                {!isSales && claim.status === 'pending' ? (
+                  <View className="claim-actions">
+                    <View style={{ flex: 1 }}>
+                      <NutButton
+                        block
+                        size="small"
+                        type="primary"
+                        loading={resolving === claim.id}
+                        onClick={() => void resolve(claim.id, true)}
+                      >
+                        确认知领
+                      </NutButton>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <NutButton
+                        block
+                        size="small"
+                        fill="outline"
+                        disabled={resolving === claim.id}
+                        onClick={() => void resolve(claim.id, false)}
+                      >
+                        拒绝
+                      </NutButton>
+                    </View>
+                  </View>
+                ) : null}
+              </View>
             ))}
           </CellGroup>
         )}

@@ -23,6 +23,12 @@ import type { AuthUser } from '../auth/auth-user.type'
 
 export const REPORT_DISCLAIMER = '本报告仅用于健康风险提示，不作为临床诊断依据'
 
+/** 客户可见的报告状态：更正流程中的未定稿版本（draft/pending_review）与已被新版本替代的归档版本不对客户开放。 */
+const CUSTOMER_VISIBLE_REPORT_STATUSES: PrismaReportStatus[] = [
+  PrismaReportStatus.published,
+  PrismaReportStatus.corrected,
+]
+
 type AccessResult = { allowed: boolean; channelSide: boolean; redacted: boolean }
 
 @Injectable()
@@ -216,8 +222,9 @@ export class ReportsService {
   }
 
   async latestBySample(sampleId: string, actor: AuthUser) {
+    // 「最新报告」语义 = 最新已发布版本；更正中的未定稿版本不通过本接口暴露
     const report = await this.prisma.report.findFirst({
-      where: { sampleId },
+      where: { sampleId, status: { in: CUSTOMER_VISIBLE_REPORT_STATUSES } },
       orderBy: { version: 'desc' },
     })
     if (!report) {
@@ -366,6 +373,9 @@ export class ReportsService {
     let channelSide = false
 
     if (actor.roles.includes(Role.CUSTOMER) && report.customerId === actor.sub) {
+      if (!CUSTOMER_VISIBLE_REPORT_STATUSES.includes(report.status)) {
+        throw new ForbiddenException('该报告尚未发布或已被新版本替代，请查看最新报告')
+      }
       allowed = true
     } else if (actor.roles.includes(Role.MERCHANT) && report.merchantId === actor.sub) {
       allowed = true
@@ -442,7 +452,10 @@ export class ReportsService {
       return {}
     }
     if (actor.roles.includes(Role.CUSTOMER)) {
-      return { customerId: actor.sub }
+      return {
+        customerId: actor.sub,
+        status: { in: CUSTOMER_VISIBLE_REPORT_STATUSES },
+      }
     }
     if (actor.roles.includes(Role.MERCHANT)) {
       return { merchantId: actor.sub }

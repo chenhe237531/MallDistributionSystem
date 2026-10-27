@@ -11,6 +11,7 @@ import {
 import { api, ensureLogin } from '../../lib/api'
 import { PageToast, toast } from '../../components/feedback'
 import { GoodsThumb } from '../../components/goods/GoodsThumb'
+import { useTheme } from '../../lib/theme'
 
 type Listing = {
   id: string
@@ -37,6 +38,7 @@ const marginPercent = (listing: Listing): string =>
  * 保存后写回 MerchantProduct.retailPriceCents，C 端商城即时生效。
  */
 export default function Pricing() {
+  const { themeClass } = useTheme()
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Listing | null>(null)
@@ -141,7 +143,7 @@ export default function Pricing() {
   }
 
   return (
-    <View className="page pricing-page">
+    <View className={`page pricing-page ${themeClass}`}>
       <PageToast />
 
       <View className="pricing-hero">

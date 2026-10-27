@@ -93,7 +93,12 @@ export default function Product() {
       <PageToast />
       {item ? (
         <>
-          <Swiper className="pd-swiper" indicatorDots circular indicatorActiveColor="#1677ff">
+          <Swiper
+            className="pd-swiper"
+            indicatorDots
+            circular={heroImages.length > 1}
+            indicatorActiveColor="#1677ff"
+          >
             {heroImages.map((image, index) => (
               <SwiperItem key={`${image ?? 'fallback'}-${index}`}>
                 <GoodsImage

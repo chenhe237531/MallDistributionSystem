@@ -6,6 +6,9 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { AppModule } from './app.module'
 
+// 业务自然日与推送时点统一按 Asia/Shanghai（doc/health-assistant-prd.html §4.1）
+process.env.TZ = 'Asia/Shanghai'
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
   app.setGlobalPrefix('api')

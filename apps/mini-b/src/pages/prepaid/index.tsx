@@ -12,6 +12,7 @@ import {
   Tag,
   Toast,
 } from '@nutui/nutui-react-taro'
+import { useTheme } from '../../lib/theme'
 
 type Entry = {
   id: string
@@ -73,6 +74,7 @@ const buildCsv = (entries: Entry[]) => {
 }
 
 export default function Prepaid() {
+  const { themeClass } = useTheme()
   const [data, setData] = useState<Prepaid | null>(null)
   const [amount, setAmount] = useState('')
   const [voucher, setVoucher] = useState('')
@@ -153,7 +155,7 @@ export default function Prepaid() {
   const hasEntries = Boolean(data && data.entries.length > 0)
 
   return (
-    <View className="page">
+    <View className={`page ${themeClass}`}>
       <View className="hero">
         <Text className="hero-role">预付款账户</Text>
         <Text className="hero-title">

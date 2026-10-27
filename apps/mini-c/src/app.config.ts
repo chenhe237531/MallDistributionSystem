@@ -7,6 +7,7 @@ export default defineAppConfig({
     'pages/pay-result/index',
     'pages/order-detail/index',
     'pages/orders/index',
+    'pages/journey/index',
     'pages/activate/index',
     'pages/questionnaire/index',
     'pages/progress/index',

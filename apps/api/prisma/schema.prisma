@@ -1158,3 +1158,113 @@ model AuditLog {
   @@index([merchantId])
   @@index([createdAt])
 }
+
+/* ============================================================
+ * 移植后健康助手（doc/health-assistant-prd.html §6.1）
+ * 新增模型统一追加在本区块，避免与既有模型产生 diff 冲突。
+ * ============================================================ */
+
+enum JourneyStatus {
+  pending_schedule
+  active
+  paused
+  completed
+  cancelled
+}
+
+enum DosingScheme {
+  morning_once
+  twice_daily
+}
+
+enum PushSlot {
+  morning
+  noon
+  evening
+}
+
+enum PushTaskStatus {
+  pending
+  sent
+  skipped
+  failed
+}
+
+enum BowelPrepStatus {
+  none
+  platform_ordered
+  self_confirmed
+  ready
+}
+
+/// 一次移植服务的健康管理周期：移植服务订单支付成功后按商品行自动开通
+model TransplantJourney {
+  id              String          @id @default(cuid())
+  journeyNo       String          @unique
+  orderId         String
+  orderItemId     String
+  customerId      String
+  merchantId      String
+  /// 移植日 D0（本地日期，存当日 00:00）
+  transplantDate  DateTime?
+  dosingScheme    DosingScheme    @default(morning_once)
+  status          JourneyStatus   @default(pending_schedule)
+  bowelPrepStatus BowelPrepStatus @default(none)
+  pauseReason     String?
+  templateVersion Int             @default(1)
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  pushTasks       JourneyPushTask[]
+  bowelPrep       BowelPrepRecord?
+
+  /// 同一订单商品行只开通一条旅程，支付回调重复触发幂等
+  @@unique([orderId, orderItemId])
+  @@index([customerId, status])
+  @@index([merchantId, status])
+}
+
+/// 三时段推送任务：排期时一次性生成，调度器到点投递站内通知
+model JourneyPushTask {
+  id              String          @id @default(cuid())
+  journeyId       String
+  journey         TransplantJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  /// 相对移植日：-7 ~ +35
+  dayOffset       Int
+  slot            PushSlot
+  /// 绝对触发时刻（由移植日 + 时段换算为 Asia/Shanghai 时间）
+  scheduledAt     DateTime
+  templateCode    String
+  templateVersion Int             @default(1)
+  title           String
+  body            String
+  status          PushTaskStatus  @default(pending)
+  notificationId  String?
+  skipReason      String?
+  sentAt          DateTime?
+  createdAt       DateTime        @default(now())
+
+  @@unique([journeyId, dayOffset, slot])
+  @@index([status, scheduledAt])
+}
+
+/// 清肠药就绪记录：平台购买与自购两条路径互斥可切换
+model BowelPrepRecord {
+  id           String          @id @default(cuid())
+  journeyId    String          @unique
+  journey      TransplantJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  /// platform / self；就绪前可为空
+  path         String?
+  productId    String?
+  orderId      String?
+  selfDrugName String?
+  selfNote     String?
+  selfPhotoUrl String?
+  readyAt      DateTime?
+  /// customer / merchant
+  readyBy      String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}

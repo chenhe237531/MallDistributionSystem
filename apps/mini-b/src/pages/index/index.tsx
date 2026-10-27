@@ -14,6 +14,7 @@ import {
   NOTICE_TEXT,
   SERVICE_HOTLINE,
 } from '../../config/home'
+import { useTheme } from '../../lib/theme'
 
 type Me = {
   name: string
@@ -93,6 +94,7 @@ function aggregateToday(orders: MerchantOrder[]): { orderCount: number; incomeCe
 }
 
 export default function Index() {
+  const { themeClass } = useTheme()
   const [me, setMe] = useState<Me | null>(null)
   const [balance, setBalance] = useState<number | null>(null)
   const [todayOrders, setTodayOrders] = useState<number | null>(null)
@@ -244,7 +246,7 @@ export default function Index() {
   }
 
   return (
-    <View className="page page-tabbar">
+    <View className={`page page-tabbar ${themeClass}`}>
       <PageToast />
 
       <View className="hero b-hero">

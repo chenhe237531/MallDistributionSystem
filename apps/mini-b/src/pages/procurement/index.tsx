@@ -15,6 +15,7 @@ import { StatusTag } from '../../components/goods/StatusTag'
 import { ProcurementProgress } from '../../components/process/ProcurementProgress'
 import { MALL_CATEGORIES, goodsTags } from '../../config/home'
 import { Empty, Toast } from '@nutui/nutui-react-taro'
+import { useTheme } from '../../lib/theme'
 
 type Product = GoodsSummary & {
   retailPriceCents?: number | null
@@ -39,6 +40,7 @@ const matchKeywords = (name: string, keywords: string[]): boolean =>
   keywords.some((keyword) => name.toUpperCase().includes(keyword.toUpperCase()))
 
 export default function Procurement() {
+  const { themeClass } = useTheme()
   const router = getCurrentInstance().router
   const rawCat = typeof router?.params?.cat === 'string' ? router.params.cat : 'all'
   const initialCat = MALL_CATEGORIES.some((item) => item.key === rawCat) ? rawCat : 'all'
@@ -148,7 +150,7 @@ export default function Procurement() {
   const formatDate = (iso?: string) => (iso ? iso.slice(5, 16).replace('T', ' ') : '')
 
   return (
-    <View className="page page-tabbar-proc" style={{ padding: 0 }}>
+    <View className={`page page-tabbar-proc ${themeClass}`} style={{ padding: 0 }}>
       <View className="proc-head">
         <View
           className="b-hero-bell"

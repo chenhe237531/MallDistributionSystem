@@ -385,7 +385,8 @@ export class ContractsService {
     return this.esignService.setProvider(provider)
   }
 
-  private async findActiveContract(userId: string, templateCode: string) {
+  /** 查询用户某模板下当前有效的合同（未过期且 active）；供其他模块做强校验（如 FR-11 结清拦截） */
+  async findActiveContract(userId: string, templateCode: string) {
     const now = new Date()
     return this.prisma.contract.findFirst({
       where: {

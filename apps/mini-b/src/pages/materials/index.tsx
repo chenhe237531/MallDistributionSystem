@@ -10,6 +10,7 @@ import {
   Tag,
   Toast,
 } from '@nutui/nutui-react-taro'
+import { useTheme } from '../../lib/theme'
 
 type Template = { id: string; name: string; category: string; body: string }
 type Material = { id: string; title: string; content: string }
@@ -18,6 +19,7 @@ const toast = (title: string, icon?: 'success' | 'fail') =>
   Toast.show('b-toast', { title, icon })
 
 export default function Materials() {
+  const { themeClass } = useTheme()
   const [templates, setTemplates] = useState<Template[]>([])
   const [materials, setMaterials] = useState<Material[]>([])
   const [loading, setLoading] = useState(false)
@@ -54,7 +56,7 @@ export default function Materials() {
   }
 
   return (
-    <View className="page">
+    <View className={`page ${themeClass}`}>
       <View className="section">
         <Text className="section-title">平台模板</Text>
         {templates.length === 0 ? <Empty description="暂无模板" /> : null}

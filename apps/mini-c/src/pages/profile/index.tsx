@@ -27,6 +27,12 @@ type Ownership = {
   consent: { reportAuthorization: boolean; templateVersion: number; agreedAt: string } | null
 }
 
+type Claim = {
+  id: string
+  status: string
+  sales: { name: string; phone: string } | null
+}
+
 type NotificationList = { unread: number }
 
 const MENU: Array<{ key: string; label: string; icon: IconName; url: string }> = [
@@ -43,6 +49,7 @@ export default function Profile() {
   const [me, setMe] = useState<Me | null>(null)
   const [ownership, setOwnership] = useState<Ownership | null>(null)
   const [unread, setUnread] = useState(0)
+  const [pendingClaims, setPendingClaims] = useState<Claim[]>([])
   const [realName, setRealName] = useState('')
   const [idCardNo, setIdCardNo] = useState('')
   const [gender, setGender] = useState('male')
@@ -51,14 +58,16 @@ export default function Profile() {
   const [message, setMessage] = useState('')
 
   const load = async () => {
-    const [profile, owned, notifications] = await Promise.all([
+    const [profile, owned, notifications, claims] = await Promise.all([
       api<Me>('/customers/me'),
       api<Ownership>('/customers/me/ownership'),
       api<NotificationList>('/notifications/me').catch(() => ({ unread: 0 })),
+      api<Claim[]>('/sales-workbench/claims').catch(() => [] as Claim[]),
     ])
     setMe(profile)
     setOwnership(owned)
     setUnread(notifications.unread)
+    setPendingClaims(claims.filter((claim) => claim.status === 'pending'))
     setRealName(profile.realName ?? '')
     setIdCardNo(profile.idCardNo ?? '')
     setGender(profile.gender ?? 'male')
@@ -100,6 +109,20 @@ export default function Profile() {
         data: { authorized },
       })
       setMessage(authorized ? '已授权渠道查看报告' : '已关闭渠道查看报告授权')
+      await load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '操作失败')
+    }
+  }
+
+  const resolveClaim = async (claimId: string, confirm: boolean) => {
+    setError('')
+    setMessage('')
+    try {
+      await api(`/sales-workbench/claims/${claimId}/${confirm ? 'confirm' : 'reject'}`, {
+        method: 'POST',
+      })
+      setMessage(confirm ? '已同意认领，服务归属该顾问' : '已拒绝该认领申请')
       await load()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '操作失败')
@@ -198,6 +221,35 @@ export default function Profile() {
           ) : null}
         </View>
       </View>
+
+      {pendingClaims.length > 0 ? (
+        <View className="section">
+          <Text className="section-title">认领确认</Text>
+          {pendingClaims.map((claim) => (
+            <View key={claim.id} className="card">
+              <Text>
+                {claim.sales?.name ?? '健康顾问'}
+                {claim.sales?.phone ? `（${claim.sales.phone}）` : ''} 申请认领你为服务客户
+              </Text>
+              <Text className="muted">
+                同意后，该顾问可为你提供检测报告解读等跟进服务；检测数据归属仍以检测盒来源为准。
+              </Text>
+              <View className="row" style={{ marginTop: '10px', gap: '10px' }}>
+                <View style={{ flex: 1 }}>
+                  <NutButton block type="primary" onClick={() => void resolveClaim(claim.id, true)}>
+                    同意认领
+                  </NutButton>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <NutButton block fill="outline" onClick={() => void resolveClaim(claim.id, false)}>
+                    拒绝
+                  </NutButton>
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       <View className="section">
         <Text className="section-title">关于</Text>

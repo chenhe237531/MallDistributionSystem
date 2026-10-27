@@ -18,6 +18,7 @@ import {
   Empty,
   Tag,
 } from '@nutui/nutui-react-taro'
+import { useTheme } from '../../lib/theme'
 
 type Me = { roles: string[] }
 type Order = { id: string; orderNo: string; status: string; totalAmountCents: number }
@@ -80,6 +81,7 @@ const resolveRange = (key: RangeKey, customFrom: string, customTo: string) => {
 }
 
 export default function Business() {
+  const { themeClass } = useTheme()
   const [orders, setOrders] = useState<Order[]>([])
   const [commissions, setCommissions] = useState<Commission[]>([])
   const [statements, setStatements] = useState<Statement[]>([])
@@ -171,7 +173,7 @@ export default function Business() {
   const rangeCaption = resolveRange(rangeKey, customFrom, customTo).caption
 
   return (
-    <View className="page">
+    <View className={`page ${themeClass}`}>
       {performance ? (
         <View className="hero">
           <Text className="hero-role">销售业绩</Text>

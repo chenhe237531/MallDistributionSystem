@@ -14,6 +14,7 @@ import { Role, productCategoryLabel } from '@mall/shared'
 import { AuditService } from '../audit/audit.service'
 import { ChannelsService } from '../channels/channels.service'
 import { CommissionsService } from '../commissions/commissions.service'
+import { JourneysService } from '../journeys/journeys.service'
 import { NotificationsService } from '../notifications/notifications.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { ProductsService } from '../products/products.service'
@@ -69,6 +70,7 @@ export class SalesOrdersService {
     private readonly auditService: AuditService,
     private readonly channelsService: ChannelsService,
     private readonly notificationsService: NotificationsService,
+    private readonly journeysService: JourneysService,
   ) {}
 
   /** 渠道码 → 商家 ID（仅 merchant 类型渠道限定商家，其他渠道返回全部商家） */
@@ -423,6 +425,20 @@ export class SalesOrdersService {
       dedupeKey: `order_paid_merchant:${order.id}`,
       payload: { orderId: order.id, orderNo: order.orderNo },
     })
+    // 健康助手：移植服务订单支付成功即开通旅程（失败不阻断支付，转系统告警）
+    try {
+      await this.journeysService.onOrderPaid(order.id)
+    } catch (cause) {
+      await this.prisma.systemAlert.create({
+        data: {
+          type: 'journey_open_failed',
+          subjectType: 'order',
+          subjectId: order.id,
+          message: `订单 ${order.orderNo} 支付成功但健康助手旅程开通失败：${String(cause)}`,
+          severity: 'warning',
+        },
+      })
+    }
     const commissions = await this.prisma.commission.findMany({
       where: { orderId: order.id },
     })
@@ -694,6 +710,23 @@ export class SalesOrdersService {
       detail: { reason: dto.reason, requested },
     })
     await this.evaluateChannelRefundRate(order)
+    // 健康助手：服务订单全额退款取消旅程；清肠药订单退款回退就绪状态
+    try {
+      await this.journeysService.onOrderRefund(
+        order.id,
+        refunded.status === PrismaSalesOrderStatus.refunded,
+      )
+    } catch (cause) {
+      await this.prisma.systemAlert.create({
+        data: {
+          type: 'journey_refund_sync_failed',
+          subjectType: 'order',
+          subjectId: order.id,
+          message: `订单 ${order.orderNo} 退款后健康助手状态同步失败：${String(cause)}`,
+          severity: 'warning',
+        },
+      })
+    }
     return refunded
   }
 

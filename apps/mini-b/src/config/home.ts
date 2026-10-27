@@ -138,6 +138,7 @@ export const HOME_ENTRIES: HomeEntry[] = [
   { label: '采购商城', icon: 'shop', tone: 'primary', url: '/pages/procurement/index' },
   { label: '预付款', icon: 'wallet', tone: 'warning', url: '/pages/prepaid/index' },
   { label: '我的客户', icon: 'users', tone: 'success', url: '/pages/customers/index' },
+  { label: '健康助手', icon: 'checkCircle', tone: 'success', url: '/pages/journeys/index' },
   { label: '报告与解读', icon: 'report', tone: 'primary', url: '/pages/reports/index' },
   { label: '我的生意', icon: 'chart', tone: 'success', url: '/pages/business/index' },
   { label: '素材与培训', icon: 'palette', tone: 'warning', url: '/pages/materials/index' },

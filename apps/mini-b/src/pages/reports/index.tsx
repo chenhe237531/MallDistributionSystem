@@ -13,6 +13,7 @@ import {
   Tag,
   Toast,
 } from '@nutui/nutui-react-taro'
+import { useTheme } from '../../lib/theme'
 
 type Report = {
   id: string
@@ -43,6 +44,7 @@ const SECTION_LABELS: Array<[string, string]> = [
 ]
 
 export default function Reports() {
+  const { themeClass } = useTheme()
   const [reports, setReports] = useState<Report[]>([])
   const [selected, setSelected] = useState<Report | null>(null)
   const [interpretation, setInterpretation] = useState<Interpretation | null>(null)
@@ -102,7 +104,7 @@ export default function Reports() {
   }
 
   return (
-    <View className="page">
+    <View className={`page ${themeClass}`}>
       <View className="section">
         <Text className="section-title">本店报告</Text>
         {reports.length === 0 ? <Empty description="暂无报告" /> : null}

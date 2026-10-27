@@ -9,6 +9,7 @@ export default defineAppConfig({
     'pages/cart/index',
     'pages/prepaid/index',
     'pages/customers/index',
+    'pages/journeys/index',
     'pages/reports/index',
     'pages/business/index',
     'pages/materials/index',
@@ -19,7 +20,8 @@ export default defineAppConfig({
   ],
   window: {
     backgroundTextStyle: 'light',
-    navigationBarBackgroundColor: '#4c3ed9',
+    backgroundColor: '#08080a',
+    navigationBarBackgroundColor: '#08080a',
     navigationBarTitleText: '百英诺 · 商家中心',
     navigationBarTextStyle: 'white',
   },

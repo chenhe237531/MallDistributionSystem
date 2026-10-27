@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { Text, View } from '@tarojs/components'
-import { ROLE_LABELS, Role, formatCents } from '@mall/shared'
+import { ROLE_LABELS, Role, formatCents, type ThemeKey } from '@mall/shared'
 import { api, clearToken, ensureLogin, go } from '../../lib/api'
 import { PageToast, toast } from '../../components/feedback'
 import { AppTabbar } from '../../components/AppTabbar'
 import { Icon, type IconName } from '../../components/Icon'
 import { PROFILE_ORDER_BUCKETS } from '../../config/home'
 import { Button as NutButton, Dialog } from '@nutui/nutui-react-taro'
+import { useTheme } from '../../lib/theme'
 
 type Me = {
   name: string
@@ -47,6 +48,8 @@ const APP_ENTRIES: AppEntry[] = [
 const PREPAID_LOW_THRESHOLD_CENTS = 10000
 
 export default function Profile() {
+  const { theme, themeClass, themeName, options, setTheme } = useTheme()
+  const [themeSheetOpen, setThemeSheetOpen] = useState(false)
   const [me, setMe] = useState<Me | null>(null)
   const [prepaid, setPrepaid] = useState<Prepaid | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
@@ -104,6 +107,12 @@ export default function Profile() {
     }
   }
 
+  const chooseTheme = (key: ThemeKey, name: string) => {
+    setTheme(key)
+    setThemeSheetOpen(false)
+    toast(`已切换为${name}`, 'success')
+  }
+
   const confirmLogout = () => {
     Dialog.open('b-profile-logout', {
       title: '退出登录',
@@ -120,7 +129,7 @@ export default function Profile() {
   }
 
   return (
-    <View className="page page-tabbar">
+    <View className={`page page-tabbar ${themeClass}`}>
       <PageToast />
 
       <View className="profile-user-card">
@@ -221,6 +230,25 @@ export default function Profile() {
           </View>
           <Text className="profile-tool-arrow">›</Text>
         </View>
+
+        <View className="card profile-tool" onClick={() => setThemeSheetOpen(true)}>
+          <View className="profile-tool-icon tone-primary">
+            <Icon name="palette" size={20} />
+          </View>
+          <View className="profile-tool-main">
+            <Text className="profile-tool-name">外观主题</Text>
+            <Text className="profile-tool-desc">当前：{themeName}，可切换回经典蓝紫</Text>
+          </View>
+          <View className="theme-inline-swatch">
+            {options
+              .filter((option) => option.key === theme)
+              .flatMap((option) => option.swatch)
+              .map((color, index) => (
+                <View key={`${color}-${index}`} className="theme-inline-dot" style={{ background: color }} />
+              ))}
+          </View>
+          <Text className="profile-tool-arrow">›</Text>
+        </View>
       </View>
 
       <View className="section">
@@ -244,6 +272,49 @@ export default function Profile() {
       <NutButton className="profile-logout" block type="danger" fill="outline" onClick={confirmLogout}>
         退出登录
       </NutButton>
+
+      {themeSheetOpen ? (
+        <View className="theme-sheet-mask" onClick={() => setThemeSheetOpen(false)}>
+          <View className="theme-sheet" onClick={(event) => event.stopPropagation()}>
+            <View className="theme-sheet-head">
+              <Text className="theme-sheet-title">外观主题</Text>
+              <Text className="theme-sheet-close" onClick={() => setThemeSheetOpen(false)}>
+                关闭
+              </Text>
+            </View>
+            <Text className="theme-sheet-desc">
+              黑金为默认主题，切换后立即生效并记住选择；仅影响界面样式，不影响数据与权限。
+            </Text>
+            <View className="theme-options">
+              {options.map((option) => {
+                const active = option.key === theme
+                return (
+                  <View
+                    key={option.key}
+                    className={`theme-option${active ? ' theme-option-active' : ''}`}
+                    onClick={() => chooseTheme(option.key, option.name)}
+                  >
+                    {active ? <View className="theme-option-check">✓</View> : null}
+                    <View
+                      className="theme-option-preview"
+                      style={{
+                        background: option.swatch[0],
+                        border: `1px solid ${option.swatch[1]}44`,
+                      }}
+                    >
+                      <View className="theme-option-dot" style={{ background: option.swatch[1] }} />
+                      <View className="theme-option-bar" style={{ background: option.swatch[2] }} />
+                    </View>
+                    <Text className="theme-option-name">{option.name}</Text>
+                    <Text className="theme-option-sub">{option.description}</Text>
+                  </View>
+                )
+              })}
+            </View>
+            <Text className="theme-sheet-foot">主题选择保存在本机，换设备需重新设置</Text>
+          </View>
+        </View>
+      ) : null}
 
       <Dialog id="b-profile-logout" />
       <AppTabbar active="profile" />

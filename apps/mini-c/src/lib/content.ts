@@ -39,10 +39,11 @@ export type HomeEntry = {
   auth?: boolean
 }
 
-/** 首页服务四宫格（§4.1） */
+/** 首页服务宫格（§4.1） */
 export const HOME_ENTRIES: HomeEntry[] = [
   { key: 'bind', label: '绑定样本', icon: 'box', url: '/pages/activate/index', auth: true },
   { key: 'progress', label: '检测进度', icon: 'packageCheck', url: '/pages/progress/index', auth: true },
+  { key: 'journey', label: '健康助手', icon: 'checkCircle', url: '/pages/journey/index', auth: true },
   { key: 'tech', label: '技术介绍', icon: 'book', url: '/pages/tech-intro/index' },
   { key: 'service', label: '联系客服', icon: 'headset', action: 'service' },
 ]

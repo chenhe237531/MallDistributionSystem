@@ -9,6 +9,7 @@ import {
 import { api, setToken } from '../../lib/api'
 import { Icon } from '../../components/Icon'
 import logoPng from '../../assets/logo.png'
+import { useTheme } from '../../lib/theme'
 
 type LoginResponse = {
   token: string
@@ -17,6 +18,7 @@ type LoginResponse = {
 
 /** 登录页卡片化（§6.3）：logo 位 + 协议勾选；协议文本 D7 占位，待法务审定 */
 export default function Login() {
+  const { themeClass } = useTheme()
   const [phone, setPhone] = useState('13900000001')
   const [password, setPassword] = useState('Merchant@123')
   const [agreed, setAgreed] = useState(false)
@@ -57,7 +59,7 @@ export default function Login() {
   }
 
   return (
-    <View className="page login-page">
+    <View className={`page login-page ${themeClass}`}>
       <Image src={logoPng} className="login-logo-img" mode="aspectFit" />
       <Text className="login-welcome">欢迎登录</Text>
       <Text className="login-welcome-sub">登录后可享受更好的服务体验</Text>

@@ -1,16 +1,22 @@
-/* ===== 设计令牌 → CSS 变量（FR-DS，基础值与 @mall/shared designTokens 同步） =====
-   D1 方案 A：百英诺商家端品牌紫（tokens.ts palette.violet*），仅本端覆盖主色系；
-   admin / mini-c 仍为 #1677ff 蓝。VI 确认后仅需替换本块色值。 */
+/* ===== 设计令牌 → CSS 变量（FR-DS，与 @mall/shared themePacks 逐项同步） =====
+   主题机制：页面根容器挂 .theme-gold / .theme-classic，变量在子树内级联覆盖。
+   - 默认主题为黑金（themePacks.gold），经典主题完整保留用于回退；
+   - 无主题类时（如 H5 body / 未接入的容器）回落到 :root, page 的经典值，避免样式塌陷；
+   - NutUI 映射必须与主题块「同元素」声明：自定义属性在声明元素处完成 var() 解析，
+     若只写在 :root，子元素继承到的是 :root 处解析出的经典色。 */
 :root,
-page {
+page,
+.theme-classic {
   --mall-primary: #6e5cff;
   --mall-primary-hover: #8f85ff;
   --mall-primary-pressed: #4c3ed9;
   --mall-primary-light: #efecff;
   --mall-primary-light-pressed: #ddd9ff;
+  --mall-on-primary: #ffffff;
   /* 促销语义色（§7 要点 4）：价格红 / 金色按钮，不污染既有语义 */
   --mall-color-price: #ff4d4f;
   --mall-color-gold: #f7c945;
+  --mall-on-gold: #5a4300;
   --mall-success: #00b42a;
   --mall-success-light: #e8ffea;
   --mall-warning: #ff7d00;
@@ -22,11 +28,60 @@ page {
   --mall-text-tertiary: #8f959e;
   --mall-border: #e5e6eb;
   --mall-border-light: #f2f3f5;
+  --mall-card-border: rgba(31, 35, 41, 0.06);
   --mall-bg: #f7f8fa;
   --mall-card: #ffffff;
+  --mall-surface-2: #ffffff;
   --mall-brand-dark: #4c3ed9;
+  --mall-hero-text: #ffffff;
+  --mall-hero-grad: linear-gradient(135deg, #4c3ed9 0%, #6e5cff 100%);
+  --mall-banner-grad: linear-gradient(120deg, #2b2350 0%, #4c3ed9 100%);
+  --mall-shadow: 0 1px 3px rgba(31, 35, 41, 0.05);
+  --mall-glow: 0 6px 16px rgba(110, 92, 255, 0.28);
+  --mall-nav-bg: #4c3ed9;
+}
 
-  /* ===== NutUI 主题覆盖（品牌色 → 设计令牌，变量名以 NutUI dist/style.css 为准） ===== */
+/* ===== 黑金主题（默认）—— themePacks.gold ===== */
+.theme-gold {
+  --mall-primary: #d4af37;
+  --mall-primary-hover: #e3c173;
+  --mall-primary-pressed: #b8952b;
+  --mall-primary-light: rgba(212, 175, 55, 0.14);
+  --mall-primary-light-pressed: rgba(212, 175, 55, 0.22);
+  --mall-on-primary: #14110a;
+  --mall-color-price: #f0c86a;
+  --mall-color-gold: #d4af37;
+  --mall-on-gold: #14110a;
+  --mall-success: #3fbf7f;
+  --mall-success-light: rgba(63, 191, 127, 0.14);
+  --mall-warning: #e8a33d;
+  --mall-warning-light: rgba(232, 163, 61, 0.14);
+  --mall-danger: #e4685c;
+  --mall-danger-light: rgba(228, 104, 92, 0.14);
+  --mall-text: #f4efe4;
+  --mall-text-secondary: #b3a995;
+  --mall-text-tertiary: #7c7466;
+  --mall-border: #2f2a22;
+  --mall-border-light: #221e18;
+  --mall-card-border: rgba(212, 175, 55, 0.14);
+  --mall-bg: #08080a;
+  --mall-card: #141217;
+  --mall-surface-2: #1b181f;
+  --mall-brand-dark: #8c6f1e;
+  --mall-hero-text: #f7edcf;
+  --mall-hero-grad: linear-gradient(135deg, #1a1509 0%, #241b0b 55%, #3a2a0e 100%);
+  --mall-banner-grad: linear-gradient(120deg, #141109 0%, #33270f 100%);
+  --mall-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  --mall-glow: 0 0 20px rgba(212, 175, 55, 0.18);
+  --mall-nav-bg: #08080a;
+}
+
+/* ===== NutUI 主题覆盖（变量名以 NutUI dist/style.css 为准）
+   与主题类同元素声明，确保按当前主题解析；新增变量只在此处加入。 ===== */
+:root,
+page,
+.theme-classic,
+.theme-gold {
   --nutui-color-primary: var(--mall-primary);
   --nutui-color-primary-pressed: var(--mall-primary-pressed);
   --nutui-color-primary-light: var(--mall-primary-light);
@@ -39,6 +94,10 @@ page {
   --nutui-color-text-help: var(--mall-text-tertiary);
   --nutui-color-border: var(--mall-border);
   --nutui-color-background: var(--mall-bg);
+  --nutui-color-background-overlay: var(--mall-card);
+  --nutui-color-mask: rgba(0, 0, 0, 0.6);
+  --nutui-dialog-background: var(--mall-card);
+  --nutui-popup-background-color: var(--mall-card);
 }
 
 page {
@@ -62,9 +121,9 @@ page {
   flex-direction: column;
   padding: 18px 16px;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--mall-brand-dark), var(--mall-primary));
-  color: #fff;
-  box-shadow: 0 6px 16px rgba(110, 92, 255, 0.28);
+  background: var(--mall-hero-grad);
+  color: var(--mall-hero-text);
+  box-shadow: var(--mall-glow);
 }
 
 .hero-role {
@@ -115,10 +174,11 @@ page {
 
 .card {
   margin-top: 8px;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 14px;
+  border: 1px solid var(--mall-card-border);
+  border-radius: 14px;
   background: var(--mall-card);
-  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.05);
+  box-shadow: var(--mall-shadow);
 }
 
 .row {
@@ -161,7 +221,7 @@ page {
 .nut-cell {
   border-radius: 10px;
   margin-top: 8px;
-  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.05);
+  box-shadow: var(--mall-shadow);
 }
 
 .nut-cell-group {
@@ -432,6 +492,14 @@ page {
 .form-hint {
   display: block;
   margin-top: 10px;
+}
+
+/* ===== 认领处理操作行 ===== */
+.claim-actions {
+  display: flex;
+  gap: 10px;
+  padding: 0 16px 10px;
+  background: var(--mall-bg-container, #fff);
 }
 
 /* ===== 业务金额展示 ===== */
@@ -812,7 +880,7 @@ page {
   padding: 0 18px;
   height: 100%;
   box-sizing: border-box;
-  background: linear-gradient(120deg, #4c3ed9 0%, #6e5cff 72%, #8f85ff 100%);
+  background: var(--mall-hero-grad);
   color: #fff;
 }
 
@@ -889,7 +957,7 @@ page {
   padding: 8px 12px;
   border-radius: 999px;
   background: var(--mall-card);
-  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.05);
+  box-shadow: var(--mall-shadow);
   color: var(--mall-warning);
   overflow: hidden;
 }
@@ -1002,7 +1070,7 @@ page {
   padding: 4px 10px;
   border: 1px dashed var(--mall-primary-light-pressed);
   border-radius: 6px;
-  background: #fff;
+  background: var(--mall-card);
   font-size: 10px;
   color: var(--mall-primary);
 }
@@ -1024,7 +1092,7 @@ page {
   padding: 12px;
   border-radius: 12px;
   background: var(--mall-card);
-  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.05);
+  box-shadow: var(--mall-shadow);
 }
 
 .contact-icon {
@@ -1077,7 +1145,7 @@ page {
   top: 0;
   z-index: 20;
   padding: 10px 12px 8px;
-  background: linear-gradient(135deg, var(--mall-brand-dark), var(--mall-primary));
+  background: var(--mall-hero-grad);
 }
 
 .proc-head-title {
@@ -1137,7 +1205,7 @@ page {
   text-align: center;
 
   &:active {
-    background: #fff;
+    background: var(--mall-card);
   }
 }
 
@@ -1246,8 +1314,8 @@ page {
   width: 72px;
   height: 72px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #ddd9ff, #8f85ff);
-  color: #4c3ed9;
+  background: linear-gradient(135deg, var(--mall-primary-light-pressed), var(--mall-primary-hover));
+  color: var(--mall-primary-pressed);
   font-size: 18px;
   font-weight: 600;
   flex-shrink: 0;
@@ -1338,7 +1406,7 @@ page {
   color: #fff;
   font-size: 16px;
   line-height: 1;
-  box-shadow: 0 2px 6px rgba(110, 92, 255, 0.35);
+  box-shadow: var(--mall-glow);
 
   &:active {
     background: var(--mall-primary-pressed);
@@ -1499,9 +1567,9 @@ page {
   gap: 12px;
   padding: 18px 14px;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--mall-brand-dark), var(--mall-primary));
-  color: #fff;
-  box-shadow: 0 6px 16px rgba(110, 92, 255, 0.28);
+  background: var(--mall-hero-grad);
+  color: var(--mall-hero-text);
+  box-shadow: var(--mall-glow);
 }
 
 .profile-avatar {
@@ -1589,7 +1657,7 @@ page {
   margin-top: 12px;
   padding: 13px 14px;
   border-radius: 12px;
-  background: linear-gradient(120deg, #2b2350, #4c3ed9);
+  background: var(--mall-banner-grad);
   color: #fff;
 }
 
@@ -1615,7 +1683,7 @@ page {
   padding: 7px 14px;
   border-radius: 999px;
   background: var(--mall-color-gold);
-  color: #5a4300;
+  color: var(--mall-on-gold);
   font-size: 12px;
   font-weight: 600;
   flex-shrink: 0;
@@ -1743,7 +1811,7 @@ page {
   padding: 8px 10px;
   border: 1px solid var(--mall-border-light);
   border-radius: 10px;
-  background: #fff;
+  background: var(--mall-card);
 
   &:active {
     background: var(--mall-bg);
@@ -1810,7 +1878,7 @@ page {
   height: 16px;
   border-radius: 50%;
   border: 1px solid var(--mall-border);
-  background: #fff;
+  background: var(--mall-card);
   color: #fff;
   flex-shrink: 0;
 
@@ -1876,13 +1944,13 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #ddd9ff, #8f85ff);
+  background: linear-gradient(135deg, var(--mall-primary-light-pressed), var(--mall-primary-hover));
 }
 
 .goods-thumb-initial {
   font-size: 24px;
   font-weight: 700;
-  color: #4c3ed9;
+  color: var(--mall-primary-pressed);
 }
 
 .goods-thumb-sm .goods-thumb-initial {
@@ -1979,7 +2047,7 @@ page {
   color: #fff;
   font-size: 16px;
   line-height: 1;
-  box-shadow: 0 2px 6px rgba(110, 92, 255, 0.35);
+  box-shadow: var(--mall-glow);
 
   &:active {
     background: var(--mall-primary-pressed);
@@ -2055,7 +2123,7 @@ page {
 
 .detail-swiper {
   height: 375px;
-  background: #fff;
+  background: var(--mall-card);
 }
 
 .detail-hero-img {
@@ -2070,7 +2138,7 @@ page {
   justify-content: center;
   gap: 10px;
   height: 280px;
-  background: #fff;
+  background: var(--mall-card);
 }
 
 .detail-hero-empty-text {
@@ -2083,7 +2151,7 @@ page {
   padding: 14px;
   border-radius: 12px;
   background: var(--mall-card);
-  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.05);
+  box-shadow: var(--mall-shadow);
 }
 
 .detail-price-row {
@@ -2471,7 +2539,7 @@ page {
   background: var(--mall-card);
   vertical-align: top;
   white-space: normal;
-  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.05);
+  box-shadow: var(--mall-shadow);
 
   &:active {
     opacity: 0.9;
@@ -2537,9 +2605,9 @@ page {
 .guide-head {
   padding: 16px 14px;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--mall-brand-dark), var(--mall-primary));
-  color: #fff;
-  box-shadow: 0 6px 16px rgba(110, 92, 255, 0.24);
+  background: var(--mall-hero-grad);
+  color: var(--mall-hero-text);
+  box-shadow: var(--mall-glow);
 }
 
 .guide-head-title {
@@ -2697,7 +2765,7 @@ page {
   margin-bottom: 8px;
   padding: 9px 10px;
   border-radius: 9px;
-  background: linear-gradient(135deg, var(--mall-primary-light), #f6f4ff);
+  background: linear-gradient(135deg, var(--mall-primary-light), var(--mall-primary-light-pressed));
 }
 
 .proc-price-entry:active {
@@ -2736,9 +2804,9 @@ page {
 .pricing-hero {
   padding: 16px;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--mall-brand-dark), var(--mall-primary));
-  color: #fff;
-  box-shadow: 0 6px 16px rgba(110, 92, 255, 0.24);
+  background: var(--mall-hero-grad);
+  color: var(--mall-hero-text);
+  box-shadow: var(--mall-glow);
 }
 
 .pricing-hero-title {
@@ -2793,7 +2861,7 @@ page {
   padding: 12px;
   border-radius: 12px;
   background: var(--mall-card);
-  box-shadow: 0 1px 4px rgba(31, 35, 41, 0.05);
+  box-shadow: var(--mall-shadow);
 }
 
 .pricing-head {
@@ -3061,4 +3129,645 @@ page {
 .pricing-sheet-save {
   background: linear-gradient(135deg, var(--mall-primary), var(--mall-primary-pressed));
   color: #fff;
+}
+
+/* ===== 健康助手跟进（商家端，doc/health-assistant-prd.html §7.1） ===== */
+.journey-stats {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.journey-stat {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 6px;
+  border-radius: 10px;
+  background: var(--mall-card);
+  box-shadow: var(--mall-shadow);
+}
+
+.journey-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--mall-primary);
+}
+
+.journey-stat-label {
+  font-size: 11px;
+  color: var(--mall-text-secondary);
+}
+
+.journey-stat-warn .journey-stat-value {
+  color: var(--mall-danger);
+}
+
+.journey-filters {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.journey-filter {
+  padding: 6px 12px;
+  border-radius: 99px;
+  background: var(--mall-card);
+  font-size: 12px;
+  color: var(--mall-text-secondary);
+  border: 1px solid var(--mall-border-light);
+}
+
+.journey-filter-active {
+  background: var(--mall-primary-light);
+  border-color: var(--mall-primary);
+  color: var(--mall-primary);
+  font-weight: 600;
+}
+
+.journey-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.journey-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.journey-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.journey-schedule-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--mall-bg);
+}
+
+.journey-date-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 2px;
+  font-size: 13px;
+}
+
+.journey-date-value {
+  font-weight: 600;
+  color: var(--mall-primary);
+}
+
+.journey-foot-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 16px 0 8px;
+  font-size: 12px;
+  color: var(--mall-primary);
+}
+
+/* =====================================================================
+   黑金主题皮肤（仅 .theme-gold 作用域内生效，经典主题零影响）
+   设计稿：docs/商家小程序黑金主题设计方案.md §4~§6
+   ===================================================================== */
+
+/* H5：主题类同时挂在 html 上时，body / 滚动条同步为黑金 */
+html.theme-gold {
+  background: var(--mall-bg);
+}
+
+html.theme-gold body {
+  background: var(--mall-bg);
+}
+
+html.theme-gold ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html.theme-gold ::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: #2f2a22;
+}
+
+html.theme-gold ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 页面与卡片：深色下用"金边 + 顶部高光"表达层级，阴影退为辅助 */
+.theme-gold .page {
+  background: var(--mall-bg);
+}
+
+.theme-gold .card {
+  border: 1px solid var(--mall-card-border);
+  background: linear-gradient(180deg, #19161d 0%, var(--mall-card) 46%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), var(--mall-shadow);
+}
+
+/* 区块标题：金色渐变竖条 + 微光 */
+.theme-gold .section-title {
+  letter-spacing: 0.2px;
+  color: var(--mall-text);
+}
+
+.theme-gold .section-title::before {
+  background: linear-gradient(180deg, #f3dc9a, #b8952b);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.35);
+}
+
+/* Hero / 品牌渐变容器：金边 + 右上角金色光晕 */
+.theme-gold .hero,
+.theme-gold .pricing-hero,
+.theme-gold .proc-head,
+.theme-gold .biz-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+}
+
+.theme-gold .hero::after,
+.theme-gold .pricing-hero::after {
+  content: '';
+  position: absolute;
+  top: -46%;
+  right: -12%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0) 68%);
+  pointer-events: none;
+}
+
+.theme-gold .hero-role {
+  color: rgba(247, 237, 207, 0.72);
+  letter-spacing: 2px;
+}
+
+.theme-gold .hero-title,
+.theme-gold .pricing-hero-title {
+  color: #f7edcf;
+}
+
+.theme-gold .hero-balance,
+.theme-gold .pricing-stat-value {
+  color: var(--mall-primary-hover);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 指标数字：暖白 + 等宽数字，避免切换数据时抖动 */
+.theme-gold .metric-value,
+.theme-gold .pricing-stat-value,
+.theme-gold .biz-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.theme-gold .metric-value {
+  color: var(--mall-text);
+}
+
+.theme-gold .metric-divider {
+  background: var(--mall-border);
+}
+
+/* 价格：香槟金，符号降透明度 */
+.theme-gold .proc-price,
+.theme-gold .detail-price,
+.theme-gold .goods-card-price,
+.theme-gold .home-goods-price,
+.theme-gold .pricing-retail,
+.theme-gold .detail-related-price {
+  color: var(--mall-color-price);
+  font-variant-numeric: tabular-nums;
+}
+
+.theme-gold .proc-price-symbol,
+.theme-gold .detail-price-symbol,
+.theme-gold .goods-card-price-symbol,
+.theme-gold .pricing-input-symbol {
+  opacity: 0.7;
+}
+
+.theme-gold .pricing-cost,
+.theme-gold .proc-cost {
+  color: var(--mall-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 标签：金色描边款 */
+.theme-gold .tag-pill {
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: var(--mall-primary-light);
+  color: var(--mall-primary);
+}
+
+.theme-gold .status-tag {
+  border: 1px solid transparent;
+}
+
+.theme-gold .status-tag-success {
+  border-color: rgba(63, 191, 127, 0.3);
+}
+
+.theme-gold .status-tag-warning {
+  border-color: rgba(232, 163, 61, 0.3);
+}
+
+.theme-gold .status-tag-danger {
+  border-color: rgba(228, 104, 92, 0.3);
+}
+
+.theme-gold .status-tag-primary {
+  border-color: rgba(212, 175, 55, 0.32);
+}
+
+/* 底栏：半透明黑 + 毛玻璃（小程序不支持时由不透明底色兜底） */
+.theme-gold .b-tabbar {
+  border-top: 1px solid rgba(212, 175, 55, 0.16);
+  background: #0c0b0e;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+}
+
+/* H5 支持毛玻璃，升级为半透明；小程序端不编译该块，走上面的不透明兜底 */
+/* #ifdef H5 */
+.theme-gold .b-tabbar {
+  background: rgba(12, 11, 14, 0.92);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+/* #endif */
+
+.theme-gold .b-tabbar-item {
+  color: var(--mall-text-tertiary);
+}
+
+.theme-gold .b-tabbar-item-active {
+  color: var(--mall-primary);
+}
+
+.theme-gold .b-tabbar-badge {
+  background: var(--mall-primary);
+  color: var(--mall-on-primary);
+  font-weight: 700;
+}
+
+/* 登录页：金边卡 + 金底按钮 */
+.theme-gold .login-page {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0) 42%),
+    var(--mall-bg);
+}
+
+.theme-gold .login-card {
+  border: 1px solid var(--mall-card-border);
+  background: linear-gradient(180deg, #19161d 0%, var(--mall-card) 50%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), var(--mall-shadow);
+}
+
+.theme-gold .login-field {
+  border-color: var(--mall-border);
+  background: var(--mall-surface-2);
+}
+
+.theme-gold .login-submit {
+  background: linear-gradient(135deg, #e3c173 0%, #d4af37 55%, #b8952b 100%);
+  color: var(--mall-on-primary);
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(184, 149, 43, 0.28);
+}
+
+/* 我的页：头像金环、工具图标金底 */
+.theme-gold .profile-avatar {
+  border: 1px solid rgba(212, 175, 55, 0.42);
+  background: linear-gradient(135deg, #2a2113, #4a3714);
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .profile-role-tag {
+  border: 1px solid rgba(212, 175, 55, 0.26);
+  background: var(--mall-primary-light);
+  color: var(--mall-primary);
+}
+
+.theme-gold .profile-tool-icon,
+.theme-gold .profile-app-icon {
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: var(--mall-primary-light);
+  color: var(--mall-primary);
+}
+
+.theme-gold .profile-tool-icon.tone-success,
+.theme-gold .profile-app-icon.tone-success {
+  border-color: rgba(63, 191, 127, 0.24);
+  background: var(--mall-success-light);
+  color: var(--mall-success);
+}
+
+.theme-gold .profile-tool-icon.tone-warning,
+.theme-gold .profile-app-icon.tone-warning {
+  border-color: rgba(232, 163, 61, 0.24);
+  background: var(--mall-warning-light);
+  color: var(--mall-warning);
+}
+
+.theme-gold .profile-tool-icon.tone-danger,
+.theme-gold .profile-app-icon.tone-danger {
+  border-color: rgba(228, 104, 92, 0.24);
+  background: var(--mall-danger-light);
+  color: var(--mall-danger);
+}
+
+/* 弹层 / 抽屉：深底金边 */
+.theme-gold .pricing-sheet {
+  border-top: 1px solid rgba(212, 175, 55, 0.2);
+  background: linear-gradient(180deg, #19161d 0%, var(--mall-card) 40%);
+}
+
+.theme-gold .pricing-mask {
+  background: rgba(0, 0, 0, 0.62);
+}
+
+.theme-gold .pricing-quick-item {
+  border: 1px solid var(--mall-border);
+  background: var(--mall-surface-2);
+  color: var(--mall-text-secondary);
+}
+
+.theme-gold .pricing-sheet-cancel {
+  border: 1px solid var(--mall-border);
+  background: var(--mall-surface-2);
+  color: var(--mall-text-secondary);
+}
+
+.theme-gold .pricing-sheet-save {
+  background: linear-gradient(135deg, #e3c173 0%, #d4af37 55%, #b8952b 100%);
+  color: var(--mall-on-primary);
+  font-weight: 700;
+}
+
+/* NutUI：Cell / Button / Dialog / Toast / Empty / Tag / Input */
+.theme-gold .nut-cell {
+  border: 1px solid var(--mall-card-border);
+  background: var(--mall-card);
+  box-shadow: var(--mall-shadow);
+}
+
+.theme-gold .nut-cell::after {
+  border-color: var(--mall-border-light);
+}
+
+.theme-gold .nut-cell-title {
+  color: var(--mall-text);
+}
+
+.theme-gold .nut-cell-extra {
+  color: var(--mall-text-secondary);
+}
+
+.theme-gold .nut-button-primary.nut-button-solid {
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  background: linear-gradient(135deg, #e3c173 0%, #d4af37 55%, #b8952b 100%);
+  color: var(--mall-on-primary);
+  font-weight: 700;
+}
+
+.theme-gold .nut-button-primary.nut-button-outline,
+.theme-gold .nut-button-primary.nut-button-none {
+  border-color: rgba(212, 175, 55, 0.45);
+  background: transparent;
+  color: var(--mall-primary);
+}
+
+.theme-gold .nut-button-danger.nut-button-outline {
+  border-color: rgba(228, 104, 92, 0.5);
+  background: rgba(228, 104, 92, 0.08);
+  color: var(--mall-danger);
+}
+
+.theme-gold .nut-dialog {
+  border: 1px solid var(--mall-card-border);
+  background: #16131a;
+}
+
+.theme-gold .nut-dialog-header {
+  color: var(--mall-text);
+}
+
+.theme-gold .nut-dialog-content {
+  color: var(--mall-text-secondary);
+}
+
+.theme-gold .nut-dialog-footer {
+  border-top: 1px solid var(--mall-border-light);
+}
+
+.theme-gold .nut-dialog-footer-ok {
+  color: var(--mall-primary);
+  font-weight: 700;
+}
+
+.theme-gold .nut-dialog-footer-cancel {
+  color: var(--mall-text-secondary);
+}
+
+.theme-gold .nut-overlay {
+  background: rgba(0, 0, 0, 0.62);
+}
+
+.theme-gold .nut-toast-inner {
+  background: rgba(22, 19, 26, 0.96);
+  color: var(--mall-text);
+  border: 1px solid var(--mall-card-border);
+}
+
+.theme-gold .nut-empty-description,
+.theme-gold .nut-empty__description {
+  color: var(--mall-text-tertiary);
+}
+
+.theme-gold .nut-empty-image {
+  opacity: 0.55;
+}
+
+.theme-gold .nut-tag.nut-tag-default {
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: var(--mall-primary-light);
+  color: var(--mall-primary);
+}
+
+.theme-gold .nut-input,
+.theme-gold .nut-input-native {
+  color: var(--mall-text);
+}
+
+.theme-gold .nut-input-native::placeholder {
+  color: var(--mall-text-tertiary);
+}
+
+/* 主题切换卡片（我的 → 外观主题） */
+.theme-sheet-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 300;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.theme-sheet {
+  width: 100%;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  background: var(--mall-card);
+  box-sizing: border-box;
+}
+
+.theme-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.theme-sheet-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--mall-text);
+}
+
+.theme-sheet-close {
+  padding: 2px 6px;
+  color: var(--mall-text-tertiary);
+  font-size: 14px;
+}
+
+.theme-sheet-desc {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--mall-text-tertiary);
+}
+
+.theme-options {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.theme-option {
+  position: relative;
+  flex: 1;
+  padding: 12px;
+  border: 1px solid var(--mall-border);
+  border-radius: 14px;
+  background: var(--mall-surface-2);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.theme-option-active {
+  border-color: var(--mall-primary);
+  box-shadow: 0 0 0 1px var(--mall-primary), 0 6px 18px rgba(184, 149, 43, 0.18);
+}
+
+.theme-option-preview {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 64px;
+  padding: 10px;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.theme-option-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+
+.theme-option-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  opacity: 0.85;
+}
+
+.theme-option-name {
+  display: block;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.theme-option-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--mall-text-tertiary);
+}
+
+.theme-option-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--mall-primary);
+  color: var(--mall-on-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.theme-sheet-foot {
+  margin-top: 14px;
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--mall-text-tertiary);
+  text-align: center;
+}
+
+/* 我的页 · 外观主题入口的迷你色卡 */
+.theme-inline-swatch {
+  display: flex;
+  gap: 4px;
+  margin-right: 6px;
+}
+
+.theme-inline-dot {
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 50%;
+}
+
+/* 登录按钮/勾选：金底深字（白字在金色上对比不足） */
+.theme-gold .login-submit-purple .nut-button {
+  background: linear-gradient(135deg, #e3c173 0%, #d4af37 55%, #b8952b 100%);
+  color: var(--mall-on-primary);
+  box-shadow: 0 8px 22px rgba(184, 149, 43, 0.26);
+}
+
+.theme-gold .login-checkbox {
+  color: var(--mall-on-primary);
 }

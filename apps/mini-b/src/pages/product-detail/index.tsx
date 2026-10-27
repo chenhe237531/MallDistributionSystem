@@ -8,6 +8,7 @@ import { GoodsThumb } from '../../components/goods/GoodsThumb'
 import { SpecList } from '../../components/goods/SpecList'
 import { goodsTags } from '../../config/home'
 import { Empty, Toast } from '@nutui/nutui-react-taro'
+import { useTheme } from '../../lib/theme'
 
 type RelatedProduct = {
   id: string
@@ -59,6 +60,7 @@ function complianceText(category?: string | null): string {
 const toast = (title: string, icon?: 'success' | 'fail') => Toast.show('b-toast', { title, icon })
 
 export default function ProductDetail() {
+  const { themeClass } = useTheme()
   const router = useRouter()
   const id = router.params.id ?? ''
   const [detail, setDetail] = useState<ProductDetail | null>(null)
@@ -98,14 +100,14 @@ export default function ProductDetail() {
 
   if (!loading && !detail) {
     return (
-      <View className="page">
+      <View className={`page ${themeClass}`}>
         <Empty description="商品不存在或已下架" />
       </View>
     )
   }
 
   if (!detail) {
-    return <View className="page" />
+    return <View className={`page ${themeClass}`} />
   }
 
   const images = (detail.images ?? []).map(resolveAsset).filter(Boolean)
@@ -117,7 +119,7 @@ export default function ProductDetail() {
   const retail = detail.retailPriceCents ?? 0
 
   return (
-    <View className="page page-detail">
+    <View className={`page page-detail ${themeClass}`}>
       {images.length > 0 ? (
         <Swiper
           className="detail-swiper"

@@ -262,7 +262,7 @@ export default function AccountsPage() {
         title="新建账号"
         width={480}
         open={createOpen}
-        modalProps={{ destroyOnClose: true, onCancel: () => setCreateOpen(false) }}
+        modalProps={{ destroyOnHidden: true, onCancel: () => setCreateOpen(false) }}
         onOpenChange={setCreateOpen}
         initialValues={{ primaryRole: Role.MERCHANT }}
         submitter={{ searchConfig: { submitText: '创建账号', resetText: '取消' } }}

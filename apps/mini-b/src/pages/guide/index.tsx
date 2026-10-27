@@ -3,6 +3,7 @@ import { Text, View } from '@tarojs/components'
 import { BIZ_WECHAT_ID, SERVICE_HOTLINE } from '../../config/home'
 import { Icon } from '../../components/Icon'
 import { PageToast, toast } from '../../components/feedback'
+import { useTheme } from '../../lib/theme'
 
 type Flow = {
   key: string
@@ -58,6 +59,7 @@ const FLOWS: Flow[] = [
 ]
 
 export default function Guide() {
+  const { themeClass } = useTheme()
   const copyWechat = () => {
     void Taro.setClipboardData({
       data: BIZ_WECHAT_ID,
@@ -66,7 +68,7 @@ export default function Guide() {
   }
 
   return (
-    <View className="page">
+    <View className={`page ${themeClass}`}>
       <PageToast />
 
       <View className="guide-head">

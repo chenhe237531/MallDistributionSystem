@@ -17,4 +17,15 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // 拆分大依赖，避免单 chunk 过大（antd/pro-components/echarts 等）
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          antd: ['antd', '@ant-design/icons', '@ant-design/pro-components'],
+        },
+      },
+    },
+  },
 })

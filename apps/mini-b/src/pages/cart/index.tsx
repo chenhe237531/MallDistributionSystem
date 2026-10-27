@@ -8,6 +8,7 @@ import { AppTabbar } from '../../components/AppTabbar'
 import { GoodsThumb } from '../../components/goods/GoodsThumb'
 import { Toast } from '@nutui/nutui-react-taro'
 import { Empty } from '@nutui/nutui-react-taro'
+import { useTheme } from '../../lib/theme'
 
 type Product = {
   id: string
@@ -23,6 +24,7 @@ const toast = (title: string, icon?: 'success' | 'fail') =>
   Toast.show('b-toast', { title, icon })
 
 export default function Cart() {
+  const { themeClass } = useTheme()
   const [cart, setCart] = useState<CartMap>(readCart)
   const [products, setProducts] = useState<Product[]>([])
   const [remark, setRemark] = useState('')
@@ -94,7 +96,7 @@ export default function Cart() {
   }
 
   return (
-    <View className="page page-tabbar-proc" style={{ padding: 0 }}>
+    <View className={`page page-tabbar-proc ${themeClass}`} style={{ padding: 0 }}>
       <View className="proc-head" style={{ paddingBottom: 12 }}>
         <Text className="proc-head-title">购物车</Text>
       </View>

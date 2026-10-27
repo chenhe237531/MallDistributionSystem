@@ -949,6 +949,42 @@ async function main(): Promise<void> {
       relatedSkuCodes: ['INNO-CHANG-001', 'INNO-HENG-001'],
       courseCodes: ['product_knowledge'],
     },
+    {
+      // 健康助手开通触发商品：购买后自动创建 TransplantJourney（PRD FR-HA-01）
+      skuCode: 'FMT-SVC-001',
+      name: '精准菌群移植服务（含移植后健康管理）',
+      supplyPriceCents: 199900,
+      retailPriceCents: 299900,
+      testItems: ['移植前评估与清肠指导', '6 天移植期用药管理', '30 天恢复期随访'],
+      sampleType: '服务类（按预约执行）',
+      samplingMethod: '商家对接预约时间与地点',
+      storageCondition: '不适用',
+      shelfLifeDays: 365,
+      intro:
+        '含移植前 7 天准备指导、移植前 1 天清肠管理、6 天移植期用药提醒与 30 天恢复期随访。购买并支付后自动开通「健康助手」，按早、中、晚三时段推送注意事项；清肠药可从平台购买或自行购买后确认。',
+      category: 'transplant_service',
+      images: productImages('FMT-SVC-001'),
+      relatedSkuCodes: ['FMT-CAP-001', 'MED-PEG-001'],
+      courseCodes: ['product_knowledge'],
+    },
+    {
+      // 清肠药平台购买路径的专用商品（PRD FR-HA-06）
+      skuCode: 'MED-PEG-001',
+      name: '聚乙二醇电解质散（清肠用）',
+      supplyPriceCents: 2900,
+      retailPriceCents: 5900,
+      testItems: ['聚乙二醇 4000 散剂', '2 袋/盒'],
+      sampleType: '口服散剂',
+      samplingMethod: '2 袋加 2000mL 水或脉动冲开，少量多次服用',
+      storageCondition: '常温阴凉干燥保存',
+      shelfLifeDays: 730,
+      intro:
+        '移植前 1 天肠道准备用药。晚餐后 2 袋加 2000mL 水冲开，少量多次服用，服后多走动并按摩腹部，至大便呈无渣清水状即可；清肠后当晚不可再进食。请在医生或商家指导下使用。',
+      category: 'bowel_prep',
+      images: productImages('MED-PEG-001'),
+      relatedSkuCodes: [],
+      courseCodes: [],
+    },
   ]
 
   for (const item of demoProducts) {

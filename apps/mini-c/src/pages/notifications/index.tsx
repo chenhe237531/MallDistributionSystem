@@ -13,6 +13,7 @@ type Notification = {
   status: string
   failureReason?: string | null
   createdAt: string
+  payload?: { entry?: string } | null
 }
 
 type NotificationList = {
@@ -90,6 +91,18 @@ export default function Notifications() {
                   onClick={() => go('/pages/reports/index')}
                 >
                   查看报告
+                </NutButton>
+              </View>
+            ) : null}
+            {item.payload?.entry && item.type.startsWith('journey') ? (
+              <View className="price-row">
+                <NutButton
+                  size="small"
+                  type="primary"
+                  fill="outline"
+                  onClick={() => go(item.payload?.entry as string)}
+                >
+                  打开健康助手
                 </NutButton>
               </View>
             ) : null}

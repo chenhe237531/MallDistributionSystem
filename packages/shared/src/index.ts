@@ -1,6 +1,7 @@
 export * from './dto'
 export * from './enums'
 export * from './interpretation'
+export * from './journey'
 export * from './money'
 export * from './product'
 export * from './status'

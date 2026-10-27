@@ -4,6 +4,7 @@ import { Text, View } from '@tarojs/components'
 import { formatCents } from '@mall/shared'
 import { api, ensureLogin } from '../../lib/api'
 import { Cell, CellGroup, Empty, Tag } from '@nutui/nutui-react-taro'
+import { useTheme } from '../../lib/theme'
 
 type Me = { roles: string[] }
 type CustomerRow = {
@@ -18,6 +19,7 @@ type CustomerRow = {
 }
 
 export default function Customers() {
+  const { themeClass } = useTheme()
   const [customers, setCustomers] = useState<CustomerRow[]>([])
   const [isSales, setIsSales] = useState(false)
 
@@ -39,7 +41,7 @@ export default function Customers() {
   })
 
   return (
-    <View className="page">
+    <View className={`page ${themeClass}`}>
       <View className="section">
         <Text className="section-title">{isSales ? '我负责的客户' : '本店客户'}</Text>
         {customers.length === 0 ? <Empty description="暂无客户" /> : null}

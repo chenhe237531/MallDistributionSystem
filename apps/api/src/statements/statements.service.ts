@@ -17,6 +17,7 @@ import PDFDocument from 'pdfkit'
 import { formatCents, Role } from '@mall/shared'
 import { AuditService } from '../audit/audit.service'
 import { ChannelsService } from '../channels/channels.service'
+import { ContractsService, CONTRACT_CODES } from '../contracts/contracts.service'
 import { NotificationsService } from '../notifications/notifications.service'
 import { asRoleArray } from '../prisma/array-values'
 import { PrismaService } from '../prisma/prisma.service'
@@ -37,6 +38,7 @@ export class StatementsService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly channelsService: ChannelsService,
+    private readonly contractsService: ContractsService,
     private readonly notificationsService: NotificationsService,
   ) {}
 
@@ -341,6 +343,18 @@ export class StatementsService {
       throw new BadRequestException(
         `已登记票证不足，仍有 ${formatCents(missing)} 元未取得票证，不能结清`,
       )
+    }
+    // FR-11：分销合作协议为线下签署 + 后台登记，时点为首次对账（结清）前
+    if (statement.subjectType === 'partner') {
+      const contract = await this.contractsService.findActiveContract(
+        statement.subjectId,
+        CONTRACT_CODES.PARTNER_DISTRIBUTION,
+      )
+      if (!contract) {
+        throw new BadRequestException(
+          '该合伙人的分销合作协议未登记或已失效，请先在合同管理完成线下签署登记后再结清',
+        )
+      }
     }
     const settled = await this.prisma.statement.update({
       where: { id },
