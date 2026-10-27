@@ -5,7 +5,7 @@ import { StatusTag } from '../goods/StatusTag'
 const NODES = [
   { key: 'created', label: '提交采购单' },
   { key: 'deducted', label: '预付款扣款' },
-  { key: 'shipped', label: '商家发货' },
+  { key: 'shipped', label: '供应商发货' },
   { key: 'received', label: '确认收货' },
   { key: 'completed', label: '完成' },
 ]
@@ -70,7 +70,8 @@ export function ProcurementProgress({ status, compact = false }: Props) {
       </View>
       {!compact ? (
         <Text className="proc-progress-hint">
-          当前状态：{status === 'pending_shipment' ? '待商家发货' : NODES[current]?.label}
+          当前状态：{status === 'pending_shipment' ? '待供应商发货' : NODES[current]?.label}
+          {status === 'shipped' ? '（收到货后请核对批次与效期再确认收货）' : ''}
           {status === 'deducted' ? '（预付款已扣款，等待发货）' : ''}
         </Text>
       ) : null}
