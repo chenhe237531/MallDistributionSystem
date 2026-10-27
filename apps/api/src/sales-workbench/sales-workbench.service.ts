@@ -5,7 +5,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { ClaimStatus as PrismaClaimStatus } from '@prisma/client'
+import {
+  ClaimStatus as PrismaClaimStatus,
+  SalesOrderStatus as PrismaSalesOrderStatus,
+} from '@prisma/client'
 import { Role } from '@mall/shared'
 import { asRoleArray } from '../prisma/array-values'
 import { PrismaService } from '../prisma/prisma.service'
@@ -274,6 +277,7 @@ export class SalesWorkbenchService {
     ownerships: Array<{
       customerId: string
       customer: { id: string; name: string; phone: string }
+      merchantId: string | null
       ownedAt: Date
       sourceBoxCode: string
     }>,
@@ -308,10 +312,61 @@ export class SalesWorkbenchService {
       }
     }
 
+    // 待支付订单：客户线下付款后由商家在客户卡片内直接登记 / 取消（方案 §6.4-5）
+    const pendingOrders = await this.prisma.salesOrder.findMany({
+      where: {
+        customerId: { in: customerIds },
+        status: PrismaSalesOrderStatus.pending_payment,
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        orderNo: true,
+        merchantId: true,
+        customerId: true,
+        totalAmountCents: true,
+        createdAt: true,
+        items: { select: { productName: true, quantity: true } },
+      },
+    })
+    const merchantByCustomer = new Map(
+      ownerships.map((ownership) => [ownership.customerId, ownership.merchantId]),
+    )
+    const pendingByCustomer = new Map<
+      string,
+      Array<{
+        id: string
+        orderNo: string
+        totalAmountCents: number
+        createdAt: Date
+        itemSummary: string
+        itemCount: number
+      }>
+    >()
+    for (const order of pendingOrders) {
+      // 只展示归属当前商家（销售版为所属商家）的订单，避免跨商家订单串档
+      if (order.merchantId !== merchantByCustomer.get(order.customerId)) {
+        continue
+      }
+      const list = pendingByCustomer.get(order.customerId) ?? []
+      list.push({
+        id: order.id,
+        orderNo: order.orderNo,
+        totalAmountCents: order.totalAmountCents,
+        createdAt: order.createdAt,
+        itemSummary: order.items
+          .map((item) => `${item.productName} × ${item.quantity}`)
+          .join('；'),
+        itemCount: order.items.reduce((sum, item) => sum + item.quantity, 0),
+      })
+      pendingByCustomer.set(order.customerId, list)
+    }
+
     return ownerships.map((ownership) => {
       const group = groupedByCustomer.get(ownership.customerId)
       const orderCount = group?._count._all ?? 0
       const totalAmountCents = group?._sum.totalAmountCents ?? 0
+      const pending = pendingByCustomer.get(ownership.customerId) ?? []
       return {
         customerId: ownership.customerId,
         name: ownership.customer.name,
@@ -323,6 +378,9 @@ export class SalesWorkbenchService {
         avgOrderCents: orderCount > 0 ? Math.round(totalAmountCents / orderCount) : null,
         lastOrderAt: group?._max.paidAt ?? null,
         reportStatus: latestReportByCustomer.get(ownership.customerId)?.status ?? null,
+        pendingOrders: pending,
+        pendingOrderCount: pending.length,
+        pendingAmountCents: pending.reduce((sum, order) => sum + order.totalAmountCents, 0),
       }
     })
   }

@@ -649,6 +649,12 @@ page {
   color: var(--mall-text);
 }
 
+.cust-phone {
+  font-size: 12px;
+  color: var(--mall-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 .cust-stats {
   margin-top: 6px;
 
@@ -664,6 +670,316 @@ page {
   font-size: 12px;
   font-weight: 600;
   color: var(--mall-primary);
+}
+
+/* 客户卡片 · 待支付订单（点击进入订单详情弹层） */
+.cust-pending {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--mall-border);
+}
+
+.cust-pending-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cust-pending-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mall-warning);
+}
+
+.cust-pending-sum {
+  font-size: 11px;
+  color: var(--mall-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cust-pending-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--mall-card-border);
+  border-radius: 10px;
+  background: var(--mall-bg);
+
+  &:active {
+    background: var(--mall-surface-3);
+  }
+}
+
+.cust-pending-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.cust-pending-no {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.cust-pending-sub {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--mall-text-tertiary);
+}
+
+.cust-pending-side {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.cust-pending-amount {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mall-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cust-pending-action {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--mall-text-secondary);
+}
+
+.cust-pending-arrow {
+  flex-shrink: 0;
+  color: var(--mall-text-tertiary);
+}
+
+/* ===== 我的生意 · 订单行可点开详情 ===== */
+.biz-order-row:active {
+  background: var(--mall-surface-3);
+}
+
+.biz-order-extra {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.biz-order-arrow {
+  color: var(--mall-text-tertiary);
+}
+
+/* ===== 商家端订单详情弹层（我的客户 / 我的生意共用） ===== */
+.b-order-sheet {
+  max-height: 88vh;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom));
+}
+
+.b-order-head-main {
+  min-width: 0;
+}
+
+.b-order-no {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--mall-text-tertiary);
+}
+
+.b-order-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 0;
+}
+
+.b-order-error {
+  font-size: 12px;
+  color: var(--mall-danger);
+}
+
+.b-order-retry {
+  padding: 4px 14px;
+  border: 1px solid var(--mall-border);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--mall-text-secondary);
+}
+
+.b-order-body {
+  margin-top: 4px;
+}
+
+.b-order-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 2px;
+}
+
+.b-order-amount {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--mall-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.b-order-block {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--mall-border-light);
+  border-radius: 12px;
+  background: var(--mall-surface-2);
+}
+
+.b-order-block-title {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.b-order-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.b-order-line-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--mall-primary);
+}
+
+.b-order-line-text {
+  flex: 1;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--mall-text-secondary);
+  word-break: break-all;
+}
+
+.b-order-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.b-order-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.b-order-item-name {
+  display: block;
+  font-size: 13px;
+  color: var(--mall-text);
+}
+
+.b-order-item-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--mall-text-tertiary);
+}
+
+.b-order-item-amount {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mall-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.b-order-sum {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--mall-border);
+}
+
+.b-order-sum-label {
+  font-size: 12px;
+  color: var(--mall-text-secondary);
+}
+
+.b-order-sum-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mall-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.b-order-sum-refund {
+  color: var(--mall-danger);
+}
+
+.b-order-hint {
+  display: block;
+  margin: 10px 0 2px;
+  padding: 10px;
+  border: 1px solid var(--mall-card-border);
+  border-radius: 10px;
+  background: var(--mall-warning-light);
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--mall-text-secondary);
+}
+
+.b-order-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.b-order-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.b-order-btn-primary {
+  background: linear-gradient(
+    135deg,
+    var(--mall-primary-hover) 0%,
+    var(--mall-primary) 55%,
+    var(--mall-primary-pressed) 100%
+  );
+  color: var(--mall-on-primary);
+  box-shadow: var(--mall-glow);
+}
+
+.b-order-btn-danger {
+  border: 1px solid var(--mall-border);
+  background: var(--mall-surface-2);
+  color: var(--mall-danger);
+}
+
+.b-order-btn-ghost {
+  border: 1px solid var(--mall-border);
+  background: var(--mall-surface-2);
+  color: var(--mall-text-secondary);
+}
+
+.b-order-btn-busy {
+  opacity: 0.6;
 }
 
 /* ===== 素材页 ===== */
@@ -4143,6 +4459,12 @@ html.theme-gold ::-webkit-scrollbar-track {
 @media (min-width: 1024px) {
   /* 内容区限宽 750px 居中，两侧露出深黑底 */
   .page {
+    max-width: 750px;
+    margin: 0 auto;
+  }
+
+  /* 订单详情弹层与内容区同宽 */
+  .b-order-sheet {
     max-width: 750px;
     margin: 0 auto;
   }

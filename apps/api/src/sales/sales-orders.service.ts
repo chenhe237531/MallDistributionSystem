@@ -327,7 +327,7 @@ export class SalesOrdersService {
     if (!order) {
       throw new NotFoundException('销售单不存在')
     }
-    this.assertAccess(order, actor)
+    await this.assertAccess(order, actor)
     return order
   }
 
@@ -815,10 +815,10 @@ export class SalesOrdersService {
     }
   }
 
-  private assertAccess(
-    order: { merchantId: string; customerId: string },
+  private async assertAccess(
+    order: { customerId: string; merchantId: string },
     actor: AuthUser,
-  ): void {
+  ): Promise<void> {
     if (actor.roles.includes(Role.PLATFORM)) {
       return
     }
@@ -830,6 +830,16 @@ export class SalesOrdersService {
     }
     if (actor.roles.includes(Role.LAB)) {
       return
+    }
+    // 销售可查看自己名下客户的订单（只读；付款 / 发货 / 退款仍限商家与平台）
+    if (actor.roles.includes(Role.SALES)) {
+      const ownership = await this.prisma.customerOwnership.findUnique({
+        where: { customerId: order.customerId },
+        select: { salesId: true },
+      })
+      if (ownership?.salesId === actor.sub) {
+        return
+      }
     }
     throw new ForbiddenException('无权查看该销售单')
   }
