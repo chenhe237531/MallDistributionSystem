@@ -5,6 +5,7 @@ import { formatCents } from '@mall/shared'
 import { api, ensureLogin, go } from '../../lib/api'
 import { cartCount, readCart, writeCart, type CartMap } from '../../lib/cart'
 import { AppTabbar } from '../../components/AppTabbar'
+import { Button } from '../../components/Button'
 import { GoodsThumb } from '../../components/goods/GoodsThumb'
 import { Empty } from '@nutui/nutui-react-taro'
 import { PageToast, toast } from '../../components/feedback'
@@ -164,9 +165,9 @@ export default function Cart() {
             <Text className="proc-settle-count">共 {count} 件</Text>
             <Text className="proc-settle-total">¥{formatCents(totalCents)}</Text>
           </View>
-          <View className="proc-settle-btn" onClick={() => void submit()}>
-            {submitting ? '提交中…' : '提交采购单'}
-          </View>
+          <Button variant="primary" size="lg" loading={submitting} onClick={() => void submit()}>
+            提交采购单
+          </Button>
         </View>
       ) : null}
 

@@ -11,6 +11,7 @@ import { cartCount, readCart, writeCart, type CartMap } from '../../lib/cart'
 import { AppTabbar } from '../../components/AppTabbar'
 import { Icon } from '../../components/Icon'
 import { GoodsCard, type GoodsSummary } from '../../components/goods/GoodsCard'
+import { Button } from '../../components/Button'
 import { StatusTag } from '../../components/goods/StatusTag'
 import { ProcurementProgress } from '../../components/process/ProcurementProgress'
 import { MALL_CATEGORIES, goodsTags } from '../../config/home'
@@ -310,9 +311,9 @@ export default function Procurement() {
             <Text className="proc-settle-count">已选 {count} 件</Text>
             <Text className="proc-settle-total">¥{formatCents(cartTotalCents)}</Text>
           </View>
-          <View className="proc-settle-btn" onClick={goCart}>
+          <Button variant="primary" size="lg" onClick={goCart}>
             去结算
-          </View>
+          </Button>
         </View>
       ) : null}
 

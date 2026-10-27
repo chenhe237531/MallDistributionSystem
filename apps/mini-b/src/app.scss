@@ -32,6 +32,9 @@ page,
   --mall-bg: #f7f8fa;
   --mall-card: #ffffff;
   --mall-surface-2: #ffffff;
+  --mall-surface-3: #f2f3f5;
+  --mall-tabbar-bg: #ffffff;
+  --mall-primary-grad: linear-gradient(135deg, #8f85ff 0%, #6e5cff 45%, #4c3ed9 100%);
   --mall-brand-dark: #4c3ed9;
   --mall-hero-text: #ffffff;
   --mall-hero-grad: linear-gradient(135deg, #4c3ed9 0%, #6e5cff 100%);
@@ -67,6 +70,9 @@ page,
   --mall-bg: #08080a;
   --mall-card: #141217;
   --mall-surface-2: #1b181f;
+  --mall-surface-3: #242028;
+  --mall-tabbar-bg: #0d0c10;
+  --mall-primary-grad: linear-gradient(135deg, #e3c173 0%, #d4af37 45%, #b8952b 100%);
   --mall-brand-dark: #8c6f1e;
   --mall-hero-text: #f7edcf;
   --mall-hero-grad: linear-gradient(135deg, #1a1509 0%, #241b0b 55%, #3a2a0e 100%);
@@ -83,12 +89,20 @@ page,
 .theme-classic,
 .theme-gold {
   --nutui-color-primary: var(--mall-primary);
+  --nutui-color-primary-stop-1: var(--mall-primary-hover);
+  --nutui-color-primary-stop-2: var(--mall-primary-pressed);
   --nutui-color-primary-pressed: var(--mall-primary-pressed);
   --nutui-color-primary-light: var(--mall-primary-light);
   --nutui-color-primary-light-pressed: var(--mall-primary-light-pressed);
   --nutui-color-primary-disabled: var(--mall-primary-light-pressed);
   --nutui-color-primary-disabled-special: var(--mall-primary-light-pressed);
-  --nutui-color-primary-text: var(--mall-card);
+  /* 金底上的文字：黑金下为深棕黑（--mall-on-primary），经典下为白 */
+  --nutui-color-primary-text: var(--mall-on-primary);
+  --nutui-brand-1: var(--mall-primary-light);
+  --nutui-brand-6: var(--mall-primary);
+  --nutui-brand-stop-1: var(--mall-primary-hover);
+  --nutui-brand-stop-2: var(--mall-primary-pressed);
+  --nutui-button-border-radius: 8px;
   --nutui-color-title: var(--mall-text);
   --nutui-color-text: var(--mall-text-secondary);
   --nutui-color-text-help: var(--mall-text-tertiary);
@@ -747,6 +761,207 @@ page {
   mask: center / contain no-repeat;
 }
 
+/* ===== 统一按钮组件（黑金规范 §5，组件见 components/Button.tsx） =====
+   全部引用 var(--mall-*)，黑金 / 经典主题通用；金色渐变由 --mall-primary-grad 承载。 */
+.m-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* 尺寸阶梯：lg 48 / md 40 / sm 32（lg 满足 ≥88rpx 触控热区） */
+.m-btn-lg {
+  height: 48px;
+  padding: 0 24px;
+  font-size: 16px;
+}
+
+.m-btn-md {
+  height: 40px;
+  padding: 0 18px;
+  font-size: 14px;
+}
+
+.m-btn-sm {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 12px;
+}
+
+.m-btn-block {
+  display: flex;
+  width: 100%;
+}
+
+/* 主按钮：金色渐变填充 + 深色文字；按压整体压暗并轻微缩放 */
+.m-btn-primary {
+  background: var(--mall-primary-grad);
+  color: var(--mall-on-primary);
+
+  &:active {
+    transform: scale(0.98);
+    filter: brightness(0.88);
+  }
+}
+
+/* H5 hover：渐变整体提亮（小程序无 hover，不生效） */
+@media (hover: hover) {
+  .m-btn-primary:hover {
+    filter: brightness(1.06);
+  }
+}
+
+/* 描金按钮：金色描边黑底，按压铺金色弱底 */
+.m-btn-outline {
+  border-color: var(--mall-primary);
+  background: transparent;
+  color: var(--mall-primary);
+
+  &:active {
+    background: var(--mall-primary-light);
+  }
+}
+
+/* 次级按钮：深灰底 + 边框 + 暖白文字 */
+.m-btn-secondary {
+  border-color: var(--mall-border);
+  background: var(--mall-surface-2);
+  color: var(--mall-text);
+
+  &:active {
+    background: var(--mall-surface-3);
+  }
+}
+
+/* 文字按钮：金色文字，按压降透明度 */
+.m-btn-text {
+  height: auto;
+  min-height: 32px;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  color: var(--mall-primary);
+  font-weight: 500;
+
+  &:active {
+    opacity: 0.6;
+  }
+}
+
+/* 危险按钮：保持红色语义，不得镀金 */
+.m-btn-danger {
+  border-color: var(--mall-danger);
+  background: var(--mall-danger-light);
+  color: var(--mall-danger);
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+/* 禁用态：主按钮去掉渐变铺弱底，其余降文字层级；均不可点 */
+.m-btn-disabled {
+  pointer-events: none;
+
+  &.m-btn-primary {
+    background: var(--mall-primary-light);
+    color: var(--mall-text-tertiary);
+  }
+
+  &.m-btn-outline,
+  &.m-btn-text {
+    border-color: var(--mall-text-tertiary);
+    color: var(--mall-text-tertiary);
+  }
+
+  &.m-btn-secondary,
+  &.m-btn-danger {
+    color: var(--mall-text-tertiary);
+    opacity: 0.6;
+  }
+}
+
+/* 加载态：spinner 随 currentColor（金底上为深色、深底上为金色），宽度锁定防跳动 */
+.m-btn-loading {
+  pointer-events: none;
+}
+
+.m-btn-spinner {
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: m-btn-spin 0.8s linear infinite;
+}
+
+@keyframes m-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== 空状态与骨架屏（黑金规范 §3.4 / §十 P1） =====
+   空状态：线性图标（三级灰）+ 暖灰文案 + 描金引导按钮（Button variant=outline）；
+   骨架屏：深底骨架块 + 微光扫过动画。 */
+.m-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 0;
+}
+
+.m-empty-icon {
+  margin-bottom: 12px;
+  color: var(--mall-text-tertiary);
+  opacity: 0.8;
+}
+
+.m-empty-text {
+  font-size: 13px;
+  color: var(--mall-text-secondary);
+}
+
+.m-empty-tip {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--mall-text-tertiary);
+}
+
+.m-empty .m-btn {
+  margin-top: 16px;
+}
+
+.m-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--mall-surface-3);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.45) 50%, transparent 100%);
+    transform: translateX(-100%);
+    animation: m-skeleton-sweep 1.4s ease infinite;
+  }
+}
+
+@keyframes m-skeleton-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
 /* ===== 自绘 4 Tab 底栏（§5 D2） ===== */
 .b-tabbar {
   position: fixed;
@@ -758,7 +973,7 @@ page {
   height: calc(52px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   border-top: 1px solid var(--mall-border-light);
-  background: var(--mall-card);
+  background: var(--mall-tabbar-bg);
 }
 
 .b-tabbar-item {
@@ -1467,18 +1682,9 @@ page {
   color: var(--mall-color-price);
 }
 
-.proc-settle-btn {
-  padding: 9px 22px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--mall-primary), var(--mall-primary-pressed));
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
+/* 结算按钮已切换为统一按钮组件（Button.tsx），此处仅保留收缩约束 */
+.proc-settle .m-btn {
   flex-shrink: 0;
-
-  &:active {
-    opacity: 0.88;
-  }
 }
 
 /* 采购确认浮层 */
@@ -2348,28 +2554,9 @@ page {
   background: var(--mall-card);
 }
 
-.detail-action-cart,
-.detail-action-buy {
+/* 底部双 CTA 已切换为统一按钮组件（Button.tsx），此处仅保留布局占比 */
+.detail-action-item {
   flex: 1;
-  padding: 10px 0;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-
-  &:active {
-    opacity: 0.88;
-  }
-}
-
-.detail-action-cart {
-  background: var(--mall-primary-light);
-  color: var(--mall-primary);
-}
-
-.detail-action-buy {
-  background: linear-gradient(135deg, var(--mall-primary), var(--mall-primary-pressed));
-  color: #fff;
 }
 
 /* ===== 采购单进度（§3.5-5a） ===== */
@@ -3391,30 +3578,49 @@ html.theme-gold ::-webkit-scrollbar-track {
   border-color: rgba(212, 175, 55, 0.32);
 }
 
-/* 底栏：半透明黑 + 毛玻璃（小程序不支持时由不透明底色兜底） */
+/* 底栏：深炭黑底 + 金线分隔（规范 §4.3）；H5 升级毛玻璃，小程序走不透明兜底 */
 .theme-gold .b-tabbar {
-  border-top: 1px solid rgba(212, 175, 55, 0.16);
-  background: #0c0b0e;
+  border-top: 1px solid rgba(212, 175, 55, 0.18);
+  background: var(--mall-tabbar-bg);
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
 }
 
 /* H5 支持毛玻璃，升级为半透明；小程序端不编译该块，走上面的不透明兜底 */
 /* #ifdef H5 */
 .theme-gold .b-tabbar {
-  background: rgba(12, 11, 14, 0.92);
+  background: rgba(13, 12, 16, 0.92);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 /* #endif */
 
 .theme-gold .b-tabbar-item {
+  position: relative;
   color: var(--mall-text-tertiary);
 }
 
+/* 选中态：图标文字变金 + 顶部 3px 金色指示条 + 标签加粗 */
 .theme-gold .b-tabbar-item-active {
   color: var(--mall-primary);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 16px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: var(--mall-primary);
+    transform: translateX(-50%);
+  }
 }
 
+.theme-gold .b-tabbar-item-active .b-tabbar-label {
+  font-weight: 600;
+}
+
+/* 购物车角标：金底深字（规范 §4.3） */
 .theme-gold .b-tabbar-badge {
   background: var(--mall-primary);
   color: var(--mall-on-primary);
@@ -3552,6 +3758,32 @@ html.theme-gold ::-webkit-scrollbar-track {
   border-color: rgba(228, 104, 92, 0.5);
   background: rgba(228, 104, 92, 0.08);
   color: var(--mall-danger);
+}
+
+/* 统一按钮组件的黑金细节（规范 §5.2：禁用为金 18% 弱底 + 35% 暖白字） */
+.theme-gold .m-btn-primary {
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 6px 18px rgba(184, 149, 43, 0.22);
+}
+
+.theme-gold .m-btn-primary.m-btn-disabled {
+  border-color: transparent;
+  background: rgba(212, 175, 55, 0.18);
+  box-shadow: none;
+  color: rgba(244, 239, 228, 0.35);
+}
+
+.theme-gold .m-btn-outline {
+  border-color: rgba(212, 175, 55, 0.45);
+}
+
+/* 骨架屏黑金适配：#1B181F 骨架块 + 金色微光扫过（规范 §十 P1） */
+.theme-gold .m-skeleton {
+  background: var(--mall-surface-2);
+
+  &::after {
+    background: linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.07) 50%, transparent 100%);
+  }
 }
 
 .theme-gold .nut-dialog {
@@ -3781,19 +4013,12 @@ html.theme-gold ::-webkit-scrollbar-track {
 }
 
 /* 金色主填充元素统一深色文字（白字在金色上对比不足 2.2:1） */
-.theme-gold .detail-action-buy,
-.theme-gold .proc-settle-btn,
 .theme-gold .contact-btn,
 .theme-gold .biz-range-chip-active,
 .theme-gold .proc-sub-pill-active,
 .theme-gold .goods-card-add,
 .theme-gold .proc-progress-dot-active {
   color: var(--mall-on-primary);
-}
-
-.theme-gold .detail-action-cart {
-  border: 1px solid rgba(212, 175, 55, 0.28);
-  color: var(--mall-primary-hover);
 }
 
 /* Dialog 细节：黑底金边、圆角、取消键改为深色次按钮（默认白底会与白字重合） */
@@ -3900,3 +4125,37 @@ html.theme-gold ::-webkit-scrollbar-track {
   text-align: center;
   word-break: break-all;
 }
+
+/* ===== H5 大屏响应式断点（黑金规范 §八，小程序端不编译该块） =====
+   说明：商品流为行式卡片（左图右文），不做多列网格，宽屏以限宽居中保证阅读宽度。 */
+/* #ifdef H5 */
+@media (min-width: 768px) {
+  .page {
+    padding: 16px 24px;
+  }
+
+  .card,
+  .hero {
+    border-radius: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* 内容区限宽 750px 居中，两侧露出深黑底 */
+  .page {
+    max-width: 750px;
+    margin: 0 auto;
+  }
+
+  /* 固定底栏同步限宽居中（tabbar / 详情双 CTA / 购物车结算栏） */
+  .b-tabbar,
+  .detail-actionbar,
+  .proc-settle {
+    right: auto;
+    left: 50%;
+    width: 100%;
+    max-width: 750px;
+    transform: translateX(-50%);
+  }
+}
+/* #endif */
