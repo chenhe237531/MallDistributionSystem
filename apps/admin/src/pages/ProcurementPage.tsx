@@ -56,7 +56,7 @@ export default function ProcurementPage() {
   }
 
   const simpleAction = (orderId: string, path: string, successText: string) => () =>
-    runAction(() => api(`/procurement-orders/${orderId}/${path}`), successText)
+    runAction(() => api(`/procurement-orders/${orderId}/${path}`, { method: 'POST' }), successText)
 
   const columns: ProColumns<ProcurementOrder>[] = [
     { title: '采购单号', dataIndex: 'orderNo', width: 190, copyable: true },

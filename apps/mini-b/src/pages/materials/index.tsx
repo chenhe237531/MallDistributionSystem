@@ -15,6 +15,9 @@ import { useTheme } from '../../lib/theme'
 type Template = { id: string; name: string; category: string; body: string }
 type Material = { id: string; title: string; content: string }
 
+// 渠道码由生成端附加在素材内容末尾（渠道码：XXX），摘要截断会把它藏掉，需单独提取展示
+const channelCodeOf = (content: string) => /渠道码[：:]\s*([A-Za-z0-9]+)/.exec(content)?.[1] ?? null
+
 const toast = (title: string, icon?: 'success' | 'fail') =>
   Toast.show('b-toast', { title, icon })
 
@@ -87,13 +90,31 @@ export default function Materials() {
           <Empty description="暂无素材" />
         ) : (
           <CellGroup>
-            {materials.map((material) => (
-              <Cell
-                key={material.id}
-                title={material.title}
-                description={<Text className="muted">{material.content.slice(0, 80)}…</Text>}
-              />
-            ))}
+            {materials.map((material) => {
+              const code = channelCodeOf(material.content)
+              return (
+                <Cell
+                  key={material.id}
+                  title={material.title}
+                  description={
+                    <View>
+                      <Text className="muted">{material.content.slice(0, 80)}…</Text>
+                      {code ? (
+                        <View
+                          className="row"
+                          onClick={() =>
+                            void Taro.setClipboardData({ data: code }).then(() => toast('渠道码已复制', 'success'))
+                          }
+                        >
+                          <Tag type="primary">渠道码 {code}</Tag>
+                          <Text className="muted">点击复制</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  }
+                />
+              )
+            })}
           </CellGroup>
         )}
       </View>

@@ -82,8 +82,12 @@ req('PATCH', '/customers/me/real-name', CT, {'realName': '探测客户', 'idCard
 
 chan = sql("SELECT code FROM \"ChannelIdentity\" WHERE status='active' AND type='partner' ORDER BY \"createdAt\" DESC LIMIT 1")
 s, sf = req('GET', f'/sales-orders/storefront?channelCode={chan}')
-listing = sf[0] if isinstance(sf, list) and sf else None
-check('P0-prep 准备：渠道码与在售商品', bool(CT and chan and listing))
+# 渠道码仅决定佣金归属，storefront 返回全部商家在售商品；登记支付仅限订单归属商家，
+# 必须选 MT 自己的 listing（选错商家会 403，属正确权限行为）
+s, mine = req('GET', '/products/merchant/mine', MT)
+mine_ids = {l.get('id') or l.get('listingId') for l in (mine if isinstance(mine, list) else []) if isinstance(l, dict)}
+listing = next((l for l in (sf if isinstance(sf, list) else []) if l.get('listingId') in mine_ids), None)
+check('P0-prep 准备：渠道码与在售商品', bool(CT and chan and listing), f'chan={chan} storefront={len(sf) if isinstance(sf, list) else "bad"}')
 
 # 为探测商品配置一级 8% / 二级 4% 佣金规则（幂等，已存在则忽略失败）
 PID = listing['productId']

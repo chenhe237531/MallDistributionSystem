@@ -84,7 +84,7 @@ export default function OrdersPage() {
   }
 
   const simpleAction = (orderId: string, path: string, successText: string) => () =>
-    runAction(() => api(`/sales-orders/${orderId}/${path}`), successText)
+    runAction(() => api(`/sales-orders/${orderId}/${path}`, { method: 'POST' }), successText)
 
   const columns: ProColumns<SalesOrder>[] = [
     { title: '订单号', dataIndex: 'orderNo', width: 190, copyable: true },

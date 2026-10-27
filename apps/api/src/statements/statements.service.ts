@@ -356,9 +356,14 @@ export class StatementsService {
         )
       }
     }
-    const settled = await this.prisma.statement.update({
-      where: { id },
-      data: { status: PrismaStatementStatus.settled, settledAt: new Date() },
+    const settled = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.statement.update({
+        where: { id },
+        data: { status: PrismaStatementStatus.settled, settledAt: new Date() },
+      })
+      // 结清打款完成，联动账单内佣金明细 → settled（对账单为打款口径）
+      await this.syncCommissionsToStatementStatus(tx, id, CommissionStatus.settled)
+      return updated
     })
     await this.auditService.record({
       actor,
@@ -380,13 +385,52 @@ export class StatementsService {
     if (statement.status !== PrismaStatementStatus.settled) {
       throw new BadRequestException('只有已结清账单可以反结清')
     }
-    return this.prisma.statement.update({
-      where: { id },
-      data: {
-        status: PrismaStatementStatus.reconciled,
-        settledAt: null,
-        reopenedAt: new Date(),
+    // 反结清与 settle 联动对称：仅回退被本次结清推进为 settled 的佣金明细
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.statement.update({
+        where: { id },
+        data: {
+          status: PrismaStatementStatus.reconciled,
+          settledAt: null,
+          reopenedAt: new Date(),
+        },
+      })
+      await this.syncCommissionsToStatementStatus(
+        tx,
+        id,
+        CommissionStatus.reconciled,
+        CommissionStatus.settled,
+      )
+      return updated
+    })
+  }
+
+  /**
+   * 对账单结清/反结清时同步佣金明细状态：
+   * - settle：账单内全部佣金行（sourceType=commission）推进为 settled；
+   * - reopen：仅把 settled 的佣金回退为 toStatus（默认 reconciled），避免误伤其他流程。
+   */
+  private async syncCommissionsToStatementStatus(
+    tx: DbClient,
+    statementId: string,
+    toStatus: CommissionStatus,
+    fromStatus?: CommissionStatus,
+  ) {
+    const lines = await tx.statementLine.findMany({
+      where: { statementId, sourceType: 'commission' },
+      select: { sourceId: true },
+    })
+    if (lines.length === 0) {
+      return
+    }
+    await tx.commission.updateMany({
+      where: {
+        id: { in: lines.map((line) => line.sourceId) },
+        status: fromStatus
+          ? { in: [fromStatus] }
+          : { notIn: [CommissionStatus.invalid, CommissionStatus.disputed] },
       },
+      data: { status: toStatus },
     })
   }
 
