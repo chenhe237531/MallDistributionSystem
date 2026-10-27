@@ -332,6 +332,7 @@ export default function ContractsPage() {
         </Card>
 
         <ProTable<ContractTemplate>
+          scroll={{ x: 'max-content' }}
           rowKey="id"
           actionRef={templateActionRef}
           headerTitle="合同模板"
@@ -348,6 +349,7 @@ export default function ContractsPage() {
         />
 
         <ProTable<Contract>
+          scroll={{ x: 'max-content' }}
           rowKey="id"
           actionRef={contractActionRef}
           headerTitle="合同列表"

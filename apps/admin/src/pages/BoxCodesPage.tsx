@@ -112,6 +112,7 @@ export default function BoxCodesPage() {
       content="按采购单生成检测盒二维码，批量冻结未激活盒码并补码，按采购单查看与导出标签。"
     >
       <ProTable<BoxCode>
+        scroll={{ x: 'max-content' }}
         rowKey="id"
         actionRef={actionRef}
         columns={columns}
@@ -226,6 +227,7 @@ export default function BoxCodesPage() {
           submitter={false}
         >
           <ProTable<BoxLabel>
+            scroll={{ x: 'max-content' }}
             rowKey="code"
             size="small"
             search={false}

@@ -228,6 +228,7 @@ export default function AuditPage() {
           rowKey="id"
           loading={loading}
           dataSource={items}
+          scroll={{ x: 'max-content' }}
           locale={{ emptyText: '暂无留痕记录' }}
           pagination={{
             current: page,

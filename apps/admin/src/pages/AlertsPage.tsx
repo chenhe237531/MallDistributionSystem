@@ -113,6 +113,7 @@ export default function AlertsPage() {
       content="覆盖自购、层级异常、盒码异常、异常注册、高频退款、预付款异常、报告外传与培训作弊。"
     >
       <ProTable<Alert>
+        scroll={{ x: 'max-content' }}
         rowKey="id"
         actionRef={actionRef}
         columns={columns}

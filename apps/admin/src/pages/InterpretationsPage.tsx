@@ -347,6 +347,7 @@ export default function InterpretationsPage() {
 
         <Card title="营养方案（按报告）">
           <ProTable<NutritionPlan>
+            scroll={{ x: 'max-content' }}
             rowKey="id"
             size="small"
             columns={planColumns}

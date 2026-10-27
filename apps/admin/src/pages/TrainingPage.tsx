@@ -245,6 +245,7 @@ export default function TrainingPage() {
       content="创建课程并配置章节与考题（60 分及格，有效期按月计算）；下方展示销售团队学习档案与完成率。"
     >
       <ProTable<Course>
+        scroll={{ x: 'max-content' }}
         rowKey="id"
         actionRef={courseActionRef}
         headerTitle="课程列表"
@@ -296,6 +297,7 @@ export default function TrainingPage() {
         ) : null}
         <div style={{ marginTop: 16 }}>
           <ProTable<SalesRecord>
+            scroll={{ x: 'max-content' }}
             rowKey="id"
             size="small"
             columns={salesColumns}

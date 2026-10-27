@@ -137,6 +137,7 @@ export default function MaterialsPage() {
       content="维护商家端可用的素材模板：设置正文与占位符、锁定条款、适用商品与有效期；停用的模板商家不可见。"
     >
       <ProTable<MaterialTemplate>
+        scroll={{ x: 'max-content' }}
         rowKey="id"
         actionRef={actionRef}
         columns={columns}

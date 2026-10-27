@@ -432,6 +432,7 @@ export default function StatementsPage() {
 
             <Text strong>账单明细</Text>
             <ProTable<StatementLine>
+              scroll={{ x: 'max-content' }}
               rowKey="id"
               size="small"
               search={false}
@@ -464,6 +465,7 @@ export default function StatementsPage() {
             <Text strong>凭证（{detail.vouchers.length}）</Text>
             {detail.vouchers.length ? (
               <ProTable<StatementVoucher>
+                scroll={{ x: 'max-content' }}
                 rowKey="id"
                 size="small"
                 search={false}
@@ -495,6 +497,7 @@ export default function StatementsPage() {
             <Text strong>差异（{detail.differences.length}）</Text>
             {detail.differences.length ? (
               <ProTable<StatementDifference>
+                scroll={{ x: 'max-content' }}
                 rowKey="id"
                 size="small"
                 search={false}

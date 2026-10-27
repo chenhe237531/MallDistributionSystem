@@ -209,6 +209,7 @@ export default function SamplesPage() {
       content="跟踪样本寄送与检测进度，对运输中的样本登记收样并核对检查项，处理异常样本（登记异常、安排补采），必要时作废样本。"
     >
       <ProTable<Sample>
+        scroll={{ x: 'max-content' }}
         rowKey="id"
         actionRef={actionRef}
         columns={columns}
@@ -379,6 +380,7 @@ export default function SamplesPage() {
             </Descriptions>
             <Text strong>流转记录</Text>
             <ProTable<SampleEvent>
+              scroll={{ x: 'max-content' }}
               rowKey="id"
               size="small"
               search={false}

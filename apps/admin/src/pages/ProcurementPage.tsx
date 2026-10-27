@@ -170,6 +170,7 @@ export default function ProcurementPage() {
       content="跟进商家采购单的确认、发货、收货完成与退款流程。"
     >
       <ProTable<ProcurementOrder>
+        scroll={{ x: 'max-content' }}
         rowKey="id"
         actionRef={actionRef}
         columns={columns}

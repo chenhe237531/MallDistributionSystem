@@ -141,6 +141,7 @@ export default function RemindersPage() {
       content="扫描 30 天内即将到期的资质、合同与培训证书并生成提醒；每日凌晨自动扫描，也可手动触发。"
     >
       <ProTable<Reminder>
+        scroll={{ x: 'max-content' }}
         rowKey="id"
         actionRef={actionRef}
         columns={columns}

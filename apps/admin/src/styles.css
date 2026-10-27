@@ -79,6 +79,7 @@ body {
   background: #f7f8fa;
   text-align: left;
   cursor: pointer;
+  min-width: 0;
   transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
@@ -114,7 +115,9 @@ body {
   font-size: 11px;
   line-height: 16px;
   color: #4e5969;
-  white-space: nowrap;
+  /* H5：窄屏两列卡片放不下整行账号，在空格处整词换行而不是溢出或拦腰截断 */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .login-demo-role-hint {
@@ -141,19 +144,30 @@ body {
     display: none;
   }
 
-  /* 未声明 scroll.x 的表格：小屏横向滚动，避免列被挤压重叠 */
+  /* 未声明 scroll.x 的表格：小屏按自然宽度横向滚动，避免列被挤压成一字一行 */
   .ant-table-content,
   .ant-table-body {
     overflow-x: auto;
   }
 
   .ant-table table {
-    min-width: 640px;
+    min-width: max-content;
+  }
+
+  /* 固定宽度的抽屉（详情等）不超过屏幕 */
+  .ant-drawer-content-wrapper {
+    max-width: 100vw;
   }
 
   /* 弹窗不超出屏幕（antd 已有 max-width，收窄留白） */
   .ant-modal {
     max-width: calc(100vw - 16px);
+  }
+
+  /* ProTable 工具栏允许换行，避免操作按钮/设置图标溢出 */
+  .ant-pro-table-list-toolbar-container {
+    flex-wrap: wrap;
+    row-gap: 8px;
   }
 
   /* PageContainer 内容留白收紧 */

@@ -179,6 +179,7 @@ export default function AccountsPage() {
       content="创建与审核六类经营账号；商家审核通过后自动生成唯一渠道身份码。点击行首箭头查看组织、渠道与资质详情。"
     >
       <ProTable<Account>
+        scroll={{ x: 'max-content' }}
         rowKey="id"
         actionRef={actionRef}
         columns={columns}

@@ -252,6 +252,7 @@ export default function ReportsPage() {
       content="实验室收样检测后在「创建报告」录入指标生成草稿，提交后由平台审核发布；已发布报告如需修改走更正流程并生成新版本，旧版本自动归档。"
     >
       <ProTable<Report>
+        scroll={{ x: 'max-content' }}
         rowKey="id"
         actionRef={actionRef}
         columns={columns}
@@ -422,6 +423,7 @@ export default function ReportsPage() {
         <Statistic title="累计浏览 / 下载次数" value={views.length} suffix="次" />
         <div style={{ marginTop: 16 }}>
           <ProTable<ReportViewRecord>
+            scroll={{ x: 'max-content' }}
             rowKey="id"
             size="small"
             search={false}

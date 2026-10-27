@@ -176,6 +176,7 @@ export default function ProductsPage() {
       content="审核供应商提交的商品，设定零售价与费率上限，管理入库批次与平台可用库存。"
     >
       <ProTable<Product>
+        scroll={{ x: 'max-content' }}
         rowKey="id"
         actionRef={actionRef}
         columns={columns}
@@ -490,6 +491,7 @@ export default function ProductsPage() {
             <Text strong>入库批次</Text>
             {detail.batches?.length ? (
               <ProTable<Batch>
+                scroll={{ x: 'max-content' }}
                 rowKey="id"
                 size="small"
                 search={false}

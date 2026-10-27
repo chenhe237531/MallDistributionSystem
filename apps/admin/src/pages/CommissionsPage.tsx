@@ -296,6 +296,7 @@ export default function CommissionsPage() {
             label: '佣金规则',
             children: (
               <ProTable<CommissionRule>
+                scroll={{ x: 'max-content' }}
                 rowKey="id"
                 actionRef={ruleActionRef}
                 columns={ruleColumns}
@@ -428,6 +429,7 @@ export default function CommissionsPage() {
         >
           <Text strong>结算拆分（按订单项）</Text>
           <ProTable<OrderSettlement>
+            scroll={{ x: 'max-content' }}
             rowKey="id"
             size="small"
             search={false}
@@ -441,6 +443,7 @@ export default function CommissionsPage() {
             佣金记录
           </Text>
           <ProTable<CommissionRecord>
+            scroll={{ x: 'max-content' }}
             rowKey="id"
             size="small"
             search={false}

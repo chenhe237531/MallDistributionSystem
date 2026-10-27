@@ -286,8 +286,9 @@ function Shell() {
       contentWidth="Fluid"
       location={{ pathname: location.pathname }}
       route={MENU_ROUTE}
-      /* H5：小屏收起时整体隐藏侧栏（避免 48px 栏遮挡内容），
-         头部由 ProLayout 自带汉堡按钮唤起全屏浮层菜单，点击菜单项后自动收起 */
+      /* H5：<768px 传 isMobile，侧栏改为带遮罩的抽屉菜单（点菜单项自动收起），
+         避免固定侧栏浮层直接压住页面内容 */
+      isMobile={isMobile}
       menu={{ hideMenuWhenCollapsed: isMobile }}
       menuItemRender={(item, dom) =>
         item.path ? (

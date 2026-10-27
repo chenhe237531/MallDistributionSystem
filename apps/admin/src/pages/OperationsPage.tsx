@@ -99,6 +99,7 @@ export default function OperationsPage() {
                 rowKey="reportId"
                 loading={loading}
                 pagination={false}
+                scroll={{ x: 'max-content' }}
                 dataSource={group.tasks}
                 rowClassName={(task) => (task.overdue ? 'overdue-row' : '')}
                 columns={[
