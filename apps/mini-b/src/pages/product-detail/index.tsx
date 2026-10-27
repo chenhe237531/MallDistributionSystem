@@ -6,6 +6,7 @@ import { api, ensureLogin, go, resolveAsset } from '../../lib/api'
 import { cartCount, readCart, writeCart } from '../../lib/cart'
 import { GoodsThumb } from '../../components/goods/GoodsThumb'
 import { SpecList } from '../../components/goods/SpecList'
+import { Button } from '../../components/Button'
 import { goodsTags } from '../../config/home'
 import { Empty, Toast } from '@nutui/nutui-react-taro'
 import { useTheme } from '../../lib/theme'
@@ -257,12 +258,13 @@ export default function ProductDetail() {
       <Text className="detail-compliance">{complianceText(detail.category)}</Text>
 
       <View className="detail-actionbar">
-        <View className="detail-action-cart" onClick={() => addToCart(false)}>
+        {/* 描金次核心 + 金色渐变主 CTA（黑金规范 §5.1，避免双金抢戏） */}
+        <Button variant="outline" size="lg" className="detail-action-item" onClick={() => addToCart(false)}>
           加入采购车
-        </View>
-        <View className="detail-action-buy" onClick={() => addToCart(true)}>
+        </Button>
+        <Button variant="primary" size="lg" className="detail-action-item" onClick={() => addToCart(true)}>
           立即采购
-        </View>
+        </Button>
       </View>
 
       <Toast id="b-toast" />

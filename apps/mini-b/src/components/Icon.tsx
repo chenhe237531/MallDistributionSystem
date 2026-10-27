@@ -36,6 +36,15 @@ const ICON_PATHS = {
   message: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M12 11v6"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  /* 黑金规范 §4.4 补充：列表箭头（替代字符 >，保证双端渲染一致） */
+  arrowRight: '<path d="M9 6l6 6-6 6"/>',
+  filter: '<path d="M4 5h16M7 12h10M10 19h4"/>',
+  location:
+    '<path d="M12 21s-7-5.4-7-11a7 7 0 0 1 14 0c0 5.6-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  phone:
+    '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+  qrcode:
+    '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h3v3h-3zM20 14v2M14 20h2M18 18h2v2h-2z"/>',
 } as const
 
 export type IconName = keyof typeof ICON_PATHS
