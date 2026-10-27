@@ -309,7 +309,7 @@ export default function ContractsPage() {
   return (
     <PageContainer
       header={{ title: '合同管理', subTitle: '模板、电子签与合同全流程' }}
-      content="维护各角色合同模板，配置电子签服务商；支持电子签发起与模拟签署，以及合伙人 / 营养师线下合同录入与解除。"
+      content="维护各角色合同模板，配置电子签服务商；支持电子签发起与模拟签署，以及商家 / 合伙人 / 营养师线下合同录入与解除。"
     >
       <Space direction="vertical" size={16} style={{ display: 'flex' }}>
         <Card size="small" title="电子签服务商">

@@ -36,7 +36,7 @@ export const CONTRACT_CODES = {
 } as const
 
 const EXPIRY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
-const OFFLINE_PARTY_TYPES: PrismaRole[] = ['partner', 'nutritionist']
+const OFFLINE_PARTY_TYPES: PrismaRole[] = ['merchant', 'partner', 'nutritionist']
 
 type ContractWithRelations = Contract & {
   template: ContractTemplate
