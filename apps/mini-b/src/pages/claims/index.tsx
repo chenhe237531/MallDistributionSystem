@@ -74,7 +74,7 @@ export default function Claims() {
                 maxLength={11}
                 value={phone}
                 placeholder="请输入客户手机号"
-                onBlur={(value) => setPhone(value)}
+                onChange={(value) => setPhone(value)}
               />
             </View>
             <NutButton className="form-submit" block type="primary" loading={loading} onClick={submit}>

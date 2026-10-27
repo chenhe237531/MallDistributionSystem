@@ -55,7 +55,7 @@ export async function api<T>(
     const text = Array.isArray(message) ? message.join('；') : message ?? '请求失败'
     // FR-X：登录失效 / 账号不存在时统一提示并跳登录页，不留白屏
     if (response.statusCode === 401 || response.statusCode === 404) {
-      handleAuthExpired(text)
+      handleAuthExpired(text, response.statusCode)
     }
     throw new Error(text)
   }

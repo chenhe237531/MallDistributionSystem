@@ -723,6 +723,7 @@ enum InterpretationStatus {
   generated
   blocked
   reviewed
+  published
   rejected
   failed
 }

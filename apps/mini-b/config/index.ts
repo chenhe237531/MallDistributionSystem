@@ -38,6 +38,11 @@ export default defineConfig({
     staticDirectory: 'static',
     devServer: {
       port: 10086,
+      // H5 端 API 走相对路径 /api，开发态需代理到后端服务（否则登录等请求 404）
+      proxy: {
+        '/api': { target: 'http://localhost:3000', changeOrigin: true },
+        '/uploads': { target: 'http://localhost:3000', changeOrigin: true },
+      },
     },
     postcss: {
       autoprefixer: { enable: true, config: {} },

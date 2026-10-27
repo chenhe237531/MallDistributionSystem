@@ -48,7 +48,7 @@ export class NotificationsService {
     })
     if (
       !interpretation ||
-      !['generated', 'reviewed'].includes(interpretation.status) ||
+      !['generated', 'reviewed', 'published'].includes(interpretation.status) ||
       !interpretation.sections
     ) {
       return null

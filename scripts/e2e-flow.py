@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """全链路 E2E：交易 → 履约 → 归属 → 佣金 → 对账 → 结清 → 退款 → 权限 → 幂等"""
 import json, urllib.request, urllib.error, sys, time
+from datetime import datetime, timezone
 
 API = 'http://localhost:3000/api'
 results = []
@@ -136,7 +137,7 @@ check('D6 确认送达', s in (200, 201), str(b)[:150])
 BOX = codes[0]
 s, pv = req('GET', f'/box-codes/preview/{BOX}', CT2)
 check('D7 盒码预览', s == 200 and pv.get('status') == 'generated', str(pv)[:120])
-s, act = req('POST', '/box-codes/activate', CT2, {'boxCode': BOX, 'questionnaire': {'gender': 'male', 'age': 30}, 'consentGiven': True, 'reportAuthorization': True, 'samplingMethod': 'self_mail', 'orderId': OID, 'device': 'e2e'})
+s, act = req('POST', '/box-codes/activate', CT2, {'boxCode': BOX, 'questionnaire': {'gender': 'male', 'age': 30}, 'consentGiven': True, 'reportAuthorization': True, 'samplingMethod': 'self_mail', 'sampledAt': datetime.now(timezone.utc).isoformat(), 'contactPhone': '13800001234', 'relationship': 'self', 'examineeAge': 30, 'orderId': OID, 'device': 'e2e'})
 SID_ = act.get('sample', {}).get('id') if isinstance(act, dict) else None
 own = act.get('ownership', {}) if isinstance(act, dict) else {}
 check('D8 扫码激活建立归属', s in (200, 201) and bool(SID_), str(act)[:150])

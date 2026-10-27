@@ -173,7 +173,7 @@ export default function Prepaid() {
               type="digit"
               value={amount}
               placeholder="请输入充值金额"
-              onBlur={(value) => setAmount(value)}
+              onChange={(value) => setAmount(value)}
             />
           </View>
           <View className="form-field">
@@ -181,7 +181,7 @@ export default function Prepaid() {
             <NutInput
               value={voucher}
               placeholder="请输入打款凭证地址"
-              onBlur={(value) => setVoucher(value)}
+              onChange={(value) => setVoucher(value)}
             />
           </View>
           <NutButton className="form-submit" block type="primary" loading={loading} onClick={submit}>

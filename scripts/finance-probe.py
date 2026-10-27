@@ -2,10 +2,23 @@
 # -*- coding: utf-8 -*-
 """金融边界探测：下单金额篡改 / 防超退 / merchant 行退款冲回 / 负票证 / 对账汇总一致性"""
 import json, urllib.request, urllib.error, sys
-import subprocess
+import subprocess, os, re
 
 API = 'http://localhost:3000/api'
 DB = ['docker', 'exec', 'mall-postgres', 'psql', '-U', 'mall', '-d', 'mall', '-tAc']
+
+# 按 apps/api/.env 的 DATABASE_URL 自动识别数据库方言（SQLite epoch 毫秒 / Postgres 原生时间戳）
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_URL = ''
+_env = os.path.join(ROOT, 'apps', 'api', '.env')
+if os.path.exists(_env):
+    for _line in open(_env):
+        m = re.match(r'\s*DATABASE_URL\s*=\s*"?([^"\n]+)"?', _line)
+        if m:
+            DB_URL = m.group(1).strip()
+            break
+IS_SQLITE = 'file:' in DB_URL or 'sqlite' in DB_URL
+SQLITE_DB = os.path.normpath(os.path.join(ROOT, 'apps', 'api', 'prisma', 'dev.db'))
 # 兼容不同容器名
 def try_psql():
     candidates = (
@@ -43,6 +56,11 @@ def req(method, path, token=None, body=None):
         except Exception: return e.code, raw
 
 def sql(query):
+    if IS_SQLITE:
+        r = subprocess.run(['sqlite3', SQLITE_DB, query], capture_output=True, text=True, timeout=15)
+        if r.returncode != 0:
+            raise RuntimeError(f'sql 失败: {r.stderr[:200]}')
+        return r.stdout.strip()
     psql = try_psql()
     if not psql:
         raise RuntimeError('找不到可用的 postgres 容器，请确认 docker compose 服务名')
@@ -91,8 +109,13 @@ s, od = req('POST', f'/sales-orders/{OID}/deliver', MT, {})
 check('P0-prep 发货送达完成', s in (200, 201), str(od)[:120])
 
 # ---------- 数据准备：完成时间回拨 8 天 + 佣金时间回拨到上月，触发确认与对账 ----------
-sql(f"UPDATE \"SalesOrder\" SET \"completedAt\"=NOW() - INTERVAL '8 days', \"paidAt\"='2026-09-10 10:00:00+00' WHERE id='{OID}'")
-sql(f"UPDATE \"Commission\" SET \"createdAt\"='2026-09-10 10:05:00+00' WHERE \"orderId\"='{OID}'")
+# SQLite：Prisma 以 epoch 毫秒存 DateTime；Postgres：原生时间戳方言
+if IS_SQLITE:
+    sql(f"UPDATE \"SalesOrder\" SET \"completedAt\"=(strftime('%s','now')-8*86400)*1000, \"paidAt\"=strftime('%s','2026-09-10 10:00:00')*1000 WHERE id='{OID}'")
+    sql(f"UPDATE \"Commission\" SET \"createdAt\"=strftime('%s','2026-09-10 10:05:00')*1000 WHERE \"orderId\"='{OID}'")
+else:
+    sql(f"UPDATE \"SalesOrder\" SET \"completedAt\"=NOW() - INTERVAL '8 days', \"paidAt\"='2026-09-10 10:00:00+00' WHERE id='{OID}'")
+    sql(f"UPDATE \"Commission\" SET \"createdAt\"='2026-09-10 10:05:00+00' WHERE \"orderId\"='{OID}'")
 s, b = req('POST', '/commissions/confirm-eligible', PT, {})
 check('P0-prep 佣金确认（售后保护期满）', s in (200, 201), str(b)[:120])
 

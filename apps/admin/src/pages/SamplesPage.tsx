@@ -1,7 +1,13 @@
 import { useRef, useState } from 'react'
 import { Descriptions, Drawer, Popconfirm, Space, Tag, Typography, message } from 'antd'
 import type { ActionType, ProColumns } from '@ant-design/pro-components'
-import { ModalForm, PageContainer, ProFormTextArea, ProTable } from '@ant-design/pro-components'
+import {
+  ModalForm,
+  PageContainer,
+  ProFormCheckbox,
+  ProFormTextArea,
+  ProTable,
+} from '@ant-design/pro-components'
 import { api } from '../lib/api'
 
 const { Text } = Typography
@@ -55,11 +61,23 @@ const EVENT_LABELS: Record<string, string> = {
 
 type AbnormalValues = { reason: string }
 type ResampleValues = { reason?: string }
+type ReceiveValues = {
+  checks: string[]
+  note?: string
+}
+
+const RECEIVE_CHECKS = [
+  { label: '盒码相符', value: 'boxCodeMatched' },
+  { label: '采样时间符合要求', value: 'samplingTimeValid' },
+  { label: '保存条件合格', value: 'storageConditionOk' },
+  { label: '运输时长在限', value: 'transitWithinLimit' },
+]
 
 export default function SamplesPage() {
   const actionRef = useRef<ActionType>()
   const [abnormalTarget, setAbnormalTarget] = useState<Sample | null>(null)
   const [resampleTarget, setResampleTarget] = useState<Sample | null>(null)
+  const [receiveTarget, setReceiveTarget] = useState<Sample | null>(null)
   const [detail, setDetail] = useState<Sample | null>(null)
 
   const reload = () => actionRef.current?.reload()
@@ -147,6 +165,11 @@ export default function SamplesPage() {
         <a key="detail" onClick={() => void openDetail(entity.id)}>
           详情
         </a>,
+        entity.status === 'in_transit' ? (
+          <a key="receive" onClick={() => setReceiveTarget(entity)}>
+            登记收样
+          </a>
+        ) : null,
         entity.status === 'received_by_lab' ? (
           <Popconfirm
             key="testing"
@@ -183,7 +206,7 @@ export default function SamplesPage() {
   return (
     <PageContainer
       header={{ title: '样本检测', subTitle: '样本流转与实验室操作' }}
-      content="跟踪样本寄送与检测进度，处理异常样本（登记异常、安排补采），必要时作废样本。"
+      content="跟踪样本寄送与检测进度，对运输中的样本登记收样并核对检查项，处理异常样本（登记异常、安排补采），必要时作废样本。"
     >
       <ProTable<Sample>
         rowKey="id"
@@ -268,6 +291,56 @@ export default function SamplesPage() {
           placeholder="说明为何需要补采"
           fieldProps={{ rows: 3 }}
           extra={`当前已补采 ${resampleTarget?.resampleCount ?? 0} 次，上限 2 次`}
+        />
+      </ModalForm>
+
+      <ModalForm<ReceiveValues>
+        title={`登记收样 · ${receiveTarget?.sampleNo ?? ''}`}
+        width={480}
+        open={Boolean(receiveTarget)}
+        modalProps={{ onCancel: () => setReceiveTarget(null) }}
+        onOpenChange={(open) => {
+          if (!open) setReceiveTarget(null)
+        }}
+        initialValues={{ checks: RECEIVE_CHECKS.map((item) => item.value) }}
+        onFinish={async (values) => {
+          if (!receiveTarget) return false
+          try {
+            const result = await api<Sample>(`/samples/${receiveTarget.id}/receive`, {
+              method: 'POST',
+              body: JSON.stringify({
+                boxCodeMatched: values.checks.includes('boxCodeMatched'),
+                samplingTimeValid: values.checks.includes('samplingTimeValid'),
+                storageConditionOk: values.checks.includes('storageConditionOk'),
+                transitWithinLimit: values.checks.includes('transitWithinLimit'),
+                note: values.note,
+              }),
+            })
+            message.success(
+              result.status === 'abnormal'
+                ? '收样检查不合格，已登记异常，请安排补采或作废'
+                : `样本 ${receiveTarget.sampleNo} 收样登记成功，可开始检测`,
+            )
+            setReceiveTarget(null)
+            reload()
+            return true
+          } catch (cause) {
+            message.error(cause instanceof Error ? cause.message : '操作失败')
+            return false
+          }
+        }}
+      >
+        <ProFormCheckbox.Group
+          name="checks"
+          label="收样检查项（勾选表示合格）"
+          options={RECEIVE_CHECKS}
+          rules={[{ required: true, message: '请核对检查项' }]}
+        />
+        <ProFormTextArea
+          name="note"
+          label="备注（可选）"
+          placeholder="如快递单号、外观情况等"
+          fieldProps={{ rows: 2 }}
         />
       </ModalForm>
 

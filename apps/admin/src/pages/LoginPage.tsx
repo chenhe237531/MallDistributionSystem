@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Alert, Button, Card, Form, Input, Typography } from 'antd'
 import { Role } from '@mall/shared'
 import { api, setSessionUser, setToken } from '../lib/api'
@@ -38,6 +39,7 @@ export default function LoginPage({ onLogin }: Props) {
   const [form] = Form.useForm<{ phone: string; password: string }>()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const navigate = useNavigate()
 
   const fillDemo = (account: DemoAccount) => {
     form.setFieldsValue({ phone: account.phone, password: account.password })
@@ -64,6 +66,8 @@ export default function LoginPage({ onLogin }: Props) {
         role: result.user.role,
       })
       onLogin()
+      /* 登录成功后离开 /login：该路径不匹配业务路由，停留会落入 403 兜底页 */
+      navigate('/', { replace: true })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '登录失败')
     } finally {

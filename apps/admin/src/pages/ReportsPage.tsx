@@ -4,6 +4,7 @@ import type { ActionType, ProColumns } from '@ant-design/pro-components'
 import {
   ModalForm,
   PageContainer,
+  ProFormSelect,
   ProFormText,
   ProFormTextArea,
   ProTable,
@@ -51,13 +52,42 @@ type CorrectValues = {
   pdfUrl?: string
 }
 
+type CreateValues = {
+  sampleId: string
+  fieldsJson: string
+  summary?: string
+  missingItems?: string
+  pdfUrl?: string
+}
+
+type SampleOption = {
+  id: string
+  sampleNo: string
+  status: string
+  customer?: { realName?: string | null; name?: string; phone: string } | null
+}
+
 export default function ReportsPage() {
   const actionRef = useRef<ActionType>()
   const [correctTarget, setCorrectTarget] = useState<Report | null>(null)
   const [viewsTarget, setViewsTarget] = useState<Report | null>(null)
   const [views, setViews] = useState<ReportViewRecord[]>([])
+  const [createOpen, setCreateOpen] = useState(false)
+  const [sampleOptions, setSampleOptions] = useState<SampleOption[]>([])
 
   const reload = () => actionRef.current?.reload()
+
+  const openCreate = async () => {
+    try {
+      const samples = await api<SampleOption[]>('/samples')
+      setSampleOptions(
+        samples.filter((item) => item.status === 'testing' || item.status === 'report_generated'),
+      )
+      setCreateOpen(true)
+    } catch (cause) {
+      message.error(cause instanceof Error ? cause.message : '加载可检样本失败')
+    }
+  }
 
   const submit = async (entity: Report) => {
     try {
@@ -210,8 +240,16 @@ export default function ReportsPage() {
 
   return (
     <PageContainer
-      header={{ title: '报告管理', subTitle: '检测报告审核、发布与更正' }}
-      content="实验室提交报告后由平台审核发布；已发布报告如需修改走更正流程并生成新版本，旧版本自动归档。"
+      header={{
+        title: '报告管理',
+        subTitle: '检测报告创建、审核、发布与更正',
+        extra: [
+          <Button key="create" type="primary" onClick={() => void openCreate()}>
+            创建报告
+          </Button>,
+        ],
+      }}
+      content="实验室收样检测后在「创建报告」录入指标生成草稿，提交后由平台审核发布；已发布报告如需修改走更正流程并生成新版本，旧版本自动归档。"
     >
       <ProTable<Report>
         rowKey="id"
@@ -225,6 +263,84 @@ export default function ReportsPage() {
           return { data, success: true }
         }}
       />
+
+      <ModalForm<CreateValues>
+        title="创建报告（检测录入）"
+        width={560}
+        open={createOpen}
+        modalProps={{ onCancel: () => setCreateOpen(false) }}
+        onOpenChange={setCreateOpen}
+        onFinish={async (values) => {
+          try {
+            const created = await api<{ reportNo: string }>('/reports', {
+              method: 'POST',
+              body: JSON.stringify({
+                sampleId: values.sampleId,
+                fields: JSON.parse(values.fieldsJson) as Record<string, unknown>,
+                summary: values.summary,
+                missingItems: values.missingItems
+                  ? values.missingItems
+                      .split(/[,，]/)
+                      .map((item) => item.trim())
+                      .filter(Boolean)
+                  : undefined,
+                pdfUrl: values.pdfUrl,
+              }),
+            })
+            message.success(`报告 ${created.reportNo} 已创建（草稿），请提交审核`)
+            setCreateOpen(false)
+            reload()
+            return true
+          } catch (cause) {
+            message.error(cause instanceof Error ? cause.message : '创建失败')
+            return false
+          }
+        }}
+      >
+        <ProFormSelect
+          name="sampleId"
+          label="选择样本（检测中 / 报告生成中）"
+          placeholder="请选择已完成收样的检测中样本"
+          options={sampleOptions.map((item) => ({
+            value: item.id,
+            label: `${item.sampleNo}（${item.customer?.realName || item.customer?.name || '—'} · ${item.customer?.phone ?? ''}）`,
+          }))}
+          showSearch
+          fieldProps={{ optionFilterProp: 'label' }}
+          rules={[{ required: true, message: '请选择样本' }]}
+          extra="仅列出处于「检测中」的样本；样本须先在「样本检测」页完成登记收样并开始检测"
+        />
+        <ProFormTextArea
+          name="fieldsJson"
+          label="指标数据（JSON）"
+          placeholder='如 {"microbiotaDiversity":"6.2","butyrate":"正常"}'
+          fieldProps={{ rows: 6 }}
+          rules={[
+            { required: true, message: '请填写指标数据' },
+            {
+              validator: (_rule: unknown, value: string) => {
+                if (!value) return Promise.resolve()
+                try {
+                  const parsed = JSON.parse(value)
+                  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    return Promise.resolve()
+                  }
+                  return Promise.reject(new Error('必须是 JSON 对象'))
+                } catch {
+                  return Promise.reject(new Error('请输入合法的 JSON 对象'))
+                }
+              },
+            },
+          ]}
+        />
+        <ProFormTextArea name="summary" label="报告摘要（可选）" fieldProps={{ rows: 3 }} />
+        <ProFormText
+          name="missingItems"
+          label="缺失项（可选）"
+          placeholder="多个用英文逗号分隔，如：血脂,肝功能"
+        />
+        <ProFormText name="pdfUrl" label="PDF 地址（可选）" placeholder="https://..." />
+      </ModalForm>
 
       <ModalForm<CorrectValues>
         title={`更正报告 · ${correctTarget?.reportNo ?? ''}（v${correctTarget?.version ?? 1}）`}

@@ -70,7 +70,7 @@ export default function Login() {
             maxLength={11}
             value={phone}
             placeholder="请输入手机号"
-            onBlur={(value) => setPhone(value)}
+            onChange={(value) => setPhone(value)}
           />
         </View>
         <View className="login-field">
@@ -79,7 +79,7 @@ export default function Login() {
             type="password"
             value={password}
             placeholder="请输入密码"
-            onBlur={(value) => setPassword(value)}
+            onChange={(value) => setPassword(value)}
           />
         </View>
         {error ? <Text className="error">{error}</Text> : null}

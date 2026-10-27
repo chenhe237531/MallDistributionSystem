@@ -186,7 +186,7 @@ export default function Reports() {
                 maxLength={11}
                 value={receiverPhone}
                 placeholder="请输入客户手机号"
-                onBlur={(value) => setReceiverPhone(value)}
+                onChange={(value) => setReceiverPhone(value)}
               />
             </View>
             <NutButton

@@ -36,3 +36,6 @@ apps/api/prisma/*.db-wal
 deploy/artifacts/
 deploy/qrcodes/
 apps/*/dist-h5-*/
+
+# 演示截图归档（旧版重复产物，不入库）
+doc/flow-demo/shots/_archive/
