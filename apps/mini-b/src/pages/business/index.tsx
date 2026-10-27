@@ -19,6 +19,9 @@ import {
   Tag,
 } from '@nutui/nutui-react-taro'
 import { useTheme } from '../../lib/theme'
+import { PageToast, toast } from '../../components/feedback'
+import { Icon } from '../../components/Icon'
+import { OrderDetailSheet } from '../../components/OrderDetailSheet'
 
 type Me = { roles: string[] }
 type Order = { id: string; orderNo: string; status: string; totalAmountCents: number }
@@ -95,6 +98,18 @@ export default function Business() {
   })
   const [customTo, setCustomTo] = useState(() => toDateText(new Date()))
   const [rangeLoading, setRangeLoading] = useState(false)
+  const [detailOrderId, setDetailOrderId] = useState<string | null>(null)
+
+  const loadMerchantData = async () => {
+    const [orderList, commissionList, statementList] = await Promise.all([
+      api<Order[]>('/sales-orders'),
+      api<Commission[]>('/commissions'),
+      api<Statement[]>('/statements'),
+    ])
+    setOrders(orderList)
+    setCommissions(commissionList)
+    setStatements(statementList)
+  }
 
   const loadPerformance = async (key: RangeKey, from: string, to: string) => {
     const resolved = resolveRange(key, from, to)
@@ -156,14 +171,7 @@ export default function Business() {
         await loadPerformance(rangeKey, customFrom, customTo)
       }
       if (me.roles.includes('merchant')) {
-        const [orderList, commissionList, statementList] = await Promise.all([
-          api<Order[]>('/sales-orders'),
-          api<Commission[]>('/commissions'),
-          api<Statement[]>('/statements'),
-        ])
-        setOrders(orderList)
-        setCommissions(commissionList)
-        setStatements(statementList)
+        await loadMerchantData()
       }
     })().catch((cause) => {
       void Taro.showToast({ title: cause instanceof Error ? cause.message : '加载失败', icon: 'none' })
@@ -174,6 +182,7 @@ export default function Business() {
 
   return (
     <View className={`page ${themeClass}`}>
+      <PageToast />
       {performance ? (
         <View className="hero">
           <Text className="hero-role">销售业绩</Text>
@@ -251,15 +260,20 @@ export default function Business() {
               {orders.map((order) => (
                 <Cell
                   key={order.id}
+                  className="biz-order-row"
                   title={order.orderNo}
                   description={
                     <Text className="biz-amount">{formatCents(order.totalAmountCents)} 元</Text>
                   }
                   extra={
-                    <Tag type={SALES_ORDER_STATUS_TONES[order.status] ?? 'default'}>
-                      {statusLabel(SALES_ORDER_STATUS_LABELS, order.status)}
-                    </Tag>
+                    <View className="biz-order-extra">
+                      <Tag type={SALES_ORDER_STATUS_TONES[order.status] ?? 'default'}>
+                        {statusLabel(SALES_ORDER_STATUS_LABELS, order.status)}
+                      </Tag>
+                      <Icon name="arrowRight" size={14} className="biz-order-arrow" />
+                    </View>
                   }
+                  onClick={() => setDetailOrderId(order.id)}
                 />
               ))}
             </CellGroup>
@@ -314,6 +328,17 @@ export default function Business() {
           )}
         </View>
       ) : null}
+
+      <OrderDetailSheet
+        orderId={detailOrderId}
+        canOperate={role === 'merchant'}
+        onClose={() => setDetailOrderId(null)}
+        onChanged={() => {
+          void loadMerchantData().catch((cause) => {
+            toast(cause instanceof Error ? cause.message : '刷新失败', 'fail')
+          })
+        }}
+      />
     </View>
   )
 }
