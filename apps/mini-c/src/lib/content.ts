@@ -3,7 +3,6 @@ import type { IconName } from '../components/Icon'
 /** 品牌信息（来源：docs/归档 企业资料，不虚构数据） */
 export const BRAND = {
   name: '百英诺科技',
-  nameEn: 'BIO-INNO',
   title: '菌群检测',
   slogan: '专注创新成果转化',
 }

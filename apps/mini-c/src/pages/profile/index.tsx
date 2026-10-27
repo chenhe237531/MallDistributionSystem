@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Taro from '@tarojs/taro'
-import { Text, View } from '@tarojs/components'
+import { Picker, Text, View } from '@tarojs/components'
 import {
   Button as NutButton,
   Input as NutInput,
@@ -10,6 +10,7 @@ import {
 import { AppTabbar } from '../../components/AppTabbar'
 import { Icon, type IconName } from '../../components/Icon'
 import { api, clearToken, ensureLogin, go } from '../../lib/api'
+import { normalizeInviteInput } from '../../lib/invite'
 import { CONSENT_PLACEHOLDER, REPORT_DISCLAIMER } from '../../lib/content'
 
 type Me = {
@@ -20,6 +21,12 @@ type Me = {
   idCardNo: string | null
   gender: string | null
   birthDate: string | null
+  inviteBinding: {
+    name: string
+    phone: string
+    role: string
+    organizationName: string | null
+  } | null
 }
 
 type Ownership = {
@@ -39,11 +46,28 @@ const MENU: Array<{ key: string; label: string; icon: IconName; url: string }> =
   { key: 'reports', label: '我的报告', icon: 'report', url: '/pages/reports/index' },
   { key: 'orders', label: '我的订单', icon: 'card', url: '/pages/orders/index' },
   { key: 'progress', label: '检测进度', icon: 'packageCheck', url: '/pages/progress/index' },
+  { key: 'address', label: '收货地址', icon: 'box', url: '/pages/address/index' },
   { key: 'notifications', label: '消息中心', icon: 'message', url: '/pages/notifications/index' },
 ]
 
 const PRIVACY_PLACEHOLDER =
   '隐私政策正文待企业提供后更新。健康信息仅用于检测服务与报告解读，我们将对个人资料严格保密。'
+
+/** 性别取值统一中文；历史数据里的 male / female 展示时转换为中文 */
+const GENDER_OPTIONS = ['男', '女'] as const
+const GENDER_LABELS: Record<string, string> = { male: '男', female: '女' }
+
+function toChineseGender(value: string | null | undefined): string {
+  if (!value) {
+    return ''
+  }
+  return GENDER_LABELS[value] ?? value
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  merchant: '商家',
+  sales: '健康顾问',
+}
 
 export default function Profile() {
   const [me, setMe] = useState<Me | null>(null)
@@ -52,7 +76,9 @@ export default function Profile() {
   const [pendingClaims, setPendingClaims] = useState<Claim[]>([])
   const [realName, setRealName] = useState('')
   const [idCardNo, setIdCardNo] = useState('')
-  const [gender, setGender] = useState('male')
+  // 注册后默认不设置性别，由用户在实名认证时自行选择（男 / 女）
+  const [gender, setGender] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [aboutDialog, setAboutDialog] = useState<'consent' | 'privacy' | null>(null)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -70,7 +96,7 @@ export default function Profile() {
     setPendingClaims(claims.filter((claim) => claim.status === 'pending'))
     setRealName(profile.realName ?? '')
     setIdCardNo(profile.idCardNo ?? '')
-    setGender(profile.gender ?? 'male')
+    setGender(toChineseGender(profile.gender))
   }
 
   useEffect(() => {
@@ -90,13 +116,54 @@ export default function Profile() {
         data: {
           realName: realName.trim(),
           idCardNo: idCardNo.trim().toUpperCase(),
-          gender,
+          gender: gender || undefined,
         },
       })
       setMessage('实名信息已保存')
       await load()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '保存失败')
+    }
+  }
+
+  /** 扫描商家邀请码二维码；浏览器环境不支持时提示手动输入 */
+  const scanInvite = async () => {
+    try {
+      const result = await Taro.scanCode({ scanType: ['qrCode'] })
+      const code = normalizeInviteInput(result.result ?? '')
+      if (code) {
+        setInviteCode(code)
+        setError('')
+      }
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : ''
+      if (!message.includes('cancel')) {
+        Taro.showToast({ title: '当前环境不支持扫码，请手动输入邀请码', icon: 'none' })
+      }
+    }
+  }
+
+  const bindInvite = async () => {
+    const code = normalizeInviteInput(inviteCode)
+    if (!code) {
+      setError('请输入商家邀请码或扫码')
+      return
+    }
+    setError('')
+    setMessage('')
+    try {
+      const result = await api<{
+        name: string
+        role: string
+        organizationName: string | null
+        salesBound: boolean
+      }>('/customers/me/invite-code', { method: 'POST', data: { code } })
+      const roleLabel = ROLE_LABELS[result.role] ?? '服务人员'
+      setMessage(`绑定成功：${result.organizationName ?? ''} ${roleLabel} ${result.name}`)
+      setInviteCode('')
+      await load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '绑定失败')
     }
   }
 
@@ -162,6 +229,46 @@ export default function Profile() {
       {message ? <Text className="muted">{message}</Text> : null}
 
       <View className="section">
+        <Text className="section-title">商家服务绑定</Text>
+        <View className="card">
+          {me?.inviteBinding ? (
+            <View className="invite-binding">
+              <Text className="invite-binding-name">
+                {me.inviteBinding.organizationName ?? '—'} ·{' '}
+                {ROLE_LABELS[me.inviteBinding.role] ?? '服务人员'} {me.inviteBinding.name}
+              </Text>
+              <Text className="invite-binding-sub">
+                已与你建立服务绑定{me.inviteBinding.phone ? `（${me.inviteBinding.phone}）` : ''}，
+                更换邀请码可重新绑定
+              </Text>
+            </View>
+          ) : (
+            <Text className="muted">填写商家邀请码或扫描商家二维码，与商家 / 健康顾问建立服务绑定。</Text>
+          )}
+          <View className="field-gap" />
+          <View className="invite-input-row">
+            <NutInput
+              value={inviteCode}
+              placeholder="商家邀请码"
+              clearable
+              onChange={(value) => setInviteCode(value.toUpperCase())}
+            />
+            <NutButton
+              className="invite-scan-btn"
+              size="small"
+              fill="outline"
+              onClick={() => void scanInvite()}
+            >
+              扫码
+            </NutButton>
+            <NutButton className="invite-scan-btn" size="small" type="primary" onClick={() => void bindInvite()}>
+              绑定
+            </NutButton>
+          </View>
+        </View>
+      </View>
+
+      <View className="section">
         <Text className="section-title">实名认证</Text>
         <View className="card">
           <Text className="muted">激活检测盒前必须完成实名认证，信息仅用于检测服务与合规留痕。</Text>
@@ -181,12 +288,19 @@ export default function Profile() {
             onChange={(value) => setIdCardNo(value)}
           />
           <View className="field-gap" />
-          <NutInput
-            value={gender}
-            placeholder="性别 male / female"
-            clearable
-            onChange={(value) => setGender(value)}
-          />
+          <Picker
+            mode="selector"
+            range={[...GENDER_OPTIONS]}
+            value={GENDER_OPTIONS.indexOf(gender as (typeof GENDER_OPTIONS)[number])}
+            onChange={(event) => setGender(GENDER_OPTIONS[Number(event.detail.value)])}
+          >
+            <View className="picker-row" role="button">
+              <Text className={gender ? 'picker-value' : 'picker-placeholder'}>
+                {gender || '请选择性别（选填）'}
+              </Text>
+              <Text className="link-row-arrow">›</Text>
+            </View>
+          </Picker>
           <View className="field-gap" />
           <NutButton block type="primary" onClick={() => void saveRealName()}>
             保存实名信息

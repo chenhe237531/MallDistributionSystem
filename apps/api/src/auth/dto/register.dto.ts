@@ -15,4 +15,9 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   deviceId?: string
+
+  /** 商家邀请码（可选）：注册后直接建立与商家端销售的绑定意向 */
+  @IsOptional()
+  @IsString()
+  inviteCode?: string
 }

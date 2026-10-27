@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import Taro from '@tarojs/taro'
 import { Text, View } from '@tarojs/components'
-import { Button as NutButton, Empty, Tag, Toast } from '@nutui/nutui-react-taro'
+import { Button as NutButton, Empty, Tag } from '@nutui/nutui-react-taro'
 import { api, ensureLogin, go } from '../../lib/api'
+import { PageToast, toast } from '../../components/feedback'
 
 type Notification = {
   id: string
@@ -36,10 +37,7 @@ export default function Notifications() {
       return
     }
     void load().catch((cause) => {
-      Toast.show('notifications-toast', {
-        title: cause instanceof Error ? cause.message : '加载失败',
-        icon: 'fail',
-      })
+      toast(cause instanceof Error ? cause.message : '加载失败', 'fail')
     })
   }, [])
 
@@ -51,16 +49,13 @@ export default function Notifications() {
       await api(`/notifications/${item.id}/read`, { method: 'POST', data: {} })
       await load()
     } catch (cause) {
-      Toast.show('notifications-toast', {
-        title: cause instanceof Error ? cause.message : '操作失败',
-        icon: 'fail',
-      })
+      toast(cause instanceof Error ? cause.message : '操作失败', 'fail')
     }
   }
 
   return (
     <View className="page">
-      <Toast id="notifications-toast" />
+      <PageToast />
       <View className="hero">
         <Text className="hero-role">消息中心</Text>
         <Text className="hero-title">{unread} 条未读</Text>

@@ -4,8 +4,8 @@ import { Text, Textarea, View } from '@tarojs/components'
 import {
   Button as NutButton,
   Input as NutInput,
-  Toast,
 } from '@nutui/nutui-react-taro'
+import { PageToast, toast } from '../../components/feedback'
 import { StepFlow } from '../../components/StepFlow'
 import { api, ensureLogin, go, routeParams } from '../../lib/api'
 import {
@@ -250,7 +250,7 @@ export default function Questionnaire() {
         method: 'PATCH',
         data: { answers: payload },
       })
-      Toast.show('questionnaire-toast', { title: '问卷已提交', icon: 'success' })
+      toast('问卷已提交', 'success')
       setTimeout(() => {
         void Taro.redirectTo({ url: '/pages/progress/index' })
       }, 600)
@@ -291,7 +291,7 @@ export default function Questionnaire() {
 
   return (
     <View className="page">
-      <Toast id="questionnaire-toast" />
+      <PageToast />
       <StepFlow status={sample.status} questionnaireDone={done} />
 
       <View className="info-card">

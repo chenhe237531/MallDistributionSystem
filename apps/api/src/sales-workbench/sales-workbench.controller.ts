@@ -10,6 +10,12 @@ import { SalesWorkbenchService } from './sales-workbench.service'
 export class SalesWorkbenchController {
   constructor(private readonly service: SalesWorkbenchService) {}
 
+  @Get('my-invite')
+  @Roles(Role.MERCHANT, Role.SALES)
+  myInvite(@CurrentUser() user: AuthUser) {
+    return this.service.myInvite(user)
+  }
+
   @Get('customers')
   @Roles(Role.SALES)
   customers(@CurrentUser() user: AuthUser) {

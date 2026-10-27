@@ -10,8 +10,8 @@ import {
   Empty,
   Input as NutInput,
   Tag,
-  Toast,
 } from '@nutui/nutui-react-taro'
+import { PageToast, toast } from '../../components/feedback'
 import { useTheme } from '../../lib/theme'
 
 type Me = { roles: string[] }
@@ -22,8 +22,6 @@ type Claim = {
   sales: { name: string; phone: string } | null
 }
 
-const toast = (title: string, icon?: 'success' | 'fail') =>
-  Toast.show('b-toast', { title, icon })
 
 export default function Claims() {
   const { themeClass } = useTheme()
@@ -158,7 +156,7 @@ export default function Claims() {
         )}
       </View>
 
-      <Toast id="b-toast" />
+      <PageToast />
     </View>
   )
 }

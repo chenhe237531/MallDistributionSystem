@@ -3813,3 +3813,90 @@ html.theme-gold ::-webkit-scrollbar-track {
   background: linear-gradient(135deg, #e3c173 0%, #d4af37 55%, #b8952b 100%);
   color: var(--mall-on-primary);
 }
+
+/* ===== 我的邀请码（二维码弹层） ===== */
+.qr-code {
+  display: flex;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.qr-cell {
+  flex-shrink: 0;
+}
+
+.invite-sheet-sub {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--mall-text-secondary);
+}
+
+.invite-qr-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 16px;
+}
+
+.invite-qr-code {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--mall-primary);
+}
+
+.invite-qr-meta {
+  font-size: 11px;
+  color: var(--mall-text-secondary);
+}
+
+/* ===== 自研轻提示（替代 NutUI Toast，见 components/feedback.tsx） ===== */
+.app-toast-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-toast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 70vw;
+  padding: 18px 22px;
+  border-radius: 12px;
+  background: rgba(31, 35, 41, 0.88);
+  box-sizing: border-box;
+}
+
+.app-toast-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.app-toast-success .app-toast-icon {
+  color: #4fb286;
+}
+
+.app-toast-fail .app-toast-icon {
+  color: #e34d59;
+}
+
+.app-toast-title {
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  word-break: break-all;
+}

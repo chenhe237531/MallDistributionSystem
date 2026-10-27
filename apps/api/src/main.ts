@@ -5,6 +5,7 @@ import type { NextFunction, Request, Response } from 'express'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { AppModule } from './app.module'
+import { chineseValidationExceptionFactory } from './common/validation'
 
 // 业务自然日与推送时点统一按 Asia/Shanghai（doc/health-assistant-prd.html §4.1）
 process.env.TZ = 'Asia/Shanghai'
@@ -13,7 +14,14 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
   app.setGlobalPrefix('api')
   app.enableCors({ origin: true, credentials: true })
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }))
+  // 校验失败统一返回中文文案（DTO 显式 message 优先，未声明的按约束类型兜底）
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      exceptionFactory: chineseValidationExceptionFactory,
+    }),
+  )
 
   // 商品图片本地静态服务：apps/api/uploads/** → /uploads/**
   // 决策点 D1：生产环境可切换 OSS/CDN，仅需替换 URL 前缀，接口结构不变。

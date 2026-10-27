@@ -10,8 +10,8 @@ import {
   Empty,
   Input as NutInput,
   Tag,
-  Toast,
 } from '@nutui/nutui-react-taro'
+import { PageToast, toast } from '../../components/feedback'
 import { useTheme } from '../../lib/theme'
 
 type Entry = {
@@ -30,8 +30,6 @@ type Prepaid = {
   recharges: Recharge[]
 }
 
-const toast = (title: string, icon?: 'success' | 'fail') =>
-  Toast.show('b-toast', { title, icon })
 
 const ENTRY_TYPE_LABELS: Record<string, string> = {
   recharge: '充值入账',
@@ -255,7 +253,7 @@ export default function Prepaid() {
         )}
       </View>
 
-      <Toast id="b-toast" />
+      <PageToast />
     </View>
   )
 }

@@ -4,8 +4,8 @@ import { Image, Text, View } from '@tarojs/components'
 import {
   Button as NutButton,
   Input as NutInput,
-  Toast,
 } from '@nutui/nutui-react-taro'
+import { PageToast, toast } from '../../components/feedback'
 import { api, setToken } from '../../lib/api'
 import { Icon } from '../../components/Icon'
 import logoPng from '../../assets/logo.png'
@@ -25,12 +25,9 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const showToast = (title: string, icon?: 'success' | 'fail') =>
-    Toast.show('b-toast', { title, icon })
-
   const submit = async () => {
     if (!agreed) {
-      showToast('请先阅读并同意《服务协议》与《隐私政策》')
+      toast('请先阅读并同意《服务协议》与《隐私政策》')
       return
     }
     setLoading(true)
@@ -45,7 +42,7 @@ export default function Login() {
         return
       }
       setToken(result.token)
-      showToast('登录成功', 'success')
+      toast('登录成功', 'success')
       void Taro.redirectTo({ url: '/pages/index/index' })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '登录失败')
@@ -55,7 +52,7 @@ export default function Login() {
   }
 
   const showAgreement = (name: string) => {
-    showToast(`《${name}》文本待法务审定后上线`)
+    toast(`《${name}》文本待法务审定后上线`)
   }
 
   return (
@@ -115,7 +112,7 @@ export default function Login() {
         <Text className="muted login-demo">演示账号：13900000001 / Merchant@123</Text>
       </View>
 
-      <Toast id="b-toast" />
+      <PageToast />
     </View>
   )
 }

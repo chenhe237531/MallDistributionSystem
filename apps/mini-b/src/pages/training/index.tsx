@@ -8,8 +8,8 @@ import {
   Empty,
   Progress,
   Tag,
-  Toast,
 } from '@nutui/nutui-react-taro'
+import { PageToast, toast } from '../../components/feedback'
 import { useTheme } from '../../lib/theme'
 
 type Record = {
@@ -21,8 +21,6 @@ type Record = {
   course: { id: string; name: string; chapters: Array<{ id: string; title: string }> }
 }
 
-const toast = (title: string, icon?: 'success' | 'fail') =>
-  Toast.show('b-toast', { title, icon })
 
 export default function Training() {
   const { themeClass } = useTheme()
@@ -105,7 +103,7 @@ export default function Training() {
         ))}
       </View>
 
-      <Toast id="b-toast" />
+      <PageToast />
     </View>
   )
 }

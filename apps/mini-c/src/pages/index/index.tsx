@@ -107,9 +107,7 @@ export default function Index() {
           <Image className="store-hero-logo" src={logo} mode="aspectFit" />
           <View className="store-hero-brand">
             <Text className="store-hero-name">{BRAND.name}</Text>
-            <Text className="store-hero-en">
-              {BRAND.nameEn} · {BRAND.slogan}
-            </Text>
+            <Text className="store-hero-en">{BRAND.slogan}</Text>
           </View>
           {loggedIn ? (
             <View className="store-hero-user">

@@ -22,6 +22,7 @@
     "@tarojs/runtime": "4.3.0",
     "@tarojs/shared": "4.3.0",
     "@tarojs/taro": "4.3.0",
+    "qrcode-generator": "1.4.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

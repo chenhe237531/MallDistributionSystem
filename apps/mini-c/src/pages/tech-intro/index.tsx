@@ -23,9 +23,7 @@ export default function TechIntro() {
       <View className="tech-hero">
         <Image className="tech-hero-logo" src={logo} mode="aspectFit" />
         <Text className="tech-hero-title">{BRAND.title} · 肠道微生态科普</Text>
-        <Text className="tech-hero-sub">
-          {BRAND.nameEn} · {BRAND.name}
-        </Text>
+        <Text className="tech-hero-sub">{BRAND.name}</Text>
       </View>
 
       {TECH_SECTIONS.map((section) => (

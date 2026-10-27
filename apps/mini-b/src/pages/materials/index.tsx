@@ -8,8 +8,8 @@ import {
   CellGroup,
   Empty,
   Tag,
-  Toast,
 } from '@nutui/nutui-react-taro'
+import { PageToast, toast } from '../../components/feedback'
 import { useTheme } from '../../lib/theme'
 
 type Template = { id: string; name: string; category: string; body: string }
@@ -18,8 +18,6 @@ type Material = { id: string; title: string; content: string }
 // 渠道码由生成端附加在素材内容末尾（渠道码：XXX），摘要截断会把它藏掉，需单独提取展示
 const channelCodeOf = (content: string) => /渠道码[：:]\s*([A-Za-z0-9]+)/.exec(content)?.[1] ?? null
 
-const toast = (title: string, icon?: 'success' | 'fail') =>
-  Toast.show('b-toast', { title, icon })
 
 export default function Materials() {
   const { themeClass } = useTheme()
@@ -119,7 +117,7 @@ export default function Materials() {
         )}
       </View>
 
-      <Toast id="b-toast" />
+      <PageToast />
     </View>
   )
 }

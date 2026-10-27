@@ -76,16 +76,24 @@ model User {
   consents         ConsentRecord[]
   learningRecords  LearningRecord[]
   examAttempts     ExamAttempt[]
+  shippingAddresses ShippingAddress[]
   realName         String?
   idCardNo         String?
   gender           String?
   birthDate        DateTime?
   deviceId         String?
   riskLevel        String            @default("normal")
+  /** 商家端邀请码：商家 / 销售用户持有，C 端用户扫码或输入后完成绑定 */
+  inviteCode       String?           @unique
+  /** C 端用户通过邀请码绑定的商家端用户（销售或商家） */
+  invitedByUserId  String?
+  invitedBy        User?             @relation("MerchantInviteBinding", fields: [invitedByUserId], references: [id])
+  invitedCustomers User[]            @relation("MerchantInviteBinding")
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
   @@index([organizationId])
+  @@index([invitedByUserId])
 }
 
 model Qualification {
@@ -1267,4 +1275,22 @@ model BowelPrepRecord {
   readyBy      String?
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
+}
+
+/// C 端收货地址（检测盒寄送）：一人多址，默认地址用于下单自动带入
+model ShippingAddress {
+  id            String   @id @default(cuid())
+  customerId    String
+  customer      User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  receiverName  String
+  receiverPhone String
+  /// 省市区（可空，手动输入）
+  region        String   @default("")
+  /// 详细地址
+  detail        String
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([customerId])
 }

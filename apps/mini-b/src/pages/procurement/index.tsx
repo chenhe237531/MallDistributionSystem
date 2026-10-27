@@ -14,7 +14,8 @@ import { GoodsCard, type GoodsSummary } from '../../components/goods/GoodsCard'
 import { StatusTag } from '../../components/goods/StatusTag'
 import { ProcurementProgress } from '../../components/process/ProcurementProgress'
 import { MALL_CATEGORIES, goodsTags } from '../../config/home'
-import { Empty, Toast } from '@nutui/nutui-react-taro'
+import { Empty } from '@nutui/nutui-react-taro'
+import { PageToast, toast } from '../../components/feedback'
 import { useTheme } from '../../lib/theme'
 
 type Product = GoodsSummary & {
@@ -32,9 +33,6 @@ type Order = {
   remark?: string | null
   items?: OrderItem[]
 }
-
-const toast = (title: string, icon?: 'success' | 'fail') =>
-  Toast.show('b-toast', { title, icon })
 
 const matchKeywords = (name: string, keywords: string[]): boolean =>
   keywords.some((keyword) => name.toUpperCase().includes(keyword.toUpperCase()))
@@ -318,7 +316,7 @@ export default function Procurement() {
         </View>
       ) : null}
 
-      <Toast id="b-toast" />
+      <PageToast />
       <AppTabbar active="mall" />
     </View>
   )

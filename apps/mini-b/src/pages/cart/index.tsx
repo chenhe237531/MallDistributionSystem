@@ -6,8 +6,8 @@ import { api, ensureLogin, go } from '../../lib/api'
 import { cartCount, readCart, writeCart, type CartMap } from '../../lib/cart'
 import { AppTabbar } from '../../components/AppTabbar'
 import { GoodsThumb } from '../../components/goods/GoodsThumb'
-import { Toast } from '@nutui/nutui-react-taro'
 import { Empty } from '@nutui/nutui-react-taro'
+import { PageToast, toast } from '../../components/feedback'
 import { useTheme } from '../../lib/theme'
 
 type Product = {
@@ -19,9 +19,6 @@ type Product = {
   category?: string | null
   sampleType?: string
 }
-
-const toast = (title: string, icon?: 'success' | 'fail') =>
-  Toast.show('b-toast', { title, icon })
 
 export default function Cart() {
   const { themeClass } = useTheme()
@@ -173,7 +170,7 @@ export default function Cart() {
         </View>
       ) : null}
 
-      <Toast id="b-toast" />
+      <PageToast />
       <AppTabbar active="cart" />
     </View>
   )

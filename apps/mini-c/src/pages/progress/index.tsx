@@ -3,8 +3,8 @@ import { Text, View } from '@tarojs/components'
 import {
   Button as NutButton,
   Input as NutInput,
-  Toast,
 } from '@nutui/nutui-react-taro'
+import { PageToast, toast } from '../../components/feedback'
 import { Icon } from '../../components/Icon'
 import { ServicePanel } from '../../components/ServicePanel'
 import { StepFlow } from '../../components/StepFlow'
@@ -69,7 +69,7 @@ export default function Progress() {
         method: 'POST',
         data: { trackingNo: trackingNo.trim() },
       })
-      Toast.show('progress-toast', { title: '运单号已登记', icon: 'success' })
+      toast('运单号已登记', 'success')
       setTrackingNo('')
       await load()
     } catch (cause) {
@@ -117,7 +117,7 @@ export default function Progress() {
 
   return (
     <View className="page">
-      <Toast id="progress-toast" />
+      <PageToast />
 
       {samples.length > 1 ? (
         <View className="sample-switch">

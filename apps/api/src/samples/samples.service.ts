@@ -18,6 +18,7 @@ import { BoxCodesService } from '../box-codes/box-codes.service'
 import { CommissionsService } from '../commissions/commissions.service'
 import { NotificationsService } from '../notifications/notifications.service'
 import { PrismaService } from '../prisma/prisma.service'
+import { asRoleArray } from '../prisma/array-values'
 import { ActivateBoxCodeDto, ReportAuthorizationDto } from './dto/activation.dto'
 import {
   AbnormalityDto,
@@ -173,6 +174,34 @@ export class SamplesService {
       const existingOwnership = await tx.customerOwnership.findUnique({
         where: { customerId: actor.sub },
       })
+      // 注册 / 绑定入口留下的邀请绑定意向：首次归属时自动落到对应销售名下
+      let inviteSalesId: string | null = null
+      if (!existingOwnership) {
+        const customer = await tx.user.findUnique({
+          where: { id: actor.sub },
+          select: { invitedByUserId: true },
+        })
+        if (customer?.invitedByUserId) {
+          const [inviter, merchantUser] = await Promise.all([
+            tx.user.findUnique({
+              where: { id: customer.invitedByUserId },
+              select: { id: true, roles: true, organizationId: true },
+            }),
+            tx.user.findUnique({
+              where: { id: box.merchantId },
+              select: { organizationId: true },
+            }),
+          ])
+          const inviterRoles = inviter ? asRoleArray(inviter.roles) : []
+          if (
+            inviter?.organizationId &&
+            inviter.organizationId === merchantUser?.organizationId &&
+            inviterRoles.includes(Role.SALES)
+          ) {
+            inviteSalesId = inviter.id
+          }
+        }
+      }
       const ownership =
         existingOwnership ??
         (await tx.customerOwnership.create({
@@ -181,6 +210,7 @@ export class SamplesService {
             channelId: box.channelId,
             channelType,
             merchantId,
+            salesId: inviteSalesId ?? undefined,
             sourceBoxCode: box.code,
           },
         }))

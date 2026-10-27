@@ -6,6 +6,7 @@ import { api, clearToken, ensureLogin, go } from '../../lib/api'
 import { PageToast, toast } from '../../components/feedback'
 import { AppTabbar } from '../../components/AppTabbar'
 import { Icon, type IconName } from '../../components/Icon'
+import { QrCode } from '../../components/QrCode'
 import { PROFILE_ORDER_BUCKETS } from '../../config/home'
 import { Button as NutButton, Dialog } from '@nutui/nutui-react-taro'
 import { useTheme } from '../../lib/theme'
@@ -23,6 +24,14 @@ type Order = {
   id: string
   status: string
   totalAmountCents: number
+}
+
+type InviteInfo = {
+  inviteCode: string
+  qrPayload: string
+  name: string
+  role: string
+  organizationName: string | null
 }
 
 type AppEntry = {
@@ -54,6 +63,8 @@ export default function Profile() {
   const [prepaid, setPrepaid] = useState<Prepaid | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [unread, setUnread] = useState(0)
+  const [invite, setInvite] = useState<InviteInfo | null>(null)
+  const [inviteSheetOpen, setInviteSheetOpen] = useState(false)
 
   const load = async () => {
     const [profile, notificationRes, orderList] = await Promise.all([
@@ -66,6 +77,10 @@ export default function Profile() {
     setOrders(orderList)
     if (profile.roles.includes('merchant')) {
       setPrepaid(await api<Prepaid>('/prepaid/me'))
+    }
+    // 商家 / 销售展示邀请码，供 C 端用户扫码或输入后绑定服务关系
+    if (profile.roles.includes('merchant') || profile.roles.includes('sales')) {
+      setInvite(await api<InviteInfo>('/sales-workbench/my-invite').catch(() => null))
     }
   }
 
@@ -220,6 +235,21 @@ export default function Profile() {
 
       <View className="section">
         <Text className="section-title">经营工具</Text>
+        {invite ? (
+          <View className="card profile-tool" onClick={() => setInviteSheetOpen(true)}>
+            <View className="profile-tool-icon tone-primary">
+              <Icon name="userPlus" size={20} />
+            </View>
+            <View className="profile-tool-main">
+              <Text className="profile-tool-name">我的邀请码</Text>
+              <Text className="profile-tool-desc">
+                {invite.inviteCode} · 向客户出示二维码即可绑定服务关系
+              </Text>
+            </View>
+            <Text className="profile-tool-arrow">›</Text>
+          </View>
+        ) : null}
+
         <View className="card profile-tool" onClick={() => go('/pages/pricing/index')}>
           <View className="profile-tool-icon tone-primary">
             <Icon name="card" size={20} />
@@ -272,6 +302,43 @@ export default function Profile() {
       <NutButton className="profile-logout" block type="danger" fill="outline" onClick={confirmLogout}>
         退出登录
       </NutButton>
+
+      {inviteSheetOpen && invite ? (
+        <View className="theme-sheet-mask" onClick={() => setInviteSheetOpen(false)}>
+          <View className="theme-sheet invite-sheet" onClick={(event) => event.stopPropagation()}>
+            <View className="theme-sheet-head">
+              <Text className="theme-sheet-title">我的邀请码</Text>
+              <Text className="theme-sheet-close" onClick={() => setInviteSheetOpen(false)}>
+                关闭
+              </Text>
+            </View>
+            <Text className="invite-sheet-sub">
+              请 C 端用户在「登录页」或「我的 - 商家服务绑定」中扫码或输入邀请码，
+              完成后该客户将绑定到你名下
+            </Text>
+            <View className="invite-qr-wrap">
+              <QrCode text={invite.qrPayload} size={190} />
+              <Text className="invite-qr-code">{invite.inviteCode}</Text>
+              <Text className="invite-qr-meta">
+                {invite.organizationName ?? '—'} · {ROLE_LABELS[invite.role as Role] ?? invite.role}{' '}
+                {invite.name}
+              </Text>
+            </View>
+            <NutButton
+              block
+              type="primary"
+              fill="outline"
+              onClick={() => {
+                void Taro.setClipboardData({ data: invite.inviteCode }).then(() =>
+                  toast('邀请码已复制', 'success'),
+                )
+              }}
+            >
+              复制邀请码
+            </NutButton>
+          </View>
+        </View>
+      ) : null}
 
       {themeSheetOpen ? (
         <View className="theme-sheet-mask" onClick={() => setThemeSheetOpen(false)}>

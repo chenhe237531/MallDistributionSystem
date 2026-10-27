@@ -5,8 +5,8 @@ import {
   Button as NutButton,
   Input as NutInput,
   Switch as NutSwitch,
-  Toast,
 } from '@nutui/nutui-react-taro'
+import { PageToast, toast } from '../../components/feedback'
 import { Icon } from '../../components/Icon'
 import { StepFlow } from '../../components/StepFlow'
 import { api, ensureLogin, go, routeParams } from '../../lib/api'
@@ -110,7 +110,7 @@ export default function Activate() {
 
   const scanCode = () => {
     if (Taro.getEnv() !== Taro.ENV_TYPE.WEAPP) {
-      Toast.show('activate-toast', { title: 'H5 暂不支持扫码，请手动输入样本编号' })
+      toast('H5 暂不支持扫码，请手动输入样本编号')
       return
     }
     void Taro.scanCode({})
@@ -188,7 +188,7 @@ export default function Activate() {
 
   return (
     <View className="page">
-      <Toast id="activate-toast" />
+      <PageToast />
       <StepFlow status="binding" />
 
       <View className="form-card">

@@ -342,6 +342,9 @@ importers:
       '@tarojs/taro':
         specifier: 4.3.0
         version: 4.3.0(53fbbcad8fb302ae0262dffeeada3b2f)
+      qrcode-generator:
+        specifier: 1.4.4
+        version: 1.4.4
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -7669,6 +7672,9 @@ packages:
 
   pure-rand@6.1.0:
     resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
+
+  qrcode-generator@1.4.4:
+    resolution: {integrity: sha512-HM7yY8O2ilqhmULxGMpcHSF1EhJJ9yBj8gvDEuZ6M+KGJ0YY2hKpnXvRD+hZPLrDVck3ExIGhmPtSdcjC+guuw==}
 
   qs@6.16.1:
     resolution: {integrity: sha512-5Px6J7rfHBAGUhNQ3es4YzcOdBBw0SDcVtThJml4RdnKw4tKs2epA0kPZ+K8X+WiHktT93RHVcQ/3ym5aTCgtg==}
@@ -18286,6 +18292,8 @@ snapshots:
   punycode@2.3.1: {}
 
   pure-rand@6.1.0: {}
+
+  qrcode-generator@1.4.4: {}
 
   qs@6.16.1:
     dependencies:

@@ -15,6 +15,7 @@ export default defineAppConfig({
     'pages/reports/index',
     'pages/share/index',
     'pages/profile/index',
+    'pages/address/index',
     'pages/notifications/index',
   ],
   window: {

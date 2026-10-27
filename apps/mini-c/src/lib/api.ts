@@ -41,7 +41,7 @@ export function routeParams(): Record<string, string> {
 
 export async function api<T>(
   path: string,
-  options: { method?: 'GET' | 'POST' | 'PATCH'; data?: unknown } = {},
+  options: { method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'; data?: unknown } = {},
 ): Promise<T> {
   const token = getToken()
   const response = await Taro.request({

@@ -9,12 +9,36 @@ import { ClaimStatus as PrismaClaimStatus } from '@prisma/client'
 import { Role } from '@mall/shared'
 import { asRoleArray } from '../prisma/array-values'
 import { PrismaService } from '../prisma/prisma.service'
+import { generateUniqueInviteCode } from '../common/invite-code'
 import { AssignSalesDto, CreateClaimDto } from './dto/workbench.dto'
 import type { AuthUser } from '../auth/auth-user.type'
 
 @Injectable()
 export class SalesWorkbenchService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /** 商家端我的邀请码：懒生成；C 端用户扫码或输入后绑定到当前商家 / 销售 */
+  async myInvite(actor: AuthUser) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: actor.sub },
+      include: { organization: true },
+    })
+    if (!user?.organizationId) {
+      throw new BadRequestException('未绑定商家组织，无法生成邀请码')
+    }
+    const inviteCode = user.inviteCode ?? (await generateUniqueInviteCode(this.prisma))
+    if (!user.inviteCode) {
+      await this.prisma.user.update({ where: { id: user.id }, data: { inviteCode } })
+    }
+    return {
+      inviteCode,
+      // 二维码载荷：C 端扫码后按前缀解析出邀请码
+      qrPayload: `INVITE:${inviteCode}`,
+      name: user.name,
+      role: user.primaryRole,
+      organizationName: user.organization?.name ?? null,
+    }
+  }
 
   async customersForSales(salesId: string) {
     const ownerships = await this.prisma.customerOwnership.findMany({

@@ -635,6 +635,49 @@ page {
   color: var(--mall-text-secondary);
 }
 
+/* ===== 商家邀请码输入（登录页 / 我的页共用） ===== */
+.invite-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .nut-input {
+    flex: 1;
+  }
+}
+
+.invite-scan-btn {
+  flex-shrink: 0;
+}
+
+.invite-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--mall-text-secondary);
+}
+
+/* ===== 我的页：服务绑定卡片 ===== */
+.invite-binding {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--mall-primary-light);
+}
+
+.invite-binding-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.invite-binding-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--mall-text-secondary);
+}
+
 /* ===== 采样指导视频区块（激活页） ===== */
 .guide-video-block {
   margin-top: 8px;
@@ -1163,6 +1206,23 @@ page {
 
 .picker-placeholder {
   color: var(--mall-text-tertiary);
+}
+
+.picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--mall-bg);
+
+  .picker-value,
+  .picker-placeholder {
+    margin-top: 0;
+    padding: 0;
+    background: none;
+    font-size: 13px;
+  }
 }
 
 .pill-group {
@@ -2659,4 +2719,81 @@ page {
   font-size: 11px;
   line-height: 1.6;
   color: var(--mall-text-secondary);
+}
+
+/* ===== 收货地址簿 ===== */
+.address-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.address-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.address-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.address-card-detail {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--mall-text-secondary);
+}
+
+.address-card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ===== 自研轻提示（替代 NutUI Toast，见 components/feedback.tsx） ===== */
+.app-toast-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-toast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 70vw;
+  padding: 18px 22px;
+  border-radius: 12px;
+  background: rgba(31, 35, 41, 0.88);
+  box-sizing: border-box;
+}
+
+.app-toast-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.app-toast-success .app-toast-icon {
+  color: #4fb286;
+}
+
+.app-toast-fail .app-toast-icon {
+  color: #e34d59;
+}
+
+.app-toast-title {
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  word-break: break-all;
 }

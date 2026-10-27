@@ -5,8 +5,8 @@ import {
   Button as NutButton,
   Empty,
   Tag,
-  Toast,
 } from '@nutui/nutui-react-taro'
+import { PageToast, toast } from '../../components/feedback'
 import {
   BOWEL_PREP_STATUS_LABELS,
   BOWEL_PREP_STATUS_TONES,
@@ -40,8 +40,6 @@ type Journey = {
 
 type Overview = { total: number; active: number; pendingSchedule: number; prepAlerts: number }
 
-const toast = (title: string, icon?: 'success' | 'fail') =>
-  Toast.show('b-toast', { title, icon })
 
 function suggestedDate(): string {
   return shanghaiDateInput(8)
@@ -136,7 +134,7 @@ export default function Journeys() {
 
   return (
     <View className={`page page-with-tabbar ${themeClass}`}>
-      <Toast id="b-toast" />
+      <PageToast />
 
       <View className="journey-stats">
         <View className="journey-stat">

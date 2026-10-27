@@ -9,6 +9,7 @@ import { AccountStatus as PrismaAccountStatus, User } from '@prisma/client'
 import * as bcrypt from 'bcryptjs'
 import { Role, type UserSummary } from '@mall/shared'
 import { PrismaService } from '../prisma/prisma.service'
+import { resolveInviteInviter } from '../common/invite-code'
 import { LoginDto } from './dto/login.dto'
 import { RegisterDto } from './dto/register.dto'
 import type { AuthUser } from './auth-user.type'
@@ -43,6 +44,13 @@ export class AuthService {
       }
     }
 
+    // 商家邀请码：注册时填写则记录绑定意向，盒码激活归属后自动落到对应销售名下
+    let invitedByUserId: string | null = null
+    if (dto.inviteCode?.trim()) {
+      const inviter = await resolveInviteInviter(this.prisma, dto.inviteCode)
+      invitedByUserId = inviter.id
+    }
+
     const user = await this.prisma.user.create({
       data: {
         phone: dto.phone,
@@ -53,6 +61,7 @@ export class AuthService {
         status: PrismaAccountStatus.active,
         deviceId,
         riskLevel,
+        invitedByUserId,
       },
     })
     if (riskLevel === 'watch') {

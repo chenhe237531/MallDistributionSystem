@@ -561,7 +561,7 @@ async function main(): Promise<void> {
       status: 'active',
       realName: '演示客户',
       idCardNo: '110101199003071236',
-      gender: 'male',
+      gender: '男',
     },
     create: {
       phone: '13900000003',
@@ -572,7 +572,7 @@ async function main(): Promise<void> {
       status: 'active',
       realName: '演示客户',
       idCardNo: '110101199003071236',
-      gender: 'male',
+      gender: '男',
     },
   })
 

@@ -7,7 +7,8 @@ import { cartCount, readCart, writeCart } from '../../lib/cart'
 import { GoodsThumb } from '../../components/goods/GoodsThumb'
 import { SpecList } from '../../components/goods/SpecList'
 import { goodsTags } from '../../config/home'
-import { Empty, Toast } from '@nutui/nutui-react-taro'
+import { Empty } from '@nutui/nutui-react-taro'
+import { PageToast, toast } from '../../components/feedback'
 import { useTheme } from '../../lib/theme'
 
 type RelatedProduct = {
@@ -56,8 +57,6 @@ function complianceText(category?: string | null): string {
   }
   return '本页面内容仅供健康信息参考，不构成诊疗建议。'
 }
-
-const toast = (title: string, icon?: 'success' | 'fail') => Toast.show('b-toast', { title, icon })
 
 export default function ProductDetail() {
   const { themeClass } = useTheme()
@@ -265,7 +264,7 @@ export default function ProductDetail() {
         </View>
       </View>
 
-      <Toast id="b-toast" />
+      <PageToast />
     </View>
   )
 }
