@@ -71,7 +71,7 @@ describe('merchant prototype screen contract', () => {
   it('keeps operating metrics before the five direct merchant shortcuts', () => {
     assert.ok(homeScreen.indexOf('home-operations') < homeScreen.indexOf('home-apps-section'))
     assert.match(homeScreen, /hero b-hero prototype-surface prototype-decor/)
-    assert.match(homeScreen, /PRIMARY_HOME_ENTRIES\.map/)
+    assert.match(homeScreen, /filterEntriesByMenus\(menus, PRIMARY_HOME_ENTRIES\)\.map/)
   })
 
   it('presents profile identity and prepaid account as prototype surfaces', () => {
