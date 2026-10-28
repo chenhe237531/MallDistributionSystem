@@ -5389,3 +5389,199 @@ html.theme-gold ::-webkit-scrollbar-track {
   background: var(--mall-primary-grad);
   color: var(--mall-on-primary);
 }
+
+/* ===== 百英诺原型 · 采购商城与商品详情 ===== */
+.proc-prototype-body {
+  display: block;
+  min-height: 60vh;
+}
+
+.proc-category-rail {
+  width: 100%;
+  padding: 8px 12px 4px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.proc-category-rail .proc-side-item {
+  display: inline-flex;
+  width: auto;
+  min-width: 68px;
+  min-height: 34px;
+  margin-right: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--mall-border);
+  border-radius: 999px;
+  background: var(--mall-card);
+  vertical-align: top;
+}
+
+.proc-category-rail .proc-side-item-active::before {
+  display: none;
+}
+
+.proc-prototype-main {
+  padding: 8px 12px 18px;
+  background: transparent;
+}
+
+.proc-catalog-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px 0;
+}
+
+.proc-catalog-grid .goods-card {
+  width: calc(50% - 5px);
+  min-height: 260px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.proc-catalog-grid .goods-card-media {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+}
+
+.proc-catalog-grid .goods-card-info {
+  gap: 5px;
+  padding: 8px 2px 0;
+}
+
+.proc-catalog-grid .goods-card-name {
+  min-height: 36px;
+  font-size: 12px;
+}
+
+.proc-catalog-grid .goods-card-tags {
+  min-height: 17px;
+}
+
+.proc-catalog-grid .goods-card-tag:nth-child(n + 3) {
+  display: none;
+}
+
+.proc-catalog-grid .goods-card-price {
+  font-size: 16px;
+}
+
+.proc-catalog-grid .goods-card-retail {
+  display: none;
+}
+
+.theme-gold .proc-prototype-head {
+  padding: calc(12px + env(safe-area-inset-top)) 12px 10px;
+  border-bottom: 1px solid rgba(226, 194, 115, 0.2);
+  background:
+    radial-gradient(circle at 98% 0%, rgba(226, 194, 115, 0.18), transparent 38%),
+    #0b0c0e;
+}
+
+.theme-gold .proc-head-title {
+  color: var(--mall-primary-hover);
+  letter-spacing: 1px;
+}
+
+.theme-gold .proc-head-search {
+  height: 38px;
+  border: 1px solid rgba(226, 194, 115, 0.3);
+  background: rgba(19, 20, 22, 0.94);
+  color: var(--mall-text-secondary);
+}
+
+.theme-gold .proc-category-rail {
+  background: rgba(11, 12, 14, 0.9);
+}
+
+.theme-gold .proc-category-rail .proc-side-item {
+  border-color: rgba(226, 194, 115, 0.2);
+  background: rgba(20, 21, 24, 0.9);
+}
+
+.theme-gold .proc-category-rail .proc-side-item-active {
+  border-color: rgba(245, 218, 143, 0.78);
+  background: var(--mall-primary-grad);
+  color: var(--mall-on-primary);
+}
+
+.theme-gold .proc-price-entry.prototype-surface {
+  margin-bottom: 12px;
+  background:
+    linear-gradient(135deg, rgba(226, 194, 115, 0.1), transparent 68%),
+    var(--mall-card);
+}
+
+.theme-gold .proc-catalog-grid .goods-card.prototype-surface {
+  flex-direction: column;
+  gap: 0;
+  border-color: rgba(226, 194, 115, 0.24);
+  background:
+    linear-gradient(165deg, rgba(226, 194, 115, 0.06), transparent 45%),
+    rgba(20, 21, 24, 0.98);
+}
+
+.theme-gold .proc-catalog-grid .goods-card-action {
+  border: 1px solid rgba(245, 218, 143, 0.7);
+  background: transparent;
+  color: var(--mall-primary-hover);
+  box-shadow: none;
+}
+
+.theme-gold .detail-media-stage.prototype-surface {
+  margin: 8px 12px 0;
+  width: auto;
+  border-color: rgba(226, 194, 115, 0.28);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 78% 20%, rgba(226, 194, 115, 0.12), transparent 36%),
+    var(--mall-media-bg);
+}
+
+.theme-gold .detail-media-stage.prototype-decor::after {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.theme-gold .detail-summary-card.prototype-surface {
+  border-color: rgba(226, 194, 115, 0.28);
+}
+
+.detail-spec-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--mall-border-light);
+}
+
+.detail-spec-trigger-label,
+.detail-spec-trigger-value {
+  display: block;
+}
+
+.detail-spec-trigger-label {
+  font-size: 11px;
+  color: var(--mall-text-secondary);
+}
+
+.detail-spec-trigger-value {
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.detail-spec-trigger-arrow {
+  font-size: 23px;
+  color: var(--mall-primary);
+}
+
+.theme-gold .detail-actionbar.prototype-actionbar {
+  border-top-color: rgba(226, 194, 115, 0.26);
+  background: rgba(11, 12, 14, 0.94);
+  box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.3);
+}

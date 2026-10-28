@@ -31,8 +31,8 @@ type Props = {
 export function GoodsCard({ product, tags = [], onOpen, onAdd }: Props) {
   const retail = product.retailPriceCents ?? 0
   return (
-    <View className="goods-card" onClick={onOpen}>
-      <GoodsThumb src={product.images?.[0]} name={product.name} size="md" />
+    <View className="goods-card prototype-surface" onClick={onOpen}>
+      <GoodsThumb className="goods-card-media" src={product.images?.[0]} name={product.name} size="lg" />
       <View className="goods-card-info">
         <Text className="goods-card-name">{product.name}</Text>
         <View className="goods-card-tags">

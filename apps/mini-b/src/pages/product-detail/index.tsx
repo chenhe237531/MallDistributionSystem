@@ -119,8 +119,8 @@ export default function ProductDetail() {
   const retail = detail.retailPriceCents ?? 0
 
   return (
-    <View className={`page page-detail ${themeClass}`}>
-      <View className="goods-media-stage detail-media-stage">
+    <View className={`page page-detail prototype-shell ${themeClass}`}>
+      <View className="goods-media-stage detail-media-stage prototype-surface prototype-decor">
         {images.length > 0 ? (
           <Swiper
             className="detail-swiper"
@@ -148,7 +148,7 @@ export default function ProductDetail() {
         )}
       </View>
 
-      <View className="detail-card">
+      <View className="detail-card detail-summary-card prototype-surface">
         <View className="detail-price-row">
           <Text className="detail-price">
             <Text className="detail-price-symbol">¥</Text>
@@ -168,6 +168,13 @@ export default function ProductDetail() {
             </Text>
           ))}
           <Text className="detail-sku">SKU {detail.skuCode}</Text>
+        </View>
+        <View className="detail-spec-trigger">
+          <View>
+            <Text className="detail-spec-trigger-label">规格选择</Text>
+            <Text className="detail-spec-trigger-value">单人装 · 默认规格</Text>
+          </View>
+          <Text className="detail-spec-trigger-arrow">›</Text>
         </View>
       </View>
 
@@ -263,7 +270,7 @@ export default function ProductDetail() {
 
       <Text className="detail-compliance">{complianceText(detail.category)}</Text>
 
-      <View className="detail-actionbar">
+      <View className="detail-actionbar prototype-actionbar">
         {/* 描金次核心 + 金色渐变主 CTA（黑金规范 §5.1，避免双金抢戏） */}
         <Button variant="outline" size="lg" className="detail-action-item" onClick={() => addToCart(false)}>
           加入采购车

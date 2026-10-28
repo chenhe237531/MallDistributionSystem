@@ -12,6 +12,9 @@ const appStyles = readFileSync(new URL('./app.scss', import.meta.url), 'utf8')
 const loginScreen = readFileSync(new URL('./pages/login/index.tsx', import.meta.url), 'utf8')
 const homeScreen = readFileSync(new URL('./pages/index/index.tsx', import.meta.url), 'utf8')
 const profileScreen = readFileSync(new URL('./pages/profile/index.tsx', import.meta.url), 'utf8')
+const procurementScreen = readFileSync(new URL('./pages/procurement/index.tsx', import.meta.url), 'utf8')
+const productDetailScreen = readFileSync(new URL('./pages/product-detail/index.tsx', import.meta.url), 'utf8')
+const goodsCard = readFileSync(new URL('./components/goods/GoodsCard.tsx', import.meta.url), 'utf8')
 
 describe('product media presentation contract', () => {
   it('supports list thumbnails and a non-cropping detail hero', () => {
@@ -74,5 +77,25 @@ describe('merchant prototype screen contract', () => {
     assert.match(profileScreen, /profile-user-card prototype-surface prototype-decor/)
     assert.match(profileScreen, /card profile-stats prototype-surface/)
     assert.match(profileScreen, /可用预付款/)
+  })
+})
+
+describe('merchant commerce prototype contract', () => {
+  it('uses a visual card and direct cart action for each catalogue product', () => {
+    assert.match(goodsCard, /className="goods-card prototype-surface"/)
+    assert.match(goodsCard, /className="goods-card-media"/)
+    assert.match(goodsCard, /className="goods-card-action"/)
+  })
+
+  it('renders the catalogue category rail and two-column product grid from existing filters', () => {
+    assert.match(procurementScreen, /className="proc-side proc-category-rail"/)
+    assert.match(procurementScreen, /scrollX/)
+    assert.match(procurementScreen, /className="proc-catalog-grid"/)
+    assert.match(procurementScreen, /filteredProducts\.map/)
+  })
+
+  it('keeps detail media inside the prototype stage and exposes a specification trigger', () => {
+    assert.match(productDetailScreen, /goods-media-stage detail-media-stage prototype-surface prototype-decor/)
+    assert.match(productDetailScreen, /className="detail-spec-trigger"/)
   })
 })
