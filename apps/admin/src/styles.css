@@ -181,3 +181,16 @@ body {
     row-gap: 8px;
   }
 }
+
+/* 商家菜单权限配置弹窗：两列勾选网格 */
+.merchant-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+}
+
+@media (max-width: 640px) {
+  .merchant-menu-grid {
+    grid-template-columns: 1fr;
+  }
+}

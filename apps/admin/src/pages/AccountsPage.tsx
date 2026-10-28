@@ -1,5 +1,17 @@
 import { useRef, useState } from 'react'
-import { Button, Descriptions, Popconfirm, Space, Tag, message } from 'antd'
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Descriptions,
+  Modal,
+  Popconfirm,
+  Space,
+  Spin,
+  Tag,
+  Typography,
+  message,
+} from 'antd'
 import type { ActionType, ProColumns } from '@ant-design/pro-components'
 import {
   ModalForm,
@@ -10,7 +22,7 @@ import {
   ProFormText,
   ProTable,
 } from '@ant-design/pro-components'
-import { ROLE_LABELS, Role } from '@mall/shared'
+import { MERCHANT_MENU_ITEMS, ROLE_LABELS, Role } from '@mall/shared'
 import { api } from '../lib/api'
 
 type Channel = { id: string; code: string; type: string; status: string }
@@ -71,9 +83,26 @@ type CreateValues = {
   dualPartner?: boolean
 }
 
+/** GET/PUT /merchant-menus/:merchantId 返回结构 */
+type MerchantMenusConfig = {
+  merchantId: string
+  menus: string[]
+  isDefault: boolean
+  updatedAt: string | null
+  updatedBy: string | null
+}
+
 export default function AccountsPage() {
   const actionRef = useRef<ActionType>()
   const [createOpen, setCreateOpen] = useState(false)
+  // 商家菜单权限配置弹窗状态（仅已启用的商家主账号可配置）
+  const [menuTarget, setMenuTarget] = useState<Account | null>(null)
+  const [menuLoading, setMenuLoading] = useState(false)
+  const [menuSaving, setMenuSaving] = useState(false)
+  const [menuChecked, setMenuChecked] = useState<string[]>([])
+  const [menuMeta, setMenuMeta] = useState<{ isDefault: boolean; updatedAt: string | null } | null>(
+    null,
+  )
 
   const reload = () => actionRef.current?.reload()
 
@@ -85,6 +114,56 @@ export default function AccountsPage() {
     } catch (cause) {
       message.error(cause instanceof Error ? cause.message : '操作失败')
     }
+  }
+
+  const openMenuPerms = async (entity: Account) => {
+    setMenuTarget(entity)
+    setMenuLoading(true)
+    setMenuMeta(null)
+    setMenuChecked([])
+    try {
+      const config = await api<MerchantMenusConfig>(`/merchant-menus/${entity.id}`)
+      setMenuChecked(config.menus)
+      setMenuMeta({ isDefault: config.isDefault, updatedAt: config.updatedAt })
+    } catch (cause) {
+      message.error(cause instanceof Error ? cause.message : '加载菜单权限失败')
+      setMenuTarget(null)
+    } finally {
+      setMenuLoading(false)
+    }
+  }
+
+  const doSaveMenuPerms = async () => {
+    if (!menuTarget) {
+      return
+    }
+    setMenuSaving(true)
+    try {
+      const config = await api<MerchantMenusConfig>(`/merchant-menus/${menuTarget.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ menus: menuChecked }),
+      })
+      message.success(`已保存「${menuTarget.name}」的菜单权限（${config.menus.length} 项）`)
+      setMenuTarget(null)
+    } catch (cause) {
+      message.error(cause instanceof Error ? cause.message : '保存失败')
+    } finally {
+      setMenuSaving(false)
+    }
+  }
+
+  const saveMenuPerms = () => {
+    if (menuChecked.length === 0) {
+      Modal.confirm({
+        title: '确认关闭全部可选菜单？',
+        content: '保存后该商家端首页将不展示任何可选功能入口，仅保留核心页签。',
+        okText: '仍要保存',
+        cancelText: '返回修改',
+        onOk: () => doSaveMenuPerms(),
+      })
+      return
+    }
+    void doSaveMenuPerms()
   }
 
   const columns: ProColumns<Account>[] = [
@@ -137,7 +216,7 @@ export default function AccountsPage() {
     {
       title: '操作',
       valueType: 'option',
-      width: 150,
+      width: 220,
       render: (_, entity) => {
         if (entity.status === 'pending') {
           return [
@@ -158,7 +237,7 @@ export default function AccountsPage() {
           ]
         }
         if (entity.status === 'active') {
-          return [
+          const actions = [
             <Popconfirm
               key="suspend"
               title="停用后渠道码与未激活盒码将失效，确认？"
@@ -167,6 +246,15 @@ export default function AccountsPage() {
               <a style={{ color: 'var(--ant-color-error)' }}>停用</a>
             </Popconfirm>,
           ]
+          // 已入驻商家：配置商家端菜单权限
+          if (entity.primaryRole === Role.MERCHANT) {
+            actions.unshift(
+              <a key="menus" onClick={() => void openMenuPerms(entity)}>
+                菜单权限
+              </a>,
+            )
+          }
+          return actions
         }
         return [<span key="none">—</span>]
       },
@@ -333,6 +421,82 @@ export default function AccountsPage() {
           )}
         </ProFormDependency>
       </ModalForm>
+
+      <Modal
+        title={`商家端菜单权限 · ${menuTarget?.name ?? ''}`}
+        open={Boolean(menuTarget)}
+        onCancel={() => (menuSaving ? undefined : setMenuTarget(null))}
+        closable={!menuSaving}
+        maskClosable={false}
+        width={560}
+        footer={
+          <Space>
+            <Button disabled={menuSaving} onClick={() => setMenuTarget(null)}>
+              取消
+            </Button>
+            <Button type="primary" loading={menuSaving} onClick={saveMenuPerms}>
+              保存
+            </Button>
+          </Space>
+        }
+      >
+        {menuLoading || !menuTarget ? (
+          <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            <Spin />
+          </div>
+        ) : (
+          <Space direction="vertical" size={12} style={{ width: '100%' }}>
+            <Alert
+              type="info"
+              showIcon
+              message={
+                menuMeta?.isDefault
+                  ? '该商家尚未单独配置，当前为默认全量菜单；保存后按所选菜单生效。'
+                  : `上次保存：${menuMeta?.updatedAt ? new Date(menuMeta.updatedAt).toLocaleString('zh-CN', { hour12: false }) : '—'}`
+              }
+            />
+            <Typography.Text type="secondary">
+              首页底部「首页 / 采购商城 / 购物车 / 我的」页签为平台核心能力，不参与配置。
+            </Typography.Text>
+            <div className="merchant-menu-grid">
+              {MERCHANT_MENU_ITEMS.map((item) => (
+                <Checkbox
+                  key={item.key}
+                  checked={menuChecked.includes(item.key)}
+                  onChange={(event) => {
+                    setMenuChecked((previous) =>
+                      event.target.checked
+                        ? [...previous, item.key]
+                        : previous.filter((key) => key !== item.key),
+                    )
+                  }}
+                >
+                  <Space size={4}>
+                    <span>{item.label}</span>
+                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                      {item.description}
+                    </Typography.Text>
+                  </Space>
+                </Checkbox>
+              ))}
+            </div>
+            <Space wrap>
+              <Button
+                size="small"
+                onClick={() => setMenuChecked(MERCHANT_MENU_ITEMS.map((item) => item.key))}
+              >
+                全选
+              </Button>
+              <Button size="small" onClick={() => setMenuChecked([])}>
+                全不选
+              </Button>
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                已选 {menuChecked.length}/{MERCHANT_MENU_ITEMS.length} 项
+              </Typography.Text>
+            </Space>
+          </Space>
+        )}
+      </Modal>
     </PageContainer>
   )
 }
