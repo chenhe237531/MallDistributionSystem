@@ -142,7 +142,8 @@ page {
 /* ===== 共享布局（375 设计稿基准） ===== */
 .page {
   min-height: 100vh;
-  padding: 12px;
+  min-height: 100dvh;
+  padding: calc(12px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 12px calc(12px + env(safe-area-inset-left));
   box-sizing: border-box;
   background: var(--mall-bg);
 }
@@ -280,6 +281,66 @@ page {
   margin-top: 8px;
   font-size: 12px;
   color: var(--mall-text-tertiary);
+}
+
+/* 表单与弹层基础状态：两套主题共用结构，仅由语义令牌换色 */
+.nut-input,
+.nut-textarea {
+  color: var(--mall-text);
+  background: transparent;
+}
+
+.nut-input-native,
+.nut-textarea-native {
+  color: var(--mall-text);
+  caret-color: var(--mall-primary);
+}
+
+.nut-input-native::placeholder,
+.nut-textarea-native::placeholder {
+  color: var(--mall-text-tertiary);
+}
+
+.login-field .nut-input,
+.form-field .nut-input,
+.proc-quantity .nut-input,
+.pricing-input-row {
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.login-field:focus-within .nut-input,
+.form-field:focus-within .nut-input,
+.proc-quantity:focus-within .nut-input,
+.pricing-input-row:focus-within {
+  border-color: var(--mall-primary);
+  box-shadow: 0 0 0 3px var(--mall-focus-ring);
+}
+
+.nut-dialog {
+  border: 1px solid var(--mall-card-border);
+  border-radius: 16px;
+  background: var(--mall-card);
+  box-shadow: var(--mall-shadow);
+}
+
+.nut-dialog-header {
+  color: var(--mall-text);
+}
+
+.nut-dialog-content {
+  color: var(--mall-text-secondary);
+}
+
+.nut-dialog-footer {
+  border-top: 1px solid var(--mall-border-light);
+}
+
+.nut-dialog-footer-cancel {
+  color: var(--mall-text-secondary);
+}
+
+.nut-overlay {
+  background: var(--mall-overlay);
 }
 
 /* ===== 首页 ===== */
@@ -1436,10 +1497,24 @@ page {
   box-sizing: border-box;
   border: 1px solid transparent;
   border-radius: 999px;
+  margin: 0;
   font-weight: 600;
+  font-family: inherit;
   line-height: 1;
+  text-align: center;
   white-space: nowrap;
   user-select: none;
+  cursor: pointer;
+  appearance: none;
+  transition: transform 160ms ease, filter 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+
+  &::after {
+    display: none;
+  }
+}
+
+.m-btn-hover {
+  transform: scale(0.98);
 }
 
 /* 尺寸阶梯：lg 48 / md 40 / sm 32（lg 满足 ≥88rpx 触控热区） */
@@ -1535,16 +1610,20 @@ page {
 /* 禁用态：主按钮去掉渐变铺弱底，其余降文字层级；均不可点 */
 .m-btn-disabled {
   pointer-events: none;
+  background: var(--mall-disabled-bg);
+  color: var(--mall-disabled-text);
+  cursor: not-allowed;
+  opacity: 1;
 
   &.m-btn-primary {
-    background: var(--mall-primary-light);
-    color: var(--mall-text-tertiary);
+    background: var(--mall-disabled-bg);
+    color: var(--mall-disabled-text);
   }
 
   &.m-btn-outline,
   &.m-btn-text {
     border-color: var(--mall-text-tertiary);
-    color: var(--mall-text-tertiary);
+    color: var(--mall-disabled-text);
   }
 
   &.m-btn-secondary,
@@ -1637,9 +1716,12 @@ page {
   z-index: 100;
   display: flex;
   height: calc(52px + env(safe-area-inset-bottom));
+  padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
   border-top: 1px solid var(--mall-border-light);
   background: var(--mall-tabbar-bg);
+  box-sizing: border-box;
 }
 
 .b-tabbar-item {
@@ -1649,9 +1731,24 @@ page {
   align-items: center;
   justify-content: center;
   gap: 2px;
+  min-width: 0;
+  height: 52px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--mall-text-tertiary);
+  font-family: inherit;
+  line-height: normal;
+  appearance: none;
 
-  &:active {
+  &::after {
+    display: none;
+  }
+
+  &:active,
+  &.b-tabbar-item-hover {
     opacity: 0.8;
   }
 }
@@ -3035,13 +3132,22 @@ page {
   justify-content: center;
   width: 30px;
   height: 30px;
+  min-width: 30px;
+  margin: 0;
+  padding: 0;
+  border: 0;
   border-radius: 50%;
   background: var(--mall-primary);
   color: var(--mall-on-primary);
   box-shadow: 0 4px 12px var(--mall-primary-light-pressed);
   transition: transform 160ms ease, background-color 160ms ease;
 
-  &:active {
+  &::after {
+    display: none;
+  }
+
+  &:active,
+  &.goods-card-action-hover {
     background: var(--mall-primary-pressed);
     transform: scale(0.94);
   }
@@ -3356,9 +3462,10 @@ page {
   z-index: 90;
   display: flex;
   gap: 10px;
-  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  padding: 8px calc(12px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
   border-top: 1px solid var(--mall-border-light);
   background: var(--mall-card);
+  box-sizing: border-box;
 }
 
 /* 底部双 CTA 已切换为统一按钮组件（Button.tsx），此处仅保留布局占比 */
@@ -4588,9 +4695,9 @@ html.theme-gold ::-webkit-scrollbar-track {
 
 .theme-gold .m-btn-primary.m-btn-disabled {
   border-color: transparent;
-  background: rgba(212, 175, 55, 0.18);
+  background: var(--mall-disabled-bg);
   box-shadow: none;
-  color: rgba(244, 239, 228, 0.35);
+  color: var(--mall-disabled-text);
 }
 
 .theme-gold .m-btn-outline {
@@ -4608,7 +4715,7 @@ html.theme-gold ::-webkit-scrollbar-track {
 
 .theme-gold .nut-dialog {
   border: 1px solid var(--mall-card-border);
-  background: #16131a;
+  background: var(--mall-card);
 }
 
 .theme-gold .nut-dialog-header {
@@ -4633,7 +4740,7 @@ html.theme-gold ::-webkit-scrollbar-track {
 }
 
 .theme-gold .nut-overlay {
-  background: rgba(0, 0, 0, 0.62);
+  background: var(--mall-overlay);
 }
 
 .theme-gold .nut-toast-inner {
@@ -4676,7 +4783,7 @@ html.theme-gold ::-webkit-scrollbar-track {
   z-index: 300;
   display: flex;
   align-items: flex-end;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--mall-overlay);
 }
 
 .theme-sheet {
@@ -4946,30 +5053,36 @@ html.theme-gold ::-webkit-scrollbar-track {
   word-break: break-all;
 }
 
-/* ===== H5 大屏响应式断点（黑金规范 §八，小程序端不编译该块） =====
-   说明：商品流为行式卡片（左图右文），不做多列网格，宽屏以限宽居中保证阅读宽度。 */
-/* #ifdef H5 */
+/* ===== 宽屏响应式断点 =====
+   H5 大屏限宽居中，小程序平板端同样获得合理阅读宽度。 */
 @media (min-width: 768px) {
   .page {
-    padding: 16px 24px;
+    width: 100%;
+    max-width: var(--mall-shell-max);
+    margin: 0 auto;
+    padding: calc(20px + env(safe-area-inset-top)) 20px 20px;
   }
 
   .card,
   .hero {
     border-radius: 16px;
   }
-}
 
-@media (min-width: 1024px) {
-  /* 内容区限宽 750px 居中，两侧露出深黑底 */
-  .page {
-    max-width: 750px;
-    margin: 0 auto;
+  .page.page-tabbar {
+    padding-bottom: calc(66px + env(safe-area-inset-bottom));
+  }
+
+  .page.page-tabbar-proc {
+    padding-bottom: calc(128px + env(safe-area-inset-bottom));
+  }
+
+  .page.page-detail {
+    padding: 0 0 calc(72px + env(safe-area-inset-bottom));
   }
 
   /* 订单详情弹层与内容区同宽 */
   .b-order-sheet {
-    max-width: 750px;
+    max-width: var(--mall-shell-max);
     margin: 0 auto;
   }
 
@@ -4980,8 +5093,26 @@ html.theme-gold ::-webkit-scrollbar-track {
     right: auto;
     left: 50%;
     width: 100%;
-    max-width: 750px;
+    max-width: var(--mall-shell-max);
     transform: translateX(-50%);
   }
 }
-/* #endif */
+
+.m-btn:focus-visible,
+.b-tabbar-item:focus-visible,
+.goods-card-action:focus-visible {
+  outline: 2px solid var(--mall-primary);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px var(--mall-focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

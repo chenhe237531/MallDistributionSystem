@@ -1,7 +1,9 @@
-import { Text, View } from '@tarojs/components'
+import { Button, Text, View } from '@tarojs/components'
 import { formatCents, productCategoryLabel } from '@mall/shared'
 import { GoodsThumb } from './GoodsThumb'
 import { Icon } from '../Icon'
+
+const BUTTON_A11Y_ROLE = { role: 'button', ariaRole: 'button' } as const
 
 export type GoodsSummary = {
   id: string
@@ -51,15 +53,18 @@ export function GoodsCard({ product, tags = [], onOpen, onAdd }: Props) {
               <Text className="goods-card-retail">建议零售 ¥{formatCents(retail)}</Text>
             ) : null}
           </View>
-          <View
+          <Button
+            {...BUTTON_A11Y_ROLE}
             className="goods-card-action"
+            ariaLabel={`将${product.name}加入购物车`}
+            hoverClass="goods-card-action-hover"
             onClick={(event) => {
               event.stopPropagation()
               onAdd?.()
             }}
           >
             <Icon name="cart" size={15} />
-          </View>
+          </Button>
         </View>
       </View>
     </View>

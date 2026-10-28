@@ -1,7 +1,10 @@
 import Taro from '@tarojs/taro'
-import { View } from '@tarojs/components'
+import { Button, View } from '@tarojs/components'
 import { Icon, type IconName } from './Icon'
 import { cartCount, readCart } from '../lib/cart'
+import { tabAccessibilityLabel } from './interaction'
+
+const TAB_A11Y_ROLE = { role: 'tab', ariaRole: 'tab' } as const
 
 /**
  * 自绘底部 4 Tab 栏（改版 §5，决策点 D2）：
@@ -32,9 +35,17 @@ export function AppTabbar({ active }: { active: TabKey }) {
   return (
     <View className="b-tabbar">
       {TABS.map((tab) => (
-        <View
+        <Button
+          {...TAB_A11Y_ROLE}
           key={tab.key}
           className={`b-tabbar-item ${tab.key === active ? 'b-tabbar-item-active' : ''}`}
+          ariaLabel={tabAccessibilityLabel(
+            tab.label,
+            tab.key === active,
+            tab.key === 'cart' ? count : 0,
+          )}
+          ariaSelected={tab.key === active}
+          hoverClass="b-tabbar-item-hover"
           onClick={() => switchTab(tab)}
         >
           <View style={{ position: 'relative' }}>
@@ -44,7 +55,7 @@ export function AppTabbar({ active }: { active: TabKey }) {
             ) : null}
           </View>
           <View className="b-tabbar-label">{tab.label}</View>
-        </View>
+        </Button>
       ))}
     </View>
   )

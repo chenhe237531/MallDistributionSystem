@@ -1,5 +1,8 @@
-import { View } from '@tarojs/components'
+import { Button as TaroButton, View } from '@tarojs/components'
 import type { ReactNode } from 'react'
+import { isButtonInert } from './interaction'
+
+const BUTTON_A11Y_ROLE = { role: 'button', ariaRole: 'button' } as const
 
 /**
  * 统一按钮组件（黑金规范 §5）。
@@ -31,6 +34,8 @@ export type ButtonProps = {
   /** 加载态：显示 spinner 并锁定宽度，防文字切换跳动 */
   loading?: boolean
   className?: string
+  /** 无可见文字或文案会切换时，为读屏提供稳定名称 */
+  ariaLabel?: string
   children?: ReactNode
   onClick?: () => void
 }
@@ -42,10 +47,11 @@ export function Button({
   disabled = false,
   loading = false,
   className = '',
+  ariaLabel,
   children,
   onClick,
 }: ButtonProps) {
-  const inert = disabled || loading
+  const inert = isButtonInert(disabled, loading)
 
   const cls = [
     'm-btn',
@@ -60,8 +66,12 @@ export function Button({
     .join(' ')
 
   return (
-    <View
+    <TaroButton
+      {...BUTTON_A11Y_ROLE}
       className={cls}
+      disabled={inert}
+      ariaLabel={ariaLabel}
+      hoverClass="m-btn-hover"
       onClick={() => {
         if (inert) {
           return
@@ -71,6 +81,6 @@ export function Button({
     >
       {loading ? <View className="m-btn-spinner" /> : null}
       {children}
-    </View>
+    </TaroButton>
   )
 }
