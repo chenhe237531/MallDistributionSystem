@@ -149,10 +149,10 @@ export default function Profile() {
   }
 
   return (
-    <View className={`page page-tabbar ${themeClass}`}>
+    <View className={`page page-tabbar prototype-shell ${themeClass}`}>
       <PageToast />
 
-      <View className="profile-user-card">
+      <View className="profile-user-card prototype-surface prototype-decor">
         <View
           className="profile-bell"
           onClick={() => go('/pages/notifications/index')}
@@ -170,7 +170,7 @@ export default function Profile() {
         </View>
       </View>
 
-      <View className="card profile-stats">
+      <View className="card profile-stats prototype-surface">
         <View className="metric-item">
           <Text className="metric-value">
             {availableCents === null ? '—' : `${formatCents(availableCents)}`}
@@ -191,7 +191,7 @@ export default function Profile() {
         </View>
       </View>
 
-      <View className="prepaid-banner">
+      <View className="prepaid-banner prototype-surface prototype-decor">
         <View className="prepaid-banner-main">
           <Text className="prepaid-banner-title">
             {availableCents === null ? '预付款账户' : balanceLow ? '预付款余额偏低' : '预付款账户健康'}
@@ -310,7 +310,7 @@ export default function Profile() {
 
       {inviteSheetOpen && invite ? (
         <View className="theme-sheet-mask" onClick={() => setInviteSheetOpen(false)}>
-          <View className="theme-sheet invite-sheet" onClick={(event) => event.stopPropagation()}>
+          <View className="theme-sheet invite-sheet prototype-sheet" onClick={(event) => event.stopPropagation()}>
             <View className="theme-sheet-head">
               <Text className="theme-sheet-title">我的邀请码</Text>
               <Text className="theme-sheet-close" onClick={() => setInviteSheetOpen(false)}>
@@ -347,7 +347,7 @@ export default function Profile() {
 
       {themeSheetOpen ? (
         <View className="theme-sheet-mask" onClick={() => setThemeSheetOpen(false)}>
-          <View className="theme-sheet" onClick={(event) => event.stopPropagation()}>
+          <View className="theme-sheet prototype-sheet" onClick={(event) => event.stopPropagation()}>
             <View className="theme-sheet-head">
               <Text className="theme-sheet-title">外观主题</Text>
               <Text className="theme-sheet-close" onClick={() => setThemeSheetOpen(false)}>

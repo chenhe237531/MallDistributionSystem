@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import Taro, { useDidShow, getCurrentInstance } from '@tarojs/taro'
-import { Input, Text, View } from '@tarojs/components'
+import { Input, ScrollView, Text, View } from '@tarojs/components'
 import {
   PROCUREMENT_STATUS_LABELS,
   formatCents,
@@ -166,8 +166,8 @@ export default function Procurement() {
   const formatDate = (iso?: string) => (iso ? iso.slice(5, 16).replace('T', ' ') : '')
 
   return (
-    <View className={`page page-tabbar-proc ${themeClass}`} style={{ padding: 0 }}>
-      <View className="proc-head">
+    <View className={`page page-tabbar-proc prototype-shell ${themeClass}`} style={{ padding: 0 }}>
+      <View className="proc-head proc-prototype-head prototype-decor">
         <View
           className="b-hero-bell"
           style={{ top: 8, right: 8 }}
@@ -188,8 +188,8 @@ export default function Procurement() {
         </View>
       </View>
 
-      <View className="proc-body">
-        <View className="proc-side">
+      <View className="proc-body proc-prototype-body">
+        <ScrollView className="proc-side proc-category-rail" scrollX>
           {MALL_CATEGORIES.map((item) => (
             <View
               key={item.key}
@@ -199,9 +199,9 @@ export default function Procurement() {
               {item.label}
             </View>
           ))}
-        </View>
+        </ScrollView>
 
-        <View className="proc-main">
+        <View className="proc-main proc-prototype-main">
           <View className="proc-view-tabs">
             <View
               className={`proc-view-tab ${view === 'mall' ? 'proc-view-tab-active' : ''}`}
@@ -222,7 +222,7 @@ export default function Procurement() {
 
           {view === 'mall' ? (
             <View>
-              <View className="proc-price-entry" onClick={() => go('/pages/pricing/index')}>
+              <View className="proc-price-entry prototype-surface" onClick={() => go('/pages/pricing/index')}>
                 <View className="proc-price-entry-main">
                   <Text className="proc-price-entry-title">商品定价</Text>
                   <Text className="proc-price-entry-desc">C 端默认按采购价 2 倍，可自定义</Text>
@@ -253,15 +253,17 @@ export default function Procurement() {
               {!loaded ? null : filteredProducts.length === 0 ? (
                 <Empty description="该分类暂无可采商品" />
               ) : (
-                filteredProducts.map((product) => (
-                  <GoodsCard
-                    key={product.id}
-                    product={product}
-                    tags={goodsTags(product.category)}
-                    onOpen={() => openDetail(product.id)}
-                    onAdd={() => addToCart(product.id)}
-                  />
-                ))
+                <View className="proc-catalog-grid">
+                  {filteredProducts.map((product) => (
+                    <GoodsCard
+                      key={product.id}
+                      product={product}
+                      tags={goodsTags(product.category)}
+                      onOpen={() => openDetail(product.id)}
+                      onAdd={() => addToCart(product.id)}
+                    />
+                  ))}
+                </View>
               )}
             </View>
           ) : (

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { describe, it } from 'node:test'
 import {
   GOODS_THUMB_SIZES,
@@ -6,6 +7,15 @@ import {
   goodsImageMode,
 } from './components/goods/media'
 import { isButtonInert, tabAccessibilityLabel } from './components/interaction'
+
+const appStyles = readFileSync(new URL('./app.scss', import.meta.url), 'utf8')
+const loginScreen = readFileSync(new URL('./pages/login/index.tsx', import.meta.url), 'utf8')
+const homeScreen = readFileSync(new URL('./pages/index/index.tsx', import.meta.url), 'utf8')
+const profileScreen = readFileSync(new URL('./pages/profile/index.tsx', import.meta.url), 'utf8')
+const procurementScreen = readFileSync(new URL('./pages/procurement/index.tsx', import.meta.url), 'utf8')
+const productDetailScreen = readFileSync(new URL('./pages/product-detail/index.tsx', import.meta.url), 'utf8')
+const cartScreen = readFileSync(new URL('./pages/cart/index.tsx', import.meta.url), 'utf8')
+const goodsCard = readFileSync(new URL('./components/goods/GoodsCard.tsx', import.meta.url), 'utf8')
 
 describe('product media presentation contract', () => {
   it('supports list thumbnails and a non-cropping detail hero', () => {
@@ -35,5 +45,111 @@ describe('shared interaction states', () => {
     assert.equal(tabAccessibilityLabel('首页', true), '首页，当前页')
     assert.equal(tabAccessibilityLabel('购物车', false, 5), '购物车，5 件商品')
     assert.equal(tabAccessibilityLabel('购物车', false, 105), '购物车，99 件以上')
+  })
+})
+
+describe('merchant prototype surface contract', () => {
+  it('keeps the visual materials inside the black-gold theme scope', () => {
+    assert.match(appStyles, /\.theme-gold\s+\.prototype-surface/)
+    assert.match(appStyles, /\.theme-gold\s+\.prototype-decor/)
+    assert.match(appStyles, /\.theme-gold\s+\.prototype-gold-action/)
+  })
+
+  it('keeps wide H5 shells and bottom sheets safe-area aware', () => {
+    assert.match(appStyles, /\.prototype-shell[\s\S]*max-width:\s*var\(--mall-shell-max\)/)
+    assert.match(appStyles, /\.prototype-sheet[\s\S]*env\(safe-area-inset-bottom\)/)
+  })
+})
+
+describe('merchant prototype screen contract', () => {
+  it('gives the sign-in screen an explicit branded black-gold header', () => {
+    assert.match(loginScreen, /百英诺 · 商家中心/)
+    assert.match(loginScreen, /login-brand-block prototype-decor/)
+    assert.match(loginScreen, /login-card prototype-surface/)
+  })
+
+  it('keeps operating metrics before the five direct merchant shortcuts', () => {
+    assert.ok(homeScreen.indexOf('home-operations') < homeScreen.indexOf('home-apps-section'))
+    assert.match(homeScreen, /hero b-hero prototype-surface prototype-decor/)
+    assert.match(homeScreen, /PRIMARY_HOME_ENTRIES\.map/)
+  })
+
+  it('presents profile identity and prepaid account as prototype surfaces', () => {
+    assert.match(profileScreen, /profile-user-card prototype-surface prototype-decor/)
+    assert.match(profileScreen, /card profile-stats prototype-surface/)
+    assert.match(profileScreen, /可用预付款/)
+  })
+})
+
+describe('merchant commerce prototype contract', () => {
+  it('uses a visual card and direct cart action for each catalogue product', () => {
+    assert.match(goodsCard, /className="goods-card prototype-surface"/)
+    assert.match(goodsCard, /className="goods-card-media"/)
+    assert.match(goodsCard, /className="goods-card-action"/)
+  })
+
+  it('renders the catalogue category rail and two-column product grid from existing filters', () => {
+    assert.match(procurementScreen, /className="proc-side proc-category-rail"/)
+    assert.match(procurementScreen, /scrollX/)
+    assert.match(procurementScreen, /className="proc-catalog-grid"/)
+    assert.match(procurementScreen, /filteredProducts\.map/)
+  })
+
+  it('keeps detail media inside the prototype stage and exposes a specification trigger', () => {
+    assert.match(productDetailScreen, /goods-media-stage detail-media-stage prototype-surface prototype-decor/)
+    assert.match(productDetailScreen, /className="detail-spec-trigger"/)
+  })
+})
+
+describe('merchant prototype feedback contract', () => {
+  it('opens a deterministic specification bottom sheet from the detail trigger', () => {
+    assert.match(productDetailScreen, /const \[specSheetOpen, setSpecSheetOpen\]/)
+    assert.match(productDetailScreen, /onClick=\{\(\) => setSpecSheetOpen\(true\)\}/)
+    assert.match(productDetailScreen, /prototype-spec-sheet prototype-sheet/)
+    assert.match(productDetailScreen, /selectedSpec/)
+  })
+
+  it('shows a submission confirmation before taking the merchant to the order list', () => {
+    assert.match(cartScreen, /const \[orderSubmitted, setOrderSubmitted\]/)
+    assert.match(cartScreen, /setOrderSubmitted\(true\)/)
+    assert.match(cartScreen, /prototype-success-dialog/)
+    assert.match(cartScreen, /查看采购单/)
+  })
+})
+
+describe('merchant prototype cross-theme and keyboard contract', () => {
+  it('keeps the two-column catalogue structure and feedback surfaces usable outside gold', () => {
+    const catalogueCardRule = appStyles.match(/\.proc-catalog-grid \.goods-card \{([^}]*)\}/)?.[1] ?? ''
+    const sheetRule = appStyles.match(/\.prototype-sheet \{([^}]*)\}/)?.[1] ?? ''
+    const successDialogRule = appStyles.match(/\.prototype-success-dialog \{([^}]*)\}/)?.[1] ?? ''
+
+    assert.match(catalogueCardRule, /flex-direction:\s*column/)
+    assert.match(catalogueCardRule, /gap:\s*0/)
+    assert.match(sheetRule, /background:\s*var\(--mall-card\)/)
+    assert.match(sheetRule, /border-top:\s*1px solid var\(--mall-border\)/)
+    assert.match(successDialogRule, /background:\s*var\(--mall-card\)/)
+    assert.match(successDialogRule, /box-shadow:\s*var\(--mall-shadow\)/)
+  })
+
+  it('makes new dialogs keyboard-reachable while preserving touch controls', () => {
+    assert.match(productDetailScreen, /useH5DialogFocus\(\{[\s\S]*open:\s*specSheetOpen/)
+    assert.match(productDetailScreen, /id="product-spec-trigger"/)
+    assert.match(productDetailScreen, /role="dialog"/)
+    assert.match(productDetailScreen, /ariaRole="dialog"/)
+    assert.match(productDetailScreen, /className="prototype-spec-option/)
+    assert.match(cartScreen, /useH5DialogFocus\(\{[\s\S]*open:\s*orderSubmitted/)
+    assert.match(cartScreen, /id="cart-submit-order"/)
+    assert.match(cartScreen, /role="dialog"/)
+  })
+
+  it('reserves notification space and truncates an overlong merchant name', () => {
+    const profileCardRule = appStyles.match(/\.profile-user-card \{([^}]*)\}/)?.[1] ?? ''
+    const profileNameRule = appStyles.match(/\.profile-name \{([^}]*)\}/)?.[1] ?? ''
+    const profileRoleRule = appStyles.match(/\.profile-role-tag \{([^}]*)\}/)?.[1] ?? ''
+
+    assert.match(profileCardRule, /padding:\s*18px 56px 18px 14px/)
+    assert.match(profileNameRule, /text-overflow:\s*ellipsis/)
+    assert.match(profileNameRule, /white-space:\s*nowrap/)
+    assert.match(profileRoleRule, /flex-shrink:\s*0/)
   })
 })
