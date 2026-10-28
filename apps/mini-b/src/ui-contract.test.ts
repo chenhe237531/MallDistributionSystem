@@ -14,6 +14,7 @@ const homeScreen = readFileSync(new URL('./pages/index/index.tsx', import.meta.u
 const profileScreen = readFileSync(new URL('./pages/profile/index.tsx', import.meta.url), 'utf8')
 const procurementScreen = readFileSync(new URL('./pages/procurement/index.tsx', import.meta.url), 'utf8')
 const productDetailScreen = readFileSync(new URL('./pages/product-detail/index.tsx', import.meta.url), 'utf8')
+const cartScreen = readFileSync(new URL('./pages/cart/index.tsx', import.meta.url), 'utf8')
 const goodsCard = readFileSync(new URL('./components/goods/GoodsCard.tsx', import.meta.url), 'utf8')
 
 describe('product media presentation contract', () => {
@@ -97,5 +98,21 @@ describe('merchant commerce prototype contract', () => {
   it('keeps detail media inside the prototype stage and exposes a specification trigger', () => {
     assert.match(productDetailScreen, /goods-media-stage detail-media-stage prototype-surface prototype-decor/)
     assert.match(productDetailScreen, /className="detail-spec-trigger"/)
+  })
+})
+
+describe('merchant prototype feedback contract', () => {
+  it('opens a deterministic specification bottom sheet from the detail trigger', () => {
+    assert.match(productDetailScreen, /const \[specSheetOpen, setSpecSheetOpen\]/)
+    assert.match(productDetailScreen, /onClick=\{\(\) => setSpecSheetOpen\(true\)\}/)
+    assert.match(productDetailScreen, /prototype-spec-sheet prototype-sheet/)
+    assert.match(productDetailScreen, /selectedSpec/)
+  })
+
+  it('shows a submission confirmation before taking the merchant to the order list', () => {
+    assert.match(cartScreen, /const \[orderSubmitted, setOrderSubmitted\]/)
+    assert.match(cartScreen, /setOrderSubmitted\(true\)/)
+    assert.match(cartScreen, /prototype-success-dialog/)
+    assert.match(cartScreen, /查看采购单/)
   })
 })

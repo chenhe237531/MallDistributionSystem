@@ -5585,3 +5585,230 @@ html.theme-gold ::-webkit-scrollbar-track {
   background: rgba(11, 12, 14, 0.94);
   box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.3);
 }
+
+/* ===== 百英诺原型 · 规格抽屉与采购反馈 ===== */
+.prototype-modal-mask {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.58);
+}
+
+.prototype-spec-sheet {
+  max-height: min(78dvh, 660px);
+  overflow-y: auto;
+}
+
+.prototype-sheet-header,
+.prototype-quantity-row,
+.prototype-spec-product {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.prototype-sheet-header {
+  margin-bottom: 16px;
+}
+
+.prototype-sheet-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--mall-text);
+}
+
+.prototype-sheet-close {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--mall-fill);
+  color: var(--mall-text-secondary);
+  font-size: 24px;
+  line-height: 28px;
+  place-items: center;
+}
+
+.prototype-spec-product {
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--mall-fill);
+}
+
+.prototype-spec-product-name,
+.prototype-spec-product-price,
+.prototype-spec-label,
+.prototype-success-summary-label,
+.prototype-success-summary-value {
+  display: block;
+}
+
+.prototype-spec-product-name {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--mall-text);
+}
+
+.prototype-spec-product-price {
+  margin-top: 5px;
+  color: var(--mall-primary);
+  font-weight: 700;
+}
+
+.prototype-spec-label {
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.prototype-spec-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.prototype-spec-option {
+  min-width: 72px;
+  padding: 9px 13px;
+  border: 1px solid var(--mall-border);
+  border-radius: 10px;
+  box-sizing: border-box;
+  color: var(--mall-text-secondary);
+  font-size: 13px;
+  text-align: center;
+}
+
+.prototype-spec-option-active {
+  border-color: var(--mall-primary);
+  background: var(--mall-primary-soft);
+  color: var(--mall-primary-hover);
+  font-weight: 650;
+}
+
+.prototype-quantity-row {
+  margin-bottom: 22px;
+}
+
+.prototype-quantity-row .prototype-spec-label {
+  margin-bottom: 0;
+}
+
+.prototype-quantity-control {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--mall-border);
+  border-radius: 10px;
+}
+
+.prototype-quantity-button,
+.prototype-quantity-value {
+  display: grid;
+  width: 34px;
+  height: 32px;
+  color: var(--mall-text);
+  place-items: center;
+}
+
+.prototype-quantity-button {
+  background: var(--mall-fill);
+  font-size: 20px;
+}
+
+.prototype-quantity-value {
+  width: 38px;
+  border-right: 1px solid var(--mall-border);
+  border-left: 1px solid var(--mall-border);
+  font-size: 14px;
+}
+
+.prototype-success-mask {
+  align-items: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.prototype-success-dialog {
+  width: 100%;
+  max-width: 360px;
+  padding: 28px 20px 20px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.prototype-success-mark {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--mall-primary);
+  color: var(--mall-on-primary);
+  font-size: 30px;
+  font-weight: 700;
+  place-items: center;
+}
+
+.prototype-success-title,
+.prototype-success-copy,
+.prototype-success-secondary {
+  display: block;
+}
+
+.prototype-success-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--mall-text);
+}
+
+.prototype-success-copy {
+  margin-top: 9px;
+  color: var(--mall-text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.prototype-success-summary {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--mall-border-light);
+  border-bottom: 1px solid var(--mall-border-light);
+}
+
+.prototype-success-summary-label {
+  color: var(--mall-text-secondary);
+  font-size: 12px;
+}
+
+.prototype-success-summary-value {
+  margin-top: 5px;
+  color: var(--mall-primary);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.prototype-success-secondary {
+  margin-top: 16px;
+  color: var(--mall-primary);
+  font-size: 14px;
+}
+
+.theme-gold .prototype-spec-option-active {
+  border-color: rgba(245, 218, 143, 0.8);
+  background: rgba(226, 194, 115, 0.15);
+}
+
+.theme-gold .prototype-success-dialog.prototype-surface {
+  border-color: rgba(245, 218, 143, 0.42);
+}

@@ -27,6 +27,8 @@ export default function Cart() {
   const [products, setProducts] = useState<Product[]>([])
   const [remark, setRemark] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [orderSubmitted, setOrderSubmitted] = useState(false)
+  const [submittedSummary, setSubmittedSummary] = useState<{ count: number; totalCents: number } | null>(null)
 
   useDidShow(() => {
     if (!ensureLogin()) {
@@ -82,10 +84,11 @@ export default function Cart() {
           remark: remark.trim() || undefined,
         },
       })
+      setSubmittedSummary({ count, totalCents })
       updateCart({})
       setRemark('')
+      setOrderSubmitted(true)
       toast('采购单已提交', 'success')
-      setTimeout(() => go('/pages/procurement/index?view=orders'), 600)
     } catch (cause) {
       toast(cause instanceof Error ? cause.message : '提交失败')
     } finally {
@@ -94,8 +97,8 @@ export default function Cart() {
   }
 
   return (
-    <View className={`page page-tabbar-proc ${themeClass}`} style={{ padding: 0 }}>
-      <View className="proc-head" style={{ paddingBottom: 12 }}>
+    <View className={`page page-tabbar-proc prototype-shell ${themeClass}`} style={{ padding: 0 }}>
+      <View className="proc-head proc-prototype-head prototype-decor" style={{ paddingBottom: 12 }}>
         <Text className="proc-head-title">购物车</Text>
       </View>
 
@@ -168,6 +171,50 @@ export default function Cart() {
           <Button variant="primary" size="lg" loading={submitting} onClick={() => void submit()}>
             提交采购单
           </Button>
+        </View>
+      ) : null}
+
+      {orderSubmitted && submittedSummary ? (
+        <View className="prototype-modal-mask prototype-success-mask" onClick={() => setOrderSubmitted(false)}>
+          <View
+            className="prototype-success-dialog prototype-surface prototype-decor"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <View className="prototype-success-mark">✓</View>
+            <Text className="prototype-success-title">采购单提交成功</Text>
+            <Text className="prototype-success-copy">已为您创建采购单，后续进度可在采购单中查看。</Text>
+            <View className="prototype-success-summary">
+              <View>
+                <Text className="prototype-success-summary-label">采购数量</Text>
+                <Text className="prototype-success-summary-value">{submittedSummary.count} 件</Text>
+              </View>
+              <View>
+                <Text className="prototype-success-summary-label">采购金额</Text>
+                <Text className="prototype-success-summary-value">¥{formatCents(submittedSummary.totalCents)}</Text>
+              </View>
+            </View>
+            <Button
+              variant="primary"
+              size="lg"
+              block
+              className="prototype-gold-action"
+              onClick={() => {
+                setOrderSubmitted(false)
+                go('/pages/procurement/index?view=orders')
+              }}
+            >
+              查看采购单
+            </Button>
+            <Text
+              className="prototype-success-secondary"
+              onClick={() => {
+                setOrderSubmitted(false)
+                void Taro.redirectTo({ url: '/pages/procurement/index' })
+              }}
+            >
+              继续采购
+            </Text>
+          </View>
         </View>
       ) : null}
 

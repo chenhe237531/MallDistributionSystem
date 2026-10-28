@@ -65,6 +65,9 @@ export default function ProductDetail() {
   const id = router.params.id ?? ''
   const [detail, setDetail] = useState<ProductDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [specSheetOpen, setSpecSheetOpen] = useState(false)
+  const [selectedSpec, setSelectedSpec] = useState('单人装')
+  const [specQuantity, setSpecQuantity] = useState(1)
 
   useEffect(() => {
     if (!ensureLogin()) {
@@ -84,12 +87,12 @@ export default function ProductDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  const addToCart = (redirect = false) => {
+  const addToCart = (redirect = false, quantity = 1) => {
     if (!detail) {
       return
     }
     const cart = readCart()
-    const next = { ...cart, [detail.id]: (cart[detail.id] ?? 0) + 1 }
+    const next = { ...cart, [detail.id]: (cart[detail.id] ?? 0) + quantity }
     writeCart(next)
     if (redirect) {
       void Taro.redirectTo({ url: '/pages/cart/index' })
@@ -169,10 +172,10 @@ export default function ProductDetail() {
           ))}
           <Text className="detail-sku">SKU {detail.skuCode}</Text>
         </View>
-        <View className="detail-spec-trigger">
+        <View className="detail-spec-trigger" onClick={() => setSpecSheetOpen(true)}>
           <View>
             <Text className="detail-spec-trigger-label">规格选择</Text>
-            <Text className="detail-spec-trigger-value">单人装 · 默认规格</Text>
+            <Text className="detail-spec-trigger-value">{selectedSpec} · 已选规格</Text>
           </View>
           <Text className="detail-spec-trigger-arrow">›</Text>
         </View>
@@ -279,6 +282,68 @@ export default function ProductDetail() {
           立即采购
         </Button>
       </View>
+
+      {specSheetOpen ? (
+        <View className="prototype-modal-mask" onClick={() => setSpecSheetOpen(false)}>
+          <View className="prototype-spec-sheet prototype-sheet" onClick={(event) => event.stopPropagation()}>
+            <View className="prototype-sheet-header">
+              <Text className="prototype-sheet-title">选择规格</Text>
+              <Text className="prototype-sheet-close" onClick={() => setSpecSheetOpen(false)}>
+                ×
+              </Text>
+            </View>
+            <View className="prototype-spec-product">
+              <GoodsThumb src={images[0]} name={detail.name} size="sm" />
+              <View>
+                <Text className="prototype-spec-product-name">{detail.name}</Text>
+                <Text className="prototype-spec-product-price">¥{formatCents(detail.supplyPriceCents)}</Text>
+              </View>
+            </View>
+            <Text className="prototype-spec-label">包装规格</Text>
+            <View className="prototype-spec-options">
+              {['单人装', '5人装', '10人装', '礼盒装'].map((spec) => (
+                <View
+                  key={spec}
+                  className={`prototype-spec-option ${selectedSpec === spec ? 'prototype-spec-option-active' : ''}`}
+                  onClick={() => setSelectedSpec(spec)}
+                >
+                  {spec}
+                </View>
+              ))}
+            </View>
+            <View className="prototype-quantity-row">
+              <Text className="prototype-spec-label">采购数量</Text>
+              <View className="prototype-quantity-control">
+                <Text
+                  className="prototype-quantity-button"
+                  onClick={() => setSpecQuantity((quantity) => Math.max(1, quantity - 1))}
+                >
+                  −
+                </Text>
+                <Text className="prototype-quantity-value">{specQuantity}</Text>
+                <Text
+                  className="prototype-quantity-button"
+                  onClick={() => setSpecQuantity((quantity) => Math.min(99, quantity + 1))}
+                >
+                  +
+                </Text>
+              </View>
+            </View>
+            <Button
+              variant="primary"
+              size="lg"
+              block
+              className="prototype-gold-action"
+              onClick={() => {
+                addToCart(false, specQuantity)
+                setSpecSheetOpen(false)
+              }}
+            >
+              确认加入采购车
+            </Button>
+          </View>
+        </View>
+      ) : null}
 
       <PageToast />
     </View>
