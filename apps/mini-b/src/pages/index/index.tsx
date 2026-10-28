@@ -10,9 +10,11 @@ import { GoodsThumb } from '../../components/goods/GoodsThumb'
 import { BrandIntro, ContactCard } from '../../components/home/BrandIntro'
 import {
   BANNERS,
-  HOME_ENTRIES,
   NOTICE_TEXT,
+  PRIMARY_HOME_ENTRIES,
+  SECONDARY_HOME_ENTRIES,
   SERVICE_HOTLINE,
+  type HomeEntry,
 } from '../../config/home'
 import { useTheme } from '../../lib/theme'
 
@@ -103,6 +105,7 @@ export default function Index() {
   const [unread, setUnread] = useState(0)
   const [todos, setTodos] = useState<TodoItem[]>([])
   const [hotProducts, setHotProducts] = useState<HotProduct[]>([])
+  const [showAllApps, setShowAllApps] = useState(false)
   // Taro View 实例类型跨端不一致，此处仅读取 H5 的 offsetTop 做锚点滚动
   const brandRef = useRef<any>(null)
 
@@ -226,7 +229,7 @@ export default function Index() {
     }
   }
 
-  const openEntry = (entry: (typeof HOME_ENTRIES)[number]) => {
+  const openEntry = (entry: HomeEntry) => {
     if (entry.url) {
       go(entry.url)
     } else {
@@ -257,16 +260,80 @@ export default function Index() {
           <Icon name="bell" size={20} />
           {unread > 0 ? <View className="b-hero-bell-badge">{unread > 99 ? '99+' : unread}</View> : null}
         </View>
-        <Text className="b-hero-brand">百英诺 · 商家中心</Text>
-        <Text className="b-hero-sub">
-          你好，{me?.name ?? '商户'} · {roleLabel} · {me?.organizationName ?? '—'}
-        </Text>
-        <Text className="b-hero-sub">
-          {balance === null ? '可用预付款 —' : `可用预付款 ${formatCents(balance)} 元`}
-        </Text>
+        <Text className="b-hero-kicker">百英诺商家中心</Text>
+        <Text className="b-hero-brand">你好，{me?.name ?? '商户'}</Text>
+        <View className="b-hero-meta">
+          <Text className="b-hero-role">{roleLabel}</Text>
+          <Text className="b-hero-org">{me?.organizationName ?? '暂未绑定机构'}</Text>
+        </View>
+        <View className="b-hero-balance">
+          <Text className="b-hero-balance-label">可用预付款</Text>
+          <Text className="b-hero-balance-value">
+            {balance === null ? '—' : `${formatCents(balance)} 元`}
+          </Text>
+        </View>
         <View className="b-search" onClick={() => go('/pages/procurement/index')}>
           <Icon name="search" size={15} />
           <Text className="b-search-text">搜索商品 / 功能</Text>
+        </View>
+      </View>
+
+      <View className="section home-operations">
+        <View className="home-section-head">
+          <Text className="section-title">今日经营</Text>
+          <Text className="home-section-note">数据实时更新</Text>
+        </View>
+        <View className="card metric-row home-metric-card">
+          <View className="metric-item metric-item-primary">
+            <Text className="metric-value">{todayOrders === null ? '—' : `${todayOrders} 单`}</Text>
+            <Text className="metric-label">今日订单</Text>
+          </View>
+          <View className="metric-divider" />
+          <View className="metric-item">
+            <Text className="metric-value">
+              {todayIncomeCents === null ? '—' : `${formatCents(todayIncomeCents)} 元`}
+            </Text>
+            <Text className="metric-label">今日收入</Text>
+          </View>
+          <View className="metric-divider" />
+          <View className="metric-item">
+            <Text className="metric-value">{reminders + unread}</Text>
+            <Text className="metric-label">待处理</Text>
+          </View>
+        </View>
+      </View>
+
+      <View className="section home-apps-section">
+        <View className="home-section-head">
+          <Text className="section-title">常用功能</Text>
+          <View className="home-apps-toggle" onClick={() => setShowAllApps((visible) => !visible)}>
+            <Text>{showAllApps ? '收起' : '全部应用'}</Text>
+            <Icon name="arrowRight" size={14} className={showAllApps ? 'home-apps-toggle-icon-open' : ''} />
+          </View>
+        </View>
+        <View className="card home-apps-card">
+          <View className="b-grid b-grid-primary">
+            {PRIMARY_HOME_ENTRIES.map((entry) => (
+              <View key={entry.label} className="b-grid-item" onClick={() => openEntry(entry)}>
+                <View className={`b-grid-icon tone-${entry.tone}`}>
+                  <Icon name={entry.icon} size={22} />
+                </View>
+                <Text className="b-grid-name">{entry.label}</Text>
+              </View>
+            ))}
+          </View>
+          {showAllApps ? (
+            <View className="b-grid b-grid-secondary">
+              {SECONDARY_HOME_ENTRIES.map((entry) => (
+                <View key={entry.label} className="b-grid-item" onClick={() => openEntry(entry)}>
+                  <View className={`b-grid-icon tone-${entry.tone}`}>
+                    <Icon name={entry.icon} size={22} />
+                  </View>
+                  <Text className="b-grid-name">{entry.label}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -281,31 +348,18 @@ export default function Index() {
       >
         {BANNERS.map((banner) => (
           <SwiperItem key={banner.title}>
-            <View className="b-banner-slide">
+            <View className="b-banner-slide" onClick={() => go(banner.url)}>
               <Text className="b-banner-title">{banner.title}</Text>
               <Text className="b-banner-sub">{banner.subtitle}</Text>
-              <View className="b-banner-hotline">服务热线 {SERVICE_HOTLINE}</View>
+              <View className="b-banner-action">
+                <Text>{banner.action}</Text>
+                <Icon name="arrowRight" size={13} />
+              </View>
+              <Text className="b-banner-hotline">服务热线 {SERVICE_HOTLINE}</Text>
             </View>
           </SwiperItem>
         ))}
       </Swiper>
-
-      <View className="card" style={{ marginTop: 12 }}>
-        <View className="b-grid">
-          {HOME_ENTRIES.map((entry) => (
-            <View
-              key={entry.label}
-              className="b-grid-item"
-              onClick={() => openEntry(entry)}
-            >
-              <View className={`b-grid-icon tone-${entry.tone}`}>
-                <Icon name={entry.icon} size={22} />
-              </View>
-              <Text className="b-grid-name">{entry.label}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
 
       <View className="b-notice">
         <Icon name="horn" size={14} />
@@ -340,28 +394,6 @@ export default function Index() {
           </ScrollView>
         </View>
       ) : null}
-
-      <View className="section">
-        <Text className="section-title">今日经营</Text>
-        <View className="card metric-row">
-          <View className="metric-item">
-            <Text className="metric-value">{todayOrders === null ? '—' : `${todayOrders} 单`}</Text>
-            <Text className="metric-label">今日订单</Text>
-          </View>
-          <View className="metric-divider" />
-          <View className="metric-item">
-            <Text className="metric-value">
-              {todayIncomeCents === null ? '—' : `${formatCents(todayIncomeCents)} 元`}
-            </Text>
-            <Text className="metric-label">今日收入</Text>
-          </View>
-          <View className="metric-divider" />
-          <View className="metric-item">
-            <Text className="metric-value">{reminders + unread}</Text>
-            <Text className="metric-label">待处理 · 未读</Text>
-          </View>
-        </View>
-      </View>
 
       <View className="section">
         <Text className="section-title">今日待办</Text>

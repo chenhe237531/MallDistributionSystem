@@ -302,8 +302,9 @@ page {
 .metric-value {
   font-size: 16px;
   font-weight: 600;
-  color: var(--mall-primary);
+  color: var(--mall-text);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .metric-label {
@@ -1682,7 +1683,7 @@ page {
 /* ===== 首页（§6.1） ===== */
 .b-hero {
   position: relative;
-  padding: 16px 14px 14px;
+  padding: 18px 16px 16px;
 }
 
 .b-hero-bell {
@@ -1694,7 +1695,7 @@ page {
   justify-content: center;
   width: 34px;
   height: 34px;
-  color: #fff;
+  color: var(--mall-hero-text);
 }
 
 .b-hero-bell-badge {
@@ -1705,25 +1706,79 @@ page {
   padding: 0 4px;
   border-radius: 999px;
   background: var(--mall-color-price);
-  color: #fff;
+  color: var(--mall-on-primary);
   font-size: 10px;
   line-height: 16px;
   text-align: center;
 }
 
-.b-hero-brand {
-  font-size: 19px;
-  font-weight: 700;
+.b-hero-kicker {
+  display: block;
+  padding-right: 42px;
+  font-size: 11px;
+  font-weight: 500;
   letter-spacing: 1px;
+  color: var(--mall-hero-text);
+  opacity: 0.72;
 }
 
-.b-hero-sub {
-  margin-top: 4px;
+.b-hero-brand {
+  display: block;
+  margin-top: 5px;
+  padding-right: 42px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.b-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  min-width: 0;
+}
+
+.b-hero-role {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 6px;
+  font-size: 10px;
+  color: var(--mall-hero-text);
+}
+
+.b-hero-org {
+  min-width: 0;
   font-size: 12px;
-  opacity: 0.82;
+  color: var(--mall-hero-text);
+  opacity: 0.76;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* 搜索条（hero 内嵌白底） */
+.b-hero-balance {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.b-hero-balance-label {
+  font-size: 11px;
+  color: var(--mall-hero-text);
+  opacity: 0.72;
+}
+
+.b-hero-balance-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mall-hero-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 搜索条 */
 .b-search {
   display: flex;
   align-items: center;
@@ -1731,9 +1786,10 @@ page {
   height: 34px;
   margin-top: 12px;
   padding: 0 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--mall-text-tertiary);
+  border: 1px solid var(--mall-card-border);
+  border-radius: 12px;
+  background: var(--mall-media-bg);
+  color: var(--mall-text-secondary);
 
   &:active {
     opacity: 0.88;
@@ -1742,14 +1798,34 @@ page {
 
 .b-search-text {
   font-size: 13px;
+  color: var(--mall-text-secondary);
+}
+
+/* 首页通用标题行 */
+.home-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.home-section-note {
+  font-size: 10px;
   color: var(--mall-text-tertiary);
 }
 
-/* Banner 轮播（Taro Swiper，16:6） */
+.home-metric-card {
+  padding: 16px 8px;
+}
+
+.metric-item-primary .metric-value {
+  color: var(--mall-primary);
+}
+
+/* Banner 轮播 */
 .b-banner {
-  height: 148px;
-  margin-top: 12px;
-  border-radius: 12px;
+  height: 144px;
+  margin-top: 18px;
+  border-radius: 16px;
   overflow: hidden;
 }
 
@@ -1760,39 +1836,63 @@ page {
   padding: 0 18px;
   height: 100%;
   box-sizing: border-box;
-  background: var(--mall-hero-grad);
-  color: #fff;
+  background: var(--mall-banner-grad);
+  color: var(--mall-hero-text);
 }
 
 .b-banner-title {
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.45;
+  max-width: 78%;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .b-banner-sub {
-  margin-top: 8px;
+  margin-top: 6px;
   font-size: 12px;
-  opacity: 0.85;
+  opacity: 0.78;
+}
+
+.b-banner-action {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  align-self: flex-start;
+  margin-top: 12px;
+  color: var(--mall-primary-hover);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .b-banner-hotline {
   position: absolute;
-  right: 12px;
-  bottom: 12px;
-  padding: 3px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
+  right: 16px;
+  bottom: 14px;
+  color: var(--mall-hero-text);
   font-size: 10px;
+  opacity: 0.62;
 }
 
-/* 功能宫格：2 行 × 5 列彩色圆图标（§6.1 弃用 emoji） */
+/* 功能宫格：首屏 5 个高频入口，其余按需展开 */
+.home-apps-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--mall-primary);
+  font-size: 11px;
+}
+
+.home-apps-toggle-icon-open {
+  transform: rotate(90deg);
+}
+
+.home-apps-card {
+  padding: 6px 4px 8px;
+}
+
 .b-grid {
   display: flex;
   flex-wrap: wrap;
-  margin-top: 8px;
 }
 
 .b-grid-item {
@@ -1801,7 +1901,7 @@ page {
   align-items: center;
   gap: 7px;
   width: 20%;
-  padding: 12px 2px;
+  padding: 10px 2px;
   box-sizing: border-box;
   border-radius: 10px;
 
@@ -1814,9 +1914,10 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  border: 1px solid transparent;
+  border-radius: 12px;
 }
 
 .b-grid-name {
@@ -1826,6 +1927,16 @@ page {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.b-grid-secondary {
+  margin: 4px 8px 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--mall-border-light);
+}
+
+.b-grid-secondary .b-grid-item {
+  width: 25%;
 }
 
 /* 公告条 */

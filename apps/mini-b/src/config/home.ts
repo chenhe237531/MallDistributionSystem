@@ -17,19 +17,25 @@ export const BIZ_WECHAT_ID = 'baiyingnuo-biz'
 export const NOTICE_TEXT =
   '百英诺商家平台 2026 全新上线｜同济医院首家成果转化企业｜检测—解读—移植—随访全周期服务'
 
-/** Banner 轮播（§4.1，3 张） */
-export const BANNERS: Array<{ title: string; subtitle: string }> = [
+/** Banner 轮播（§4.1，3 张）：每张只保留一个明确动作。 */
+export const BANNERS: Array<{ title: string; subtitle: string; action: string; url: string }> = [
   {
     title: '同济医院首家成果转化标杆企业',
     subtitle: '百英诺 · 菌群移植全周期服务平台',
+    action: '了解服务能力',
+    url: '/pages/guide/index',
   },
   {
     title: 'GMP 车间 · P2 实验室 · 华中菌群库',
     subtitle: '供体 500+｜入库菌群样本 3000+',
+    action: '查看业务流程',
+    url: '/pages/guide/index',
   },
   {
     title: '检测 — 解读 — 移植 — 随访',
     subtitle: '全周期定制化精准微生态管理',
+    action: '进入采购商城',
+    url: '/pages/procurement/index',
   },
 ]
 
@@ -137,6 +143,7 @@ export type HomeEntry = {
 export const HOME_ENTRIES: HomeEntry[] = [
   { label: '采购商城', icon: 'shop', tone: 'primary', url: '/pages/procurement/index' },
   { label: '预付款', icon: 'wallet', tone: 'warning', url: '/pages/prepaid/index' },
+  { label: '商品定价', icon: 'card', tone: 'primary', url: '/pages/pricing/index' },
   { label: '我的客户', icon: 'users', tone: 'success', url: '/pages/customers/index' },
   { label: '健康助手', icon: 'checkCircle', tone: 'success', url: '/pages/journeys/index' },
   { label: '报告与解读', icon: 'report', tone: 'primary', url: '/pages/reports/index' },
@@ -147,3 +154,19 @@ export const HOME_ENTRIES: HomeEntry[] = [
   { label: '客户认领', icon: 'userPlus', tone: 'primary', url: '/pages/claims/index' },
   { label: '品牌介绍', icon: 'star', tone: 'warning', url: '' },
 ]
+
+const PRIMARY_HOME_LABELS = ['采购商城', '预付款', '商品定价', '报告与解读', '我的客户']
+
+/** 首屏仅保留高频经营动作，次要入口按需展开，降低首页选择负担。 */
+export const PRIMARY_HOME_ENTRIES: HomeEntry[] = PRIMARY_HOME_LABELS.map((label) => {
+  const entry = HOME_ENTRIES.find((item) => item.label === label)
+  if (!entry) {
+    throw new Error(`首页高频入口缺失：${label}`)
+  }
+  return entry
+})
+
+const primaryLabels = new Set(PRIMARY_HOME_LABELS)
+export const SECONDARY_HOME_ENTRIES: HomeEntry[] = HOME_ENTRIES.filter(
+  (entry) => !primaryLabels.has(entry.label),
+)
