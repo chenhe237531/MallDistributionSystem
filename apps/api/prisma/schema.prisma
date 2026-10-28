@@ -77,6 +77,8 @@ model User {
   learningRecords  LearningRecord[]
   examAttempts     ExamAttempt[]
   shippingAddresses ShippingAddress[]
+  /** 后台为商家主账号配置的商家端菜单权限（1:1） */
+  menuPermission   MerchantMenuPermission?
   realName         String?
   idCardNo         String?
   gender           String?
@@ -1293,4 +1295,17 @@ model ShippingAddress {
   updatedAt     DateTime @updatedAt
 
   @@index([customerId])
+}
+
+/// 后台为已入驻商家配置的商家端菜单权限（1 个商家主账号 1 条记录）。
+/// 无记录 = 默认全量菜单（保持存量商家行为不变）；menus 存 shared 目录内的 key。
+model MerchantMenuPermission {
+  id         String   @id @default(cuid())
+  merchantId String   @unique
+  merchant   User     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  menus      String[]
+  /// 最近一次保存操作的平台运营账号 id
+  updatedBy  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

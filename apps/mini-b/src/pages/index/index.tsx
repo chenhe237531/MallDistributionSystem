@@ -17,6 +17,7 @@ import {
   type HomeEntry,
 } from '../../config/home'
 import { useTheme } from '../../lib/theme'
+import { filterEntriesByMenus, loadMerchantMenus } from '../../lib/merchant-menus'
 
 type Me = {
   name: string
@@ -104,6 +105,8 @@ export default function Index() {
   const [reminders, setReminders] = useState(0)
   const [unread, setUnread] = useState(0)
   const [todos, setTodos] = useState<TodoItem[]>([])
+  // null = 未拉到菜单配置（fail-open 不过滤）
+  const [menus, setMenus] = useState<string[] | null>(null)
   const [hotProducts, setHotProducts] = useState<HotProduct[]>([])
   const [showAllApps, setShowAllApps] = useState(false)
   // Taro View 实例类型跨端不一致，此处仅读取 H5 的 offsetTop 做锚点滚动
@@ -112,6 +115,7 @@ export default function Index() {
   const load = async () => {
     const profile = await api<Me>('/auth/me')
     setMe(profile)
+    setMenus(await loadMerchantMenus())
     if (profile.roles.includes('merchant')) {
       const prepaid = await api<Prepaid>('/prepaid/me')
       setBalance(prepaid.account.availableCents)
@@ -199,7 +203,7 @@ export default function Index() {
             : undefined,
       },
     ]
-    setTodos(nextTodos)
+    setTodos(filterEntriesByMenus(menus, nextTodos))
   }
 
   useDidShow(() => {
@@ -313,7 +317,7 @@ export default function Index() {
         </View>
         <View className="card home-apps-card">
           <View className="b-grid b-grid-primary">
-            {PRIMARY_HOME_ENTRIES.map((entry) => (
+            {filterEntriesByMenus(menus, PRIMARY_HOME_ENTRIES).map((entry) => (
               <View key={entry.label} className="b-grid-item" onClick={() => openEntry(entry)}>
                 <View className={`b-grid-icon tone-${entry.tone}`}>
                   <Icon name={entry.icon} size={22} />
@@ -324,7 +328,7 @@ export default function Index() {
           </View>
           {showAllApps ? (
             <View className="b-grid b-grid-secondary">
-              {SECONDARY_HOME_ENTRIES.map((entry) => (
+              {filterEntriesByMenus(menus, SECONDARY_HOME_ENTRIES).map((entry) => (
                 <View key={entry.label} className="b-grid-item" onClick={() => openEntry(entry)}>
                   <View className={`b-grid-icon tone-${entry.tone}`}>
                     <Icon name={entry.icon} size={22} />

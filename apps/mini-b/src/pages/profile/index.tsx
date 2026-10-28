@@ -3,6 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import { Text, View } from '@tarojs/components'
 import { ROLE_LABELS, Role, formatCents, type ThemeKey } from '@mall/shared'
 import { api, clearToken, ensureLogin, go } from '../../lib/api'
+import { clearMerchantMenusCache, filterEntriesByMenus, loadMerchantMenus } from '../../lib/merchant-menus'
 import { PageToast, toast } from '../../components/feedback'
 import { AppTabbar } from '../../components/AppTabbar'
 import { Icon, type IconName } from '../../components/Icon'
@@ -65,6 +66,8 @@ export default function Profile() {
   const [unread, setUnread] = useState(0)
   const [invite, setInvite] = useState<InviteInfo | null>(null)
   const [inviteSheetOpen, setInviteSheetOpen] = useState(false)
+  // null = 未拉到菜单配置（fail-open 不过滤）
+  const [menus, setMenus] = useState<string[] | null>(null)
 
   const load = async () => {
     const [profile, notificationRes, orderList] = await Promise.all([
@@ -75,6 +78,7 @@ export default function Profile() {
     setMe(profile)
     setUnread(notificationRes.unread)
     setOrders(orderList)
+    setMenus(await loadMerchantMenus())
     if (profile.roles.includes('merchant')) {
       setPrepaid(await api<Prepaid>('/prepaid/me'))
     }
@@ -137,6 +141,7 @@ export default function Profile() {
       onConfirm: () => {
         Dialog.close('b-profile-logout')
         clearToken()
+        clearMerchantMenusCache()
         void Taro.redirectTo({ url: '/pages/login/index' })
       },
       onCancel: () => Dialog.close('b-profile-logout'),
@@ -284,7 +289,7 @@ export default function Profile() {
       <View className="section">
         <Text className="section-title">我的应用</Text>
         <View className="card profile-app-grid">
-          {APP_ENTRIES.map((entry) => (
+          {filterEntriesByMenus(menus, APP_ENTRIES).map((entry) => (
             <View
               key={entry.label}
               className="profile-app-item"

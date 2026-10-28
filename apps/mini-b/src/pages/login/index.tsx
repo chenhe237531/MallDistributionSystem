@@ -10,6 +10,7 @@ import { api, setToken } from '../../lib/api'
 import { Icon } from '../../components/Icon'
 import logoPng from '../../assets/logo.png'
 import { useTheme } from '../../lib/theme'
+import { clearMerchantMenusCache } from '../../lib/merchant-menus'
 
 type LoginResponse = {
   token: string
@@ -42,6 +43,7 @@ export default function Login() {
         return
       }
       setToken(result.token)
+      clearMerchantMenusCache()
       toast('登录成功', 'success')
       void Taro.redirectTo({ url: '/pages/index/index' })
     } catch (cause) {
