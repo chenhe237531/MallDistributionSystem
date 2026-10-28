@@ -1,17 +1,22 @@
 import { useState } from 'react'
 import { Image, Text, View } from '@tarojs/components'
 import { resolveAsset } from '../../lib/api'
+import {
+  goodsFallbackLabel,
+  goodsImageMode,
+  type GoodsThumbSize,
+} from './media'
 
 type Props = {
   src?: string | null
   name: string
-  /** sm 48 / md 72 / lg 96 / hero 列表主图 */
-  size?: 'sm' | 'md' | 'lg'
+  /** sm 48 / md 86 / lg 110 / hero 详情媒体舞台 */
+  size?: GoodsThumbSize
   className?: string
 }
 
 /**
- * 商品缩略图（方案 §3.1）：统一 aspectFill + 无图/加载失败品牌兜底，保证任何数据下不破版。
+ * 商品图片：列表统一 aspectFill，详情主图 aspectFit，无图/失败均使用品牌兜底。
  */
 export function GoodsThumb({ src, name, size = 'md', className = '' }: Props) {
   const [failed, setFailed] = useState(false)
@@ -21,7 +26,7 @@ export function GoodsThumb({ src, name, size = 'md', className = '' }: Props) {
   if (!url || failed) {
     return (
       <View className={`${classes} goods-thumb-fallback`}>
-        <Text className="goods-thumb-initial">{name.slice(0, 1)}</Text>
+        <Text className="goods-thumb-initial">{goodsFallbackLabel(name)}</Text>
       </View>
     )
   }
@@ -30,7 +35,7 @@ export function GoodsThumb({ src, name, size = 'md', className = '' }: Props) {
     <Image
       className={classes}
       src={url}
-      mode="aspectFill"
+      mode={goodsImageMode(size)}
       lazyLoad
       onError={() => setFailed(true)}
     />

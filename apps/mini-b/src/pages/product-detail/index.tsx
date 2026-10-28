@@ -120,26 +120,33 @@ export default function ProductDetail() {
 
   return (
     <View className={`page page-detail ${themeClass}`}>
-      {images.length > 0 ? (
-        <Swiper
-          className="detail-swiper"
-          circular
-          indicatorDots={images.length > 1}
-          indicatorColor="rgba(31,35,41,0.2)"
-          indicatorActiveColor="var(--mall-primary)"
-        >
-          {images.map((src) => (
-            <SwiperItem key={src}>
-              <Image className="detail-hero-img" src={src} mode="aspectFill" />
-            </SwiperItem>
-          ))}
-        </Swiper>
-      ) : (
-        <View className="detail-hero-empty">
-          <GoodsThumb name={detail.name} size="lg" />
-          <Text className="detail-hero-empty-text">商品图待补充</Text>
-        </View>
-      )}
+      <View className="goods-media-stage detail-media-stage">
+        {images.length > 0 ? (
+          <Swiper
+            className="detail-swiper"
+            circular
+            indicatorDots={images.length > 1}
+            indicatorColor="var(--mall-border-strong)"
+            indicatorActiveColor="var(--mall-primary)"
+          >
+            {images.map((src) => (
+              <SwiperItem key={src}>
+                <GoodsThumb
+                  className="detail-hero-img"
+                  src={src}
+                  name={detail.name}
+                  size="hero"
+                />
+              </SwiperItem>
+            ))}
+          </Swiper>
+        ) : (
+          <View className="detail-hero-empty">
+            <GoodsThumb name={detail.name} size="hero" />
+            <Text className="detail-hero-empty-text">商品图待补充</Text>
+          </View>
+        )}
+      </View>
 
       <View className="detail-card">
         <View className="detail-price-row">

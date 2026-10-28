@@ -1,6 +1,7 @@
 import { Text, View } from '@tarojs/components'
 import { formatCents, productCategoryLabel } from '@mall/shared'
 import { GoodsThumb } from './GoodsThumb'
+import { Icon } from '../Icon'
 
 export type GoodsSummary = {
   id: string
@@ -51,13 +52,13 @@ export function GoodsCard({ product, tags = [], onOpen, onAdd }: Props) {
             ) : null}
           </View>
           <View
-            className="goods-card-add"
+            className="goods-card-action"
             onClick={(event) => {
               event.stopPropagation()
               onAdd?.()
             }}
           >
-            +
+            <Icon name="cart" size={15} />
           </View>
         </View>
       </View>

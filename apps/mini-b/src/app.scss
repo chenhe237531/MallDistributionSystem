@@ -2898,12 +2898,14 @@ page {
    商品图片与详情（方案 v1.0 §3：图片体系 / 详情页 / 公共组件）
    ============================================================ */
 
-/* 商品缩略图：统一 aspectFill，无图/失败品牌兜底（§3.1） */
+/* 商品图片：列表固定 1:1，详情主图在 4:3 中性舞台内完整展示 */
 .goods-thumb {
   display: block;
   flex-shrink: 0;
   border-radius: 10px;
-  background: var(--mall-bg);
+  border: 1px solid var(--mall-border-light);
+  background: var(--mall-media-bg);
+  box-sizing: border-box;
   overflow: hidden;
 }
 
@@ -2922,11 +2924,20 @@ page {
   height: 110px;
 }
 
+.goods-thumb-hero {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
 .goods-thumb-fallback {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--mall-primary-light-pressed), var(--mall-primary-hover));
+  background:
+    radial-gradient(circle at 72% 24%, var(--mall-primary-light), transparent 44%),
+    var(--mall-media-bg);
 }
 
 .goods-thumb-initial {
@@ -3018,21 +3029,21 @@ page {
   color: var(--mall-text-tertiary);
 }
 
-.goods-card-add {
+.goods-card-action {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: var(--mall-primary);
-  color: #fff;
-  font-size: 16px;
-  line-height: 1;
-  box-shadow: var(--mall-glow);
+  color: var(--mall-on-primary);
+  box-shadow: 0 4px 12px var(--mall-primary-light-pressed);
+  transition: transform 160ms ease, background-color 160ms ease;
 
   &:active {
     background: var(--mall-primary-pressed);
+    transform: scale(0.94);
   }
 }
 
@@ -3103,29 +3114,49 @@ page {
   padding: 0 0 calc(72px + env(safe-area-inset-bottom));
 }
 
+.goods-media-stage {
+  position: relative;
+  width: 100%;
+  background: var(--mall-media-bg);
+  overflow: hidden;
+}
+
+.detail-media-stage {
+  aspect-ratio: 4 / 3;
+  border-bottom: 1px solid var(--mall-border-light);
+}
+
 .detail-swiper {
-  height: 375px;
-  background: var(--mall-card);
+  width: 100%;
+  height: 100%;
+  background: var(--mall-media-bg);
 }
 
 .detail-hero-img {
   width: 100%;
-  height: 375px;
+  height: 100%;
 }
 
 .detail-hero-empty {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  height: 280px;
-  background: var(--mall-card);
+  width: 100%;
+  height: 100%;
+  background: var(--mall-media-bg);
 }
 
 .detail-hero-empty-text {
+  position: absolute;
+  right: 0;
+  bottom: 20px;
+  left: 0;
+  z-index: 1;
   font-size: 11px;
   color: var(--mall-text-tertiary);
+  text-align: center;
 }
 
 .detail-card {
@@ -4805,7 +4836,7 @@ html.theme-gold ::-webkit-scrollbar-track {
 .theme-gold .contact-btn,
 .theme-gold .biz-range-chip-active,
 .theme-gold .proc-sub-pill-active,
-.theme-gold .goods-card-add,
+.theme-gold .goods-card-action,
 .theme-gold .proc-progress-dot-active {
   color: var(--mall-on-primary);
 }
