@@ -2644,7 +2644,7 @@ page {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 18px 14px;
+  padding: 18px 56px 18px 14px;
   border-radius: 14px;
   background: var(--mall-hero-grad);
   color: var(--mall-hero-text);
@@ -2676,14 +2676,21 @@ page {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .profile-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
   font-size: 17px;
   font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .profile-role-tag {
+  flex-shrink: 0;
   padding: 1px 7px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.22);
@@ -2691,8 +2698,11 @@ page {
 }
 
 .profile-org {
+  overflow: hidden;
   font-size: 11px;
   opacity: 0.82;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .profile-bell {
@@ -5148,6 +5158,9 @@ html.theme-gold ::-webkit-scrollbar-track {
   padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
   border-radius: 24px 24px 0 0;
   box-sizing: border-box;
+  border-top: 1px solid var(--mall-border);
+  background: var(--mall-card);
+  box-shadow: var(--mall-shadow);
 }
 
 .theme-gold .prototype-shell {
@@ -5436,6 +5449,8 @@ html.theme-gold ::-webkit-scrollbar-track {
   width: calc(50% - 5px);
   min-height: 260px;
   padding: 8px;
+  flex-direction: column;
+  gap: 0;
   box-sizing: border-box;
 }
 
@@ -5515,8 +5530,6 @@ html.theme-gold ::-webkit-scrollbar-track {
 }
 
 .theme-gold .proc-catalog-grid .goods-card.prototype-surface {
-  flex-direction: column;
-  gap: 0;
   border-color: rgba(226, 194, 115, 0.24);
   background:
     linear-gradient(165deg, rgba(226, 194, 115, 0.06), transparent 45%),
@@ -5555,7 +5568,10 @@ html.theme-gold ::-webkit-scrollbar-track {
   justify-content: space-between;
   margin-top: 14px;
   padding-top: 12px;
+  width: 100%;
   border-top: 1px solid var(--mall-border-light);
+  border-radius: 0;
+  box-sizing: border-box;
 }
 
 .detail-spec-trigger-label,
@@ -5625,8 +5641,11 @@ html.theme-gold ::-webkit-scrollbar-track {
   display: grid;
   width: 30px;
   height: 30px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
   border-radius: 50%;
-  background: var(--mall-fill);
+  background: var(--mall-surface-2);
   color: var(--mall-text-secondary);
   font-size: 24px;
   line-height: 28px;
@@ -5639,7 +5658,7 @@ html.theme-gold ::-webkit-scrollbar-track {
   margin-bottom: 20px;
   padding: 10px;
   border-radius: 14px;
-  background: var(--mall-fill);
+  background: var(--mall-surface-2);
 }
 
 .prototype-spec-product-name,
@@ -5689,7 +5708,7 @@ html.theme-gold ::-webkit-scrollbar-track {
 
 .prototype-spec-option-active {
   border-color: var(--mall-primary);
-  background: var(--mall-primary-soft);
+  background: var(--mall-primary-light);
   color: var(--mall-primary-hover);
   font-weight: 650;
 }
@@ -5720,7 +5739,11 @@ html.theme-gold ::-webkit-scrollbar-track {
 }
 
 .prototype-quantity-button {
-  background: var(--mall-fill);
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--mall-surface-2);
   font-size: 20px;
 }
 
@@ -5741,6 +5764,9 @@ html.theme-gold ::-webkit-scrollbar-track {
   width: 100%;
   max-width: 360px;
   padding: 28px 20px 20px;
+  border: 1px solid var(--mall-border);
+  background: var(--mall-card);
+  box-shadow: var(--mall-shadow);
   box-sizing: border-box;
   text-align: center;
 }
@@ -5799,7 +5825,7 @@ html.theme-gold ::-webkit-scrollbar-track {
 }
 
 .prototype-success-secondary {
-  margin-top: 16px;
+  margin: 16px auto 0;
   color: var(--mall-primary);
   font-size: 14px;
 }

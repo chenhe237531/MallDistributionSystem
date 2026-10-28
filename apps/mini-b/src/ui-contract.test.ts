@@ -116,3 +116,40 @@ describe('merchant prototype feedback contract', () => {
     assert.match(cartScreen, /查看采购单/)
   })
 })
+
+describe('merchant prototype cross-theme and keyboard contract', () => {
+  it('keeps the two-column catalogue structure and feedback surfaces usable outside gold', () => {
+    const catalogueCardRule = appStyles.match(/\.proc-catalog-grid \.goods-card \{([^}]*)\}/)?.[1] ?? ''
+    const sheetRule = appStyles.match(/\.prototype-sheet \{([^}]*)\}/)?.[1] ?? ''
+    const successDialogRule = appStyles.match(/\.prototype-success-dialog \{([^}]*)\}/)?.[1] ?? ''
+
+    assert.match(catalogueCardRule, /flex-direction:\s*column/)
+    assert.match(catalogueCardRule, /gap:\s*0/)
+    assert.match(sheetRule, /background:\s*var\(--mall-card\)/)
+    assert.match(sheetRule, /border-top:\s*1px solid var\(--mall-border\)/)
+    assert.match(successDialogRule, /background:\s*var\(--mall-card\)/)
+    assert.match(successDialogRule, /box-shadow:\s*var\(--mall-shadow\)/)
+  })
+
+  it('makes new dialogs keyboard-reachable while preserving touch controls', () => {
+    assert.match(productDetailScreen, /useH5DialogFocus\(\{[\s\S]*open:\s*specSheetOpen/)
+    assert.match(productDetailScreen, /id="product-spec-trigger"/)
+    assert.match(productDetailScreen, /role="dialog"/)
+    assert.match(productDetailScreen, /ariaRole="dialog"/)
+    assert.match(productDetailScreen, /className="prototype-spec-option/)
+    assert.match(cartScreen, /useH5DialogFocus\(\{[\s\S]*open:\s*orderSubmitted/)
+    assert.match(cartScreen, /id="cart-submit-order"/)
+    assert.match(cartScreen, /role="dialog"/)
+  })
+
+  it('reserves notification space and truncates an overlong merchant name', () => {
+    const profileCardRule = appStyles.match(/\.profile-user-card \{([^}]*)\}/)?.[1] ?? ''
+    const profileNameRule = appStyles.match(/\.profile-name \{([^}]*)\}/)?.[1] ?? ''
+    const profileRoleRule = appStyles.match(/\.profile-role-tag \{([^}]*)\}/)?.[1] ?? ''
+
+    assert.match(profileCardRule, /padding:\s*18px 56px 18px 14px/)
+    assert.match(profileNameRule, /text-overflow:\s*ellipsis/)
+    assert.match(profileNameRule, /white-space:\s*nowrap/)
+    assert.match(profileRoleRule, /flex-shrink:\s*0/)
+  })
+})

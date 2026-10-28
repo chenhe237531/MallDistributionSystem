@@ -11,6 +11,7 @@ import { goodsTags } from '../../config/home'
 import { Empty } from '@nutui/nutui-react-taro'
 import { PageToast, toast } from '../../components/feedback'
 import { useTheme } from '../../lib/theme'
+import { useH5DialogFocus } from '../../lib/useH5DialogFocus'
 
 type RelatedProduct = {
   id: string
@@ -68,6 +69,13 @@ export default function ProductDetail() {
   const [specSheetOpen, setSpecSheetOpen] = useState(false)
   const [selectedSpec, setSelectedSpec] = useState('单人装')
   const [specQuantity, setSpecQuantity] = useState(1)
+
+  useH5DialogFocus({
+    open: specSheetOpen,
+    dialogId: 'product-spec-sheet',
+    initialFocusId: 'product-spec-sheet-close',
+    onDismiss: () => setSpecSheetOpen(false),
+  })
 
   useEffect(() => {
     if (!ensureLogin()) {
@@ -172,13 +180,19 @@ export default function ProductDetail() {
           ))}
           <Text className="detail-sku">SKU {detail.skuCode}</Text>
         </View>
-        <View className="detail-spec-trigger" onClick={() => setSpecSheetOpen(true)}>
+        <Button
+          id="product-spec-trigger"
+          variant="text"
+          className="detail-spec-trigger"
+          ariaLabel={`选择规格，当前${selectedSpec}`}
+          onClick={() => setSpecSheetOpen(true)}
+        >
           <View>
             <Text className="detail-spec-trigger-label">规格选择</Text>
             <Text className="detail-spec-trigger-value">{selectedSpec} · 已选规格</Text>
           </View>
           <Text className="detail-spec-trigger-arrow">›</Text>
-        </View>
+        </Button>
       </View>
 
       <View className="detail-card">
@@ -285,12 +299,27 @@ export default function ProductDetail() {
 
       {specSheetOpen ? (
         <View className="prototype-modal-mask" onClick={() => setSpecSheetOpen(false)}>
-          <View className="prototype-spec-sheet prototype-sheet" onClick={(event) => event.stopPropagation()}>
+          <View
+            id="product-spec-sheet"
+            className="prototype-spec-sheet prototype-sheet"
+            role="dialog"
+            ariaRole="dialog"
+            ariaRoledescription="模态对话框"
+            ariaLabel="选择商品规格"
+            onClick={(event) => event.stopPropagation()}
+          >
             <View className="prototype-sheet-header">
               <Text className="prototype-sheet-title">选择规格</Text>
-              <Text className="prototype-sheet-close" onClick={() => setSpecSheetOpen(false)}>
+              <Button
+                id="product-spec-sheet-close"
+                variant="text"
+                size="sm"
+                className="prototype-sheet-close"
+                ariaLabel="关闭规格选择"
+                onClick={() => setSpecSheetOpen(false)}
+              >
                 ×
-              </Text>
+              </Button>
             </View>
             <View className="prototype-spec-product">
               <GoodsThumb src={images[0]} name={detail.name} size="sm" />
@@ -302,31 +331,40 @@ export default function ProductDetail() {
             <Text className="prototype-spec-label">包装规格</Text>
             <View className="prototype-spec-options">
               {['单人装', '5人装', '10人装', '礼盒装'].map((spec) => (
-                <View
+                <Button
                   key={spec}
+                  variant="secondary"
+                  size="sm"
                   className={`prototype-spec-option ${selectedSpec === spec ? 'prototype-spec-option-active' : ''}`}
+                  ariaLabel={`选择${spec}`}
                   onClick={() => setSelectedSpec(spec)}
                 >
                   {spec}
-                </View>
+                </Button>
               ))}
             </View>
             <View className="prototype-quantity-row">
               <Text className="prototype-spec-label">采购数量</Text>
               <View className="prototype-quantity-control">
-                <Text
+                <Button
+                  variant="secondary"
+                  size="sm"
                   className="prototype-quantity-button"
+                  ariaLabel="减少采购数量"
                   onClick={() => setSpecQuantity((quantity) => Math.max(1, quantity - 1))}
                 >
                   −
-                </Text>
+                </Button>
                 <Text className="prototype-quantity-value">{specQuantity}</Text>
-                <Text
+                <Button
+                  variant="secondary"
+                  size="sm"
                   className="prototype-quantity-button"
+                  ariaLabel="增加采购数量"
                   onClick={() => setSpecQuantity((quantity) => Math.min(99, quantity + 1))}
                 >
                   +
-                </Text>
+                </Button>
               </View>
             </View>
             <Button

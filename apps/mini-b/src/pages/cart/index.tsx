@@ -10,6 +10,7 @@ import { GoodsThumb } from '../../components/goods/GoodsThumb'
 import { Empty } from '@nutui/nutui-react-taro'
 import { PageToast, toast } from '../../components/feedback'
 import { useTheme } from '../../lib/theme'
+import { useH5DialogFocus } from '../../lib/useH5DialogFocus'
 
 type Product = {
   id: string
@@ -29,6 +30,13 @@ export default function Cart() {
   const [submitting, setSubmitting] = useState(false)
   const [orderSubmitted, setOrderSubmitted] = useState(false)
   const [submittedSummary, setSubmittedSummary] = useState<{ count: number; totalCents: number } | null>(null)
+
+  useH5DialogFocus({
+    open: orderSubmitted,
+    dialogId: 'order-submission-dialog',
+    initialFocusId: 'order-submission-confirm',
+    onDismiss: () => setOrderSubmitted(false),
+  })
 
   useDidShow(() => {
     if (!ensureLogin()) {
@@ -168,7 +176,7 @@ export default function Cart() {
             <Text className="proc-settle-count">共 {count} 件</Text>
             <Text className="proc-settle-total">¥{formatCents(totalCents)}</Text>
           </View>
-          <Button variant="primary" size="lg" loading={submitting} onClick={() => void submit()}>
+          <Button id="cart-submit-order" variant="primary" size="lg" loading={submitting} onClick={() => void submit()}>
             提交采购单
           </Button>
         </View>
@@ -177,7 +185,12 @@ export default function Cart() {
       {orderSubmitted && submittedSummary ? (
         <View className="prototype-modal-mask prototype-success-mask" onClick={() => setOrderSubmitted(false)}>
           <View
+            id="order-submission-dialog"
             className="prototype-success-dialog prototype-surface prototype-decor"
+            role="dialog"
+            ariaRole="dialog"
+            ariaRoledescription="模态对话框"
+            ariaLabel="采购单提交成功"
             onClick={(event) => event.stopPropagation()}
           >
             <View className="prototype-success-mark">✓</View>
@@ -194,6 +207,7 @@ export default function Cart() {
               </View>
             </View>
             <Button
+              id="order-submission-confirm"
               variant="primary"
               size="lg"
               block
@@ -205,15 +219,18 @@ export default function Cart() {
             >
               查看采购单
             </Button>
-            <Text
+            <Button
+              variant="text"
+              size="md"
               className="prototype-success-secondary"
+              ariaLabel="继续采购"
               onClick={() => {
                 setOrderSubmitted(false)
                 void Taro.redirectTo({ url: '/pages/procurement/index' })
               }}
             >
               继续采购
-            </Text>
+            </Button>
           </View>
         </View>
       ) : null}
