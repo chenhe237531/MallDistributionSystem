@@ -36,6 +36,7 @@ apps/api/prisma/*.db-wal
 apps/api/uploads/training/
 # 云托管打包产物、二维码与 H5 静态构建（本地交付，不入库）
 deploy/artifacts/
+project.private.config.json
 deploy/qrcodes/
 apps/*/dist-h5-*/
 
