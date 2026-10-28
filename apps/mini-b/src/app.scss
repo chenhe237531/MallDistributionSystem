@@ -5220,3 +5220,172 @@ html.theme-gold ::-webkit-scrollbar-track {
     margin: 0 auto;
   }
 }
+
+/* ===== 百英诺原型 · 登录、首页、我的 ===== */
+.login-brand-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.login-brand-name {
+  display: block;
+  margin-top: 14px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--mall-text);
+}
+
+.login-brand-tagline {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: var(--mall-text-secondary);
+}
+
+.theme-gold .login-page {
+  justify-content: flex-start;
+  min-height: 100dvh;
+  padding-top: calc(28px + env(safe-area-inset-top));
+}
+
+.theme-gold .login-brand-block {
+  padding: 4px 0 10px;
+}
+
+.theme-gold .login-brand-block.prototype-decor::after {
+  top: -112px;
+  right: -34px;
+  width: 250px;
+  height: 250px;
+  z-index: 0;
+}
+
+.theme-gold .login-brand-block > * {
+  position: relative;
+  z-index: 1;
+}
+
+.theme-gold .login-brand-name {
+  color: var(--mall-primary-hover);
+  text-shadow: 0 2px 16px rgba(226, 194, 115, 0.18);
+}
+
+.theme-gold .login-card.prototype-surface {
+  margin-top: 20px;
+  padding: 18px;
+}
+
+.theme-gold .login-card .login-field .nut-input {
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid rgba(226, 194, 115, 0.22);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.theme-gold .login-submit-purple.prototype-gold-action .nut-button {
+  height: 46px;
+  border: 0;
+  background: transparent;
+  color: var(--mall-on-primary);
+  font-weight: 700;
+}
+
+.theme-gold .b-hero.prototype-surface {
+  margin-top: 4px;
+  padding: 18px 16px 16px;
+}
+
+.theme-gold .b-hero.prototype-decor::after {
+  top: -104px;
+  right: -52px;
+  width: 246px;
+  height: 246px;
+}
+
+.theme-gold .b-hero-kicker {
+  color: var(--mall-primary-hover);
+  opacity: 0.94;
+}
+
+.theme-gold .b-hero-brand,
+.theme-gold .b-hero-balance-value {
+  color: var(--mall-text);
+}
+
+.theme-gold .b-hero-role {
+  border-color: rgba(226, 194, 115, 0.44);
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .b-search {
+  border-color: rgba(226, 194, 115, 0.26);
+  background: rgba(5, 6, 7, 0.56);
+}
+
+.theme-gold .home-metric-card.prototype-surface,
+.theme-gold .home-apps-card.prototype-surface {
+  background:
+    linear-gradient(135deg, rgba(226, 194, 115, 0.04), transparent 62%),
+    rgba(20, 21, 24, 0.96);
+}
+
+.theme-gold .home-metric-card .metric-value {
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .b-grid-icon {
+  border-color: rgba(226, 194, 115, 0.24);
+  background: radial-gradient(circle at 32% 24%, rgba(226, 194, 115, 0.14), transparent 68%);
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .b-banner {
+  border: 1px solid rgba(226, 194, 115, 0.24);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+}
+
+.theme-gold .profile-user-card.prototype-surface {
+  margin-top: 4px;
+  padding: 19px 14px;
+  color: var(--mall-text);
+}
+
+.theme-gold .profile-avatar {
+  border: 1px solid rgba(226, 194, 115, 0.52);
+  background: rgba(208, 173, 78, 0.14);
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .profile-role-tag {
+  border: 1px solid rgba(226, 194, 115, 0.36);
+  background: rgba(208, 173, 78, 0.12);
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .profile-stats.prototype-surface {
+  margin-top: 14px;
+  padding: 16px 8px;
+}
+
+.theme-gold .profile-stats .metric-value {
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .prepaid-banner.prototype-surface {
+  border-color: rgba(226, 194, 115, 0.32);
+  background:
+    linear-gradient(135deg, rgba(226, 194, 115, 0.11), transparent 62%),
+    linear-gradient(135deg, #17140c, #251e10);
+  color: var(--mall-text);
+}
+
+.theme-gold .prepaid-banner-btn {
+  border: 1px solid rgba(245, 218, 143, 0.58);
+  background: var(--mall-primary-grad);
+  color: var(--mall-on-primary);
+}
