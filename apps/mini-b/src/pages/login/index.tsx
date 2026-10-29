@@ -10,6 +10,7 @@ import { api, setToken } from '../../lib/api'
 import { Icon } from '../../components/Icon'
 import logoPng from '../../assets/logo.png'
 import { useTheme } from '../../lib/theme'
+import { clearMerchantMenusCache } from '../../lib/merchant-menus'
 
 type LoginResponse = {
   token: string
@@ -42,6 +43,7 @@ export default function Login() {
         return
       }
       setToken(result.token)
+      clearMerchantMenusCache()
       toast('登录成功', 'success')
       void Taro.redirectTo({ url: '/pages/index/index' })
     } catch (cause) {
@@ -56,12 +58,16 @@ export default function Login() {
   }
 
   return (
-    <View className={`page login-page ${themeClass}`}>
-      <Image src={logoPng} className="login-logo-img" mode="aspectFit" />
+    <View className={`page login-page prototype-shell ${themeClass}`}>
+      <View className="login-brand-block prototype-decor">
+        <Image src={logoPng} className="login-logo-img" mode="aspectFit" />
+        <Text className="login-brand-name">百英诺 · 商家中心</Text>
+        <Text className="login-brand-tagline">菌群多植 · 守护健康</Text>
+      </View>
       <Text className="login-welcome">欢迎登录</Text>
       <Text className="login-welcome-sub">登录后可享受更好的服务体验</Text>
 
-      <View className="card login-card">
+      <View className="card login-card prototype-surface">
         <View className="login-field">
           <Text className="login-label">手机号</Text>
           <NutInput
@@ -83,7 +89,7 @@ export default function Login() {
         </View>
         {error ? <Text className="error">{error}</Text> : null}
         <NutButton
-          className="login-submit login-submit-purple"
+          className="login-submit login-submit-purple prototype-gold-action"
           block
           type="primary"
           loading={loading}

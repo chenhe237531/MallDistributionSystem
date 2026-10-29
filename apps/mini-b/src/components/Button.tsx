@@ -23,6 +23,7 @@ export type ButtonVariant = 'primary' | 'outline' | 'secondary' | 'text' | 'dang
 export type ButtonSize = 'lg' | 'md' | 'sm'
 
 export type ButtonProps = {
+  id?: string
   /** 按钮类型，默认 primary */
   variant?: ButtonVariant
   /** 尺寸，默认 md */
@@ -41,6 +42,7 @@ export type ButtonProps = {
 }
 
 export function Button({
+  id,
   variant = 'primary',
   size = 'md',
   block = false,
@@ -68,6 +70,7 @@ export function Button({
   return (
     <TaroButton
       {...BUTTON_A11Y_ROLE}
+      id={id}
       className={cls}
       disabled={inert}
       ariaLabel={ariaLabel}

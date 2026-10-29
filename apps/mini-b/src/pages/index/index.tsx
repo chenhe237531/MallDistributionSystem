@@ -17,6 +17,7 @@ import {
   type HomeEntry,
 } from '../../config/home'
 import { useTheme } from '../../lib/theme'
+import { filterEntriesByMenus, loadMerchantMenus } from '../../lib/merchant-menus'
 
 type Me = {
   name: string
@@ -104,6 +105,8 @@ export default function Index() {
   const [reminders, setReminders] = useState(0)
   const [unread, setUnread] = useState(0)
   const [todos, setTodos] = useState<TodoItem[]>([])
+  // null = 未拉到菜单配置（fail-open 不过滤）
+  const [menus, setMenus] = useState<string[] | null>(null)
   const [hotProducts, setHotProducts] = useState<HotProduct[]>([])
   const [showAllApps, setShowAllApps] = useState(false)
   // Taro View 实例类型跨端不一致，此处仅读取 H5 的 offsetTop 做锚点滚动
@@ -112,6 +115,7 @@ export default function Index() {
   const load = async () => {
     const profile = await api<Me>('/auth/me')
     setMe(profile)
+    setMenus(await loadMerchantMenus())
     if (profile.roles.includes('merchant')) {
       const prepaid = await api<Prepaid>('/prepaid/me')
       setBalance(prepaid.account.availableCents)
@@ -199,7 +203,7 @@ export default function Index() {
             : undefined,
       },
     ]
-    setTodos(nextTodos)
+    setTodos(filterEntriesByMenus(menus, nextTodos))
   }
 
   useDidShow(() => {
@@ -249,10 +253,10 @@ export default function Index() {
   }
 
   return (
-    <View className={`page page-tabbar ${themeClass}`}>
+    <View className={`page page-tabbar prototype-shell ${themeClass}`}>
       <PageToast />
 
-      <View className="hero b-hero">
+      <View className="hero b-hero prototype-surface prototype-decor">
         <View
           className="b-hero-bell"
           onClick={() => go('/pages/notifications/index')}
@@ -260,7 +264,7 @@ export default function Index() {
           <Icon name="bell" size={20} />
           {unread > 0 ? <View className="b-hero-bell-badge">{unread > 99 ? '99+' : unread}</View> : null}
         </View>
-        <Text className="b-hero-kicker">百英诺商家中心</Text>
+        <Text className="b-hero-kicker">百英诺 · 商家中心</Text>
         <Text className="b-hero-brand">你好，{me?.name ?? '商户'}</Text>
         <View className="b-hero-meta">
           <Text className="b-hero-role">{roleLabel}</Text>
@@ -283,7 +287,7 @@ export default function Index() {
           <Text className="section-title">今日经营</Text>
           <Text className="home-section-note">数据实时更新</Text>
         </View>
-        <View className="card metric-row home-metric-card">
+        <View className="card metric-row home-metric-card prototype-surface">
           <View className="metric-item metric-item-primary">
             <Text className="metric-value">{todayOrders === null ? '—' : `${todayOrders} 单`}</Text>
             <Text className="metric-label">今日订单</Text>
@@ -311,9 +315,9 @@ export default function Index() {
             <Icon name="arrowRight" size={14} className={showAllApps ? 'home-apps-toggle-icon-open' : ''} />
           </View>
         </View>
-        <View className="card home-apps-card">
+        <View className="card home-apps-card prototype-surface">
           <View className="b-grid b-grid-primary">
-            {PRIMARY_HOME_ENTRIES.map((entry) => (
+            {filterEntriesByMenus(menus, PRIMARY_HOME_ENTRIES).map((entry) => (
               <View key={entry.label} className="b-grid-item" onClick={() => openEntry(entry)}>
                 <View className={`b-grid-icon tone-${entry.tone}`}>
                   <Icon name={entry.icon} size={22} />
@@ -324,7 +328,7 @@ export default function Index() {
           </View>
           {showAllApps ? (
             <View className="b-grid b-grid-secondary">
-              {SECONDARY_HOME_ENTRIES.map((entry) => (
+              {filterEntriesByMenus(menus, SECONDARY_HOME_ENTRIES).map((entry) => (
                 <View key={entry.label} className="b-grid-item" onClick={() => openEntry(entry)}>
                   <View className={`b-grid-icon tone-${entry.tone}`}>
                     <Icon name={entry.icon} size={22} />

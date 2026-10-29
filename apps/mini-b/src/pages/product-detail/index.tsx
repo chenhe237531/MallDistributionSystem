@@ -11,6 +11,7 @@ import { goodsTags } from '../../config/home'
 import { Empty } from '@nutui/nutui-react-taro'
 import { PageToast, toast } from '../../components/feedback'
 import { useTheme } from '../../lib/theme'
+import { useH5DialogFocus } from '../../lib/useH5DialogFocus'
 
 type RelatedProduct = {
   id: string
@@ -65,6 +66,16 @@ export default function ProductDetail() {
   const id = router.params.id ?? ''
   const [detail, setDetail] = useState<ProductDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [specSheetOpen, setSpecSheetOpen] = useState(false)
+  const [selectedSpec, setSelectedSpec] = useState('单人装')
+  const [specQuantity, setSpecQuantity] = useState(1)
+
+  useH5DialogFocus({
+    open: specSheetOpen,
+    dialogId: 'product-spec-sheet',
+    initialFocusId: 'product-spec-sheet-close',
+    onDismiss: () => setSpecSheetOpen(false),
+  })
 
   useEffect(() => {
     if (!ensureLogin()) {
@@ -84,12 +95,12 @@ export default function ProductDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  const addToCart = (redirect = false) => {
+  const addToCart = (redirect = false, quantity = 1) => {
     if (!detail) {
       return
     }
     const cart = readCart()
-    const next = { ...cart, [detail.id]: (cart[detail.id] ?? 0) + 1 }
+    const next = { ...cart, [detail.id]: (cart[detail.id] ?? 0) + quantity }
     writeCart(next)
     if (redirect) {
       void Taro.redirectTo({ url: '/pages/cart/index' })
@@ -119,8 +130,8 @@ export default function ProductDetail() {
   const retail = detail.retailPriceCents ?? 0
 
   return (
-    <View className={`page page-detail ${themeClass}`}>
-      <View className="goods-media-stage detail-media-stage">
+    <View className={`page page-detail prototype-shell ${themeClass}`}>
+      <View className="goods-media-stage detail-media-stage prototype-surface prototype-decor">
         {images.length > 0 ? (
           <Swiper
             className="detail-swiper"
@@ -148,7 +159,7 @@ export default function ProductDetail() {
         )}
       </View>
 
-      <View className="detail-card">
+      <View className="detail-card detail-summary-card prototype-surface">
         <View className="detail-price-row">
           <Text className="detail-price">
             <Text className="detail-price-symbol">¥</Text>
@@ -169,6 +180,19 @@ export default function ProductDetail() {
           ))}
           <Text className="detail-sku">SKU {detail.skuCode}</Text>
         </View>
+        <Button
+          id="product-spec-trigger"
+          variant="text"
+          className="detail-spec-trigger"
+          ariaLabel={`选择规格，当前${selectedSpec}`}
+          onClick={() => setSpecSheetOpen(true)}
+        >
+          <View>
+            <Text className="detail-spec-trigger-label">规格选择</Text>
+            <Text className="detail-spec-trigger-value">{selectedSpec} · 已选规格</Text>
+          </View>
+          <Text className="detail-spec-trigger-arrow">›</Text>
+        </Button>
       </View>
 
       <View className="detail-card">
@@ -263,7 +287,7 @@ export default function ProductDetail() {
 
       <Text className="detail-compliance">{complianceText(detail.category)}</Text>
 
-      <View className="detail-actionbar">
+      <View className="detail-actionbar prototype-actionbar">
         {/* 描金次核心 + 金色渐变主 CTA（黑金规范 §5.1，避免双金抢戏） */}
         <Button variant="outline" size="lg" className="detail-action-item" onClick={() => addToCart(false)}>
           加入采购车
@@ -272,6 +296,92 @@ export default function ProductDetail() {
           立即采购
         </Button>
       </View>
+
+      {specSheetOpen ? (
+        <View className="prototype-modal-mask" onClick={() => setSpecSheetOpen(false)}>
+          <View
+            id="product-spec-sheet"
+            className="prototype-spec-sheet prototype-sheet"
+            role="dialog"
+            ariaRole="dialog"
+            ariaRoledescription="模态对话框"
+            ariaLabel="选择商品规格"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <View className="prototype-sheet-header">
+              <Text className="prototype-sheet-title">选择规格</Text>
+              <Button
+                id="product-spec-sheet-close"
+                variant="text"
+                size="sm"
+                className="prototype-sheet-close"
+                ariaLabel="关闭规格选择"
+                onClick={() => setSpecSheetOpen(false)}
+              >
+                ×
+              </Button>
+            </View>
+            <View className="prototype-spec-product">
+              <GoodsThumb src={images[0]} name={detail.name} size="sm" />
+              <View>
+                <Text className="prototype-spec-product-name">{detail.name}</Text>
+                <Text className="prototype-spec-product-price">¥{formatCents(detail.supplyPriceCents)}</Text>
+              </View>
+            </View>
+            <Text className="prototype-spec-label">包装规格</Text>
+            <View className="prototype-spec-options">
+              {['单人装', '5人装', '10人装', '礼盒装'].map((spec) => (
+                <Button
+                  key={spec}
+                  variant="secondary"
+                  size="sm"
+                  className={`prototype-spec-option ${selectedSpec === spec ? 'prototype-spec-option-active' : ''}`}
+                  ariaLabel={`选择${spec}`}
+                  onClick={() => setSelectedSpec(spec)}
+                >
+                  {spec}
+                </Button>
+              ))}
+            </View>
+            <View className="prototype-quantity-row">
+              <Text className="prototype-spec-label">采购数量</Text>
+              <View className="prototype-quantity-control">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="prototype-quantity-button"
+                  ariaLabel="减少采购数量"
+                  onClick={() => setSpecQuantity((quantity) => Math.max(1, quantity - 1))}
+                >
+                  −
+                </Button>
+                <Text className="prototype-quantity-value">{specQuantity}</Text>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="prototype-quantity-button"
+                  ariaLabel="增加采购数量"
+                  onClick={() => setSpecQuantity((quantity) => Math.min(99, quantity + 1))}
+                >
+                  +
+                </Button>
+              </View>
+            </View>
+            <Button
+              variant="primary"
+              size="lg"
+              block
+              className="prototype-gold-action"
+              onClick={() => {
+                addToCart(false, specQuantity)
+                setSpecSheetOpen(false)
+              }}
+            >
+              确认加入采购车
+            </Button>
+          </View>
+        </View>
+      ) : null}
 
       <PageToast />
     </View>

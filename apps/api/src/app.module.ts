@@ -13,6 +13,7 @@ import { CustomersModule } from './customers/customers.module'
 import { HealthController } from './health/health.controller'
 import { JourneysModule } from './journeys/journeys.module'
 import { MaterialsModule } from './materials/materials.module'
+import { MerchantMenusModule } from './merchant-menus/merchant-menus.module'
 import { NotificationsModule } from './notifications/notifications.module'
 import { PrepaidModule } from './prepaid/prepaid.module'
 import { PrismaModule } from './prisma/prisma.module'
@@ -53,6 +54,7 @@ import { TrainingModule } from './training/training.module'
     StatementsModule,
     TrainingModule,
     MaterialsModule,
+    MerchantMenusModule,
     CustomersModule,
     ChannelsModule,
     RemindersModule,

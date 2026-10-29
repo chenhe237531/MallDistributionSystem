@@ -2644,7 +2644,7 @@ page {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 18px 14px;
+  padding: 18px 56px 18px 14px;
   border-radius: 14px;
   background: var(--mall-hero-grad);
   color: var(--mall-hero-text);
@@ -2676,14 +2676,21 @@ page {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .profile-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
   font-size: 17px;
   font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .profile-role-tag {
+  flex-shrink: 0;
   padding: 1px 7px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.22);
@@ -2691,8 +2698,11 @@ page {
 }
 
 .profile-org {
+  overflow: hidden;
   font-size: 11px;
   opacity: 0.82;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .profile-bell {
@@ -5115,4 +5125,716 @@ html.theme-gold ::-webkit-scrollbar-track {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ===== 百英诺原型视觉基元 =====
+   仅黑金主题增强材质与装饰；经典主题继续使用上方语义组件样式。 */
+.prototype-shell {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.prototype-surface {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.prototype-decor {
+  position: relative;
+  overflow: hidden;
+}
+
+.prototype-gold-action {
+  position: relative;
+  min-height: 44px;
+  border-radius: 14px;
+}
+
+.prototype-sheet {
+  width: 100%;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+  box-sizing: border-box;
+  border-top: 1px solid var(--mall-border);
+  background: var(--mall-card);
+  box-shadow: var(--mall-shadow);
+}
+
+.theme-gold .prototype-shell {
+  background:
+    radial-gradient(circle at 92% 3%, rgba(226, 194, 115, 0.14), transparent 26%),
+    radial-gradient(circle at 8% 44%, rgba(208, 173, 78, 0.06), transparent 28%),
+    var(--mall-bg);
+}
+
+.theme-gold .prototype-surface {
+  border: 1px solid rgba(226, 194, 115, 0.3);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.045), transparent 48%),
+    linear-gradient(150deg, rgba(27, 28, 32, 0.96), rgba(14, 15, 17, 0.98));
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 248, 225, 0.05);
+}
+
+.theme-gold .prototype-decor::after {
+  position: absolute;
+  top: -72px;
+  right: -42px;
+  z-index: -1;
+  width: 220px;
+  height: 220px;
+  border: 1px solid rgba(226, 194, 115, 0.16);
+  border-radius: 44% 56% 63% 37%;
+  box-shadow:
+    -38px 30px 0 -1px rgba(226, 194, 115, 0.09),
+    -76px 62px 0 -1px rgba(226, 194, 115, 0.05);
+  content: '';
+  opacity: 0.9;
+  pointer-events: none;
+  transform: rotate(-24deg);
+}
+
+.theme-gold .prototype-gold-action {
+  border: 1px solid rgba(245, 218, 143, 0.72);
+  background: linear-gradient(135deg, #f4d789 0%, #d0ad4e 54%, #aa812a 100%);
+  box-shadow: 0 10px 22px rgba(208, 173, 78, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  color: var(--mall-on-primary);
+}
+
+.theme-gold .prototype-sheet {
+  border-top: 1px solid rgba(226, 194, 115, 0.46);
+  background:
+    radial-gradient(circle at 92% 0%, rgba(226, 194, 115, 0.16), transparent 33%),
+    linear-gradient(180deg, #1d1b18 0%, #111214 52%);
+  box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.46);
+}
+
+.theme-gold .prototype-sheet::before {
+  display: block;
+  width: 34px;
+  height: 4px;
+  margin: 0 auto 14px;
+  border-radius: 99px;
+  background: var(--mall-primary);
+  box-shadow: 0 0 12px rgba(226, 194, 115, 0.44);
+  content: '';
+}
+
+@media (min-width: 768px) {
+  .prototype-shell {
+    max-width: var(--mall-shell-max);
+    margin: 0 auto;
+  }
+
+  .prototype-sheet {
+    max-width: var(--mall-shell-max);
+    margin: 0 auto;
+  }
+}
+
+/* ===== 百英诺原型 · 登录、首页、我的 ===== */
+.login-brand-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.login-brand-name {
+  display: block;
+  margin-top: 14px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--mall-text);
+}
+
+.login-brand-tagline {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: var(--mall-text-secondary);
+}
+
+.theme-gold .login-page {
+  justify-content: flex-start;
+  min-height: 100dvh;
+  padding-top: calc(28px + env(safe-area-inset-top));
+}
+
+.theme-gold .login-brand-block {
+  padding: 4px 0 10px;
+}
+
+.theme-gold .login-brand-block.prototype-decor::after {
+  top: -112px;
+  right: -34px;
+  width: 250px;
+  height: 250px;
+  z-index: 0;
+}
+
+.theme-gold .login-brand-block > * {
+  position: relative;
+  z-index: 1;
+}
+
+.theme-gold .login-brand-name {
+  color: var(--mall-primary-hover);
+  text-shadow: 0 2px 16px rgba(226, 194, 115, 0.18);
+}
+
+.theme-gold .login-card.prototype-surface {
+  margin-top: 20px;
+  padding: 18px;
+}
+
+.theme-gold .login-card .login-field .nut-input {
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid rgba(226, 194, 115, 0.22);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.theme-gold .login-submit-purple.prototype-gold-action .nut-button {
+  height: 46px;
+  border: 0;
+  background: transparent;
+  color: var(--mall-on-primary);
+  font-weight: 700;
+}
+
+.theme-gold .b-hero.prototype-surface {
+  margin-top: 4px;
+  padding: 18px 16px 16px;
+}
+
+.theme-gold .b-hero.prototype-decor::after {
+  top: -104px;
+  right: -52px;
+  width: 246px;
+  height: 246px;
+}
+
+.theme-gold .b-hero-kicker {
+  color: var(--mall-primary-hover);
+  opacity: 0.94;
+}
+
+.theme-gold .b-hero-brand,
+.theme-gold .b-hero-balance-value {
+  color: var(--mall-text);
+}
+
+.theme-gold .b-hero-role {
+  border-color: rgba(226, 194, 115, 0.44);
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .b-search {
+  border-color: rgba(226, 194, 115, 0.26);
+  background: rgba(5, 6, 7, 0.56);
+}
+
+.theme-gold .home-metric-card.prototype-surface,
+.theme-gold .home-apps-card.prototype-surface {
+  background:
+    linear-gradient(135deg, rgba(226, 194, 115, 0.04), transparent 62%),
+    rgba(20, 21, 24, 0.96);
+}
+
+.theme-gold .home-metric-card .metric-value {
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .b-grid-icon {
+  border-color: rgba(226, 194, 115, 0.24);
+  background: radial-gradient(circle at 32% 24%, rgba(226, 194, 115, 0.14), transparent 68%);
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .b-banner {
+  border: 1px solid rgba(226, 194, 115, 0.24);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+}
+
+.theme-gold .profile-user-card.prototype-surface {
+  margin-top: 4px;
+  padding: 19px 14px;
+  color: var(--mall-text);
+}
+
+.theme-gold .profile-avatar {
+  border: 1px solid rgba(226, 194, 115, 0.52);
+  background: rgba(208, 173, 78, 0.14);
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .profile-role-tag {
+  border: 1px solid rgba(226, 194, 115, 0.36);
+  background: rgba(208, 173, 78, 0.12);
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .profile-stats.prototype-surface {
+  margin-top: 14px;
+  padding: 16px 8px;
+}
+
+.theme-gold .profile-stats .metric-value {
+  color: var(--mall-primary-hover);
+}
+
+.theme-gold .prepaid-banner.prototype-surface {
+  border-color: rgba(226, 194, 115, 0.32);
+  background:
+    linear-gradient(135deg, rgba(226, 194, 115, 0.11), transparent 62%),
+    linear-gradient(135deg, #17140c, #251e10);
+  color: var(--mall-text);
+}
+
+.theme-gold .prepaid-banner-btn {
+  border: 1px solid rgba(245, 218, 143, 0.58);
+  background: var(--mall-primary-grad);
+  color: var(--mall-on-primary);
+}
+
+/* ===== 百英诺原型 · 采购商城与商品详情 ===== */
+.proc-prototype-body {
+  display: block;
+  min-height: 60vh;
+}
+
+.proc-category-rail {
+  width: 100%;
+  padding: 8px 12px 4px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.proc-category-rail .proc-side-item {
+  display: inline-flex;
+  width: auto;
+  min-width: 68px;
+  min-height: 34px;
+  margin-right: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--mall-border);
+  border-radius: 999px;
+  background: var(--mall-card);
+  vertical-align: top;
+}
+
+.proc-category-rail .proc-side-item-active::before {
+  display: none;
+}
+
+.proc-prototype-main {
+  padding: 8px 12px 18px;
+  background: transparent;
+}
+
+.proc-catalog-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px 0;
+}
+
+.proc-catalog-grid .goods-card {
+  width: calc(50% - 5px);
+  min-height: 260px;
+  padding: 8px;
+  flex-direction: column;
+  gap: 0;
+  box-sizing: border-box;
+}
+
+.proc-catalog-grid .goods-card-media {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+}
+
+.proc-catalog-grid .goods-card-info {
+  gap: 5px;
+  padding: 8px 2px 0;
+}
+
+.proc-catalog-grid .goods-card-name {
+  min-height: 36px;
+  font-size: 12px;
+}
+
+.proc-catalog-grid .goods-card-tags {
+  min-height: 17px;
+}
+
+.proc-catalog-grid .goods-card-tag:nth-child(n + 3) {
+  display: none;
+}
+
+.proc-catalog-grid .goods-card-price {
+  font-size: 16px;
+}
+
+.proc-catalog-grid .goods-card-retail {
+  display: none;
+}
+
+.theme-gold .proc-prototype-head {
+  padding: calc(12px + env(safe-area-inset-top)) 12px 10px;
+  border-bottom: 1px solid rgba(226, 194, 115, 0.2);
+  background:
+    radial-gradient(circle at 98% 0%, rgba(226, 194, 115, 0.18), transparent 38%),
+    #0b0c0e;
+}
+
+.theme-gold .proc-head-title {
+  color: var(--mall-primary-hover);
+  letter-spacing: 1px;
+}
+
+.theme-gold .proc-head-search {
+  height: 38px;
+  border: 1px solid rgba(226, 194, 115, 0.3);
+  background: rgba(19, 20, 22, 0.94);
+  color: var(--mall-text-secondary);
+}
+
+.theme-gold .proc-category-rail {
+  background: rgba(11, 12, 14, 0.9);
+}
+
+.theme-gold .proc-category-rail .proc-side-item {
+  border-color: rgba(226, 194, 115, 0.2);
+  background: rgba(20, 21, 24, 0.9);
+}
+
+.theme-gold .proc-category-rail .proc-side-item-active {
+  border-color: rgba(245, 218, 143, 0.78);
+  background: var(--mall-primary-grad);
+  color: var(--mall-on-primary);
+}
+
+.theme-gold .proc-price-entry.prototype-surface {
+  margin-bottom: 12px;
+  background:
+    linear-gradient(135deg, rgba(226, 194, 115, 0.1), transparent 68%),
+    var(--mall-card);
+}
+
+.theme-gold .proc-catalog-grid .goods-card.prototype-surface {
+  border-color: rgba(226, 194, 115, 0.24);
+  background:
+    linear-gradient(165deg, rgba(226, 194, 115, 0.06), transparent 45%),
+    rgba(20, 21, 24, 0.98);
+}
+
+.theme-gold .proc-catalog-grid .goods-card-action {
+  border: 1px solid rgba(245, 218, 143, 0.7);
+  background: transparent;
+  color: var(--mall-primary-hover);
+  box-shadow: none;
+}
+
+.theme-gold .detail-media-stage.prototype-surface {
+  margin: 8px 12px 0;
+  width: auto;
+  border-color: rgba(226, 194, 115, 0.28);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 78% 20%, rgba(226, 194, 115, 0.12), transparent 36%),
+    var(--mall-media-bg);
+}
+
+.theme-gold .detail-media-stage.prototype-decor::after {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.theme-gold .detail-summary-card.prototype-surface {
+  border-color: rgba(226, 194, 115, 0.28);
+}
+
+.detail-spec-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 12px;
+  width: 100%;
+  border-top: 1px solid var(--mall-border-light);
+  border-radius: 0;
+  box-sizing: border-box;
+}
+
+.detail-spec-trigger-label,
+.detail-spec-trigger-value {
+  display: block;
+}
+
+.detail-spec-trigger-label {
+  font-size: 11px;
+  color: var(--mall-text-secondary);
+}
+
+.detail-spec-trigger-value {
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.detail-spec-trigger-arrow {
+  font-size: 23px;
+  color: var(--mall-primary);
+}
+
+.theme-gold .detail-actionbar.prototype-actionbar {
+  border-top-color: rgba(226, 194, 115, 0.26);
+  background: rgba(11, 12, 14, 0.94);
+  box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== 百英诺原型 · 规格抽屉与采购反馈 ===== */
+.prototype-modal-mask {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.58);
+}
+
+.prototype-spec-sheet {
+  max-height: min(78dvh, 660px);
+  overflow-y: auto;
+}
+
+.prototype-sheet-header,
+.prototype-quantity-row,
+.prototype-spec-product {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.prototype-sheet-header {
+  margin-bottom: 16px;
+}
+
+.prototype-sheet-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--mall-text);
+}
+
+.prototype-sheet-close {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--mall-surface-2);
+  color: var(--mall-text-secondary);
+  font-size: 24px;
+  line-height: 28px;
+  place-items: center;
+}
+
+.prototype-spec-product {
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--mall-surface-2);
+}
+
+.prototype-spec-product-name,
+.prototype-spec-product-price,
+.prototype-spec-label,
+.prototype-success-summary-label,
+.prototype-success-summary-value {
+  display: block;
+}
+
+.prototype-spec-product-name {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--mall-text);
+}
+
+.prototype-spec-product-price {
+  margin-top: 5px;
+  color: var(--mall-primary);
+  font-weight: 700;
+}
+
+.prototype-spec-label {
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mall-text);
+}
+
+.prototype-spec-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.prototype-spec-option {
+  min-width: 72px;
+  padding: 9px 13px;
+  border: 1px solid var(--mall-border);
+  border-radius: 10px;
+  box-sizing: border-box;
+  color: var(--mall-text-secondary);
+  font-size: 13px;
+  text-align: center;
+}
+
+.prototype-spec-option-active {
+  border-color: var(--mall-primary);
+  background: var(--mall-primary-light);
+  color: var(--mall-primary-hover);
+  font-weight: 650;
+}
+
+.prototype-quantity-row {
+  margin-bottom: 22px;
+}
+
+.prototype-quantity-row .prototype-spec-label {
+  margin-bottom: 0;
+}
+
+.prototype-quantity-control {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--mall-border);
+  border-radius: 10px;
+}
+
+.prototype-quantity-button,
+.prototype-quantity-value {
+  display: grid;
+  width: 34px;
+  height: 32px;
+  color: var(--mall-text);
+  place-items: center;
+}
+
+.prototype-quantity-button {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--mall-surface-2);
+  font-size: 20px;
+}
+
+.prototype-quantity-value {
+  width: 38px;
+  border-right: 1px solid var(--mall-border);
+  border-left: 1px solid var(--mall-border);
+  font-size: 14px;
+}
+
+.prototype-success-mask {
+  align-items: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.prototype-success-dialog {
+  width: 100%;
+  max-width: 360px;
+  padding: 28px 20px 20px;
+  border: 1px solid var(--mall-border);
+  background: var(--mall-card);
+  box-shadow: var(--mall-shadow);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.prototype-success-mark {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--mall-primary);
+  color: var(--mall-on-primary);
+  font-size: 30px;
+  font-weight: 700;
+  place-items: center;
+}
+
+.prototype-success-title,
+.prototype-success-copy,
+.prototype-success-secondary {
+  display: block;
+}
+
+.prototype-success-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--mall-text);
+}
+
+.prototype-success-copy {
+  margin-top: 9px;
+  color: var(--mall-text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.prototype-success-summary {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--mall-border-light);
+  border-bottom: 1px solid var(--mall-border-light);
+}
+
+.prototype-success-summary-label {
+  color: var(--mall-text-secondary);
+  font-size: 12px;
+}
+
+.prototype-success-summary-value {
+  margin-top: 5px;
+  color: var(--mall-primary);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.prototype-success-secondary {
+  margin: 16px auto 0;
+  color: var(--mall-primary);
+  font-size: 14px;
+}
+
+.theme-gold .prototype-spec-option-active {
+  border-color: rgba(245, 218, 143, 0.8);
+  background: rgba(226, 194, 115, 0.15);
+}
+
+.theme-gold .prototype-success-dialog.prototype-surface {
+  border-color: rgba(245, 218, 143, 0.42);
 }

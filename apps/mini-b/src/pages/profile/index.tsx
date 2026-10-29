@@ -3,6 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import { Text, View } from '@tarojs/components'
 import { ROLE_LABELS, Role, formatCents, type ThemeKey } from '@mall/shared'
 import { api, clearToken, ensureLogin, go } from '../../lib/api'
+import { clearMerchantMenusCache, filterEntriesByMenus, loadMerchantMenus } from '../../lib/merchant-menus'
 import { PageToast, toast } from '../../components/feedback'
 import { AppTabbar } from '../../components/AppTabbar'
 import { Icon, type IconName } from '../../components/Icon'
@@ -65,6 +66,8 @@ export default function Profile() {
   const [unread, setUnread] = useState(0)
   const [invite, setInvite] = useState<InviteInfo | null>(null)
   const [inviteSheetOpen, setInviteSheetOpen] = useState(false)
+  // null = 未拉到菜单配置（fail-open 不过滤）
+  const [menus, setMenus] = useState<string[] | null>(null)
 
   const load = async () => {
     const [profile, notificationRes, orderList] = await Promise.all([
@@ -75,6 +78,7 @@ export default function Profile() {
     setMe(profile)
     setUnread(notificationRes.unread)
     setOrders(orderList)
+    setMenus(await loadMerchantMenus())
     if (profile.roles.includes('merchant')) {
       setPrepaid(await api<Prepaid>('/prepaid/me'))
     }
@@ -137,6 +141,7 @@ export default function Profile() {
       onConfirm: () => {
         Dialog.close('b-profile-logout')
         clearToken()
+        clearMerchantMenusCache()
         void Taro.redirectTo({ url: '/pages/login/index' })
       },
       onCancel: () => Dialog.close('b-profile-logout'),
@@ -144,10 +149,10 @@ export default function Profile() {
   }
 
   return (
-    <View className={`page page-tabbar ${themeClass}`}>
+    <View className={`page page-tabbar prototype-shell ${themeClass}`}>
       <PageToast />
 
-      <View className="profile-user-card">
+      <View className="profile-user-card prototype-surface prototype-decor">
         <View
           className="profile-bell"
           onClick={() => go('/pages/notifications/index')}
@@ -165,7 +170,7 @@ export default function Profile() {
         </View>
       </View>
 
-      <View className="card profile-stats">
+      <View className="card profile-stats prototype-surface">
         <View className="metric-item">
           <Text className="metric-value">
             {availableCents === null ? '—' : `${formatCents(availableCents)}`}
@@ -186,7 +191,7 @@ export default function Profile() {
         </View>
       </View>
 
-      <View className="prepaid-banner">
+      <View className="prepaid-banner prototype-surface prototype-decor">
         <View className="prepaid-banner-main">
           <Text className="prepaid-banner-title">
             {availableCents === null ? '预付款账户' : balanceLow ? '预付款余额偏低' : '预付款账户健康'}
@@ -284,7 +289,7 @@ export default function Profile() {
       <View className="section">
         <Text className="section-title">我的应用</Text>
         <View className="card profile-app-grid">
-          {APP_ENTRIES.map((entry) => (
+          {filterEntriesByMenus(menus, APP_ENTRIES).map((entry) => (
             <View
               key={entry.label}
               className="profile-app-item"
@@ -305,7 +310,7 @@ export default function Profile() {
 
       {inviteSheetOpen && invite ? (
         <View className="theme-sheet-mask" onClick={() => setInviteSheetOpen(false)}>
-          <View className="theme-sheet invite-sheet" onClick={(event) => event.stopPropagation()}>
+          <View className="theme-sheet invite-sheet prototype-sheet" onClick={(event) => event.stopPropagation()}>
             <View className="theme-sheet-head">
               <Text className="theme-sheet-title">我的邀请码</Text>
               <Text className="theme-sheet-close" onClick={() => setInviteSheetOpen(false)}>
@@ -342,7 +347,7 @@ export default function Profile() {
 
       {themeSheetOpen ? (
         <View className="theme-sheet-mask" onClick={() => setThemeSheetOpen(false)}>
-          <View className="theme-sheet" onClick={(event) => event.stopPropagation()}>
+          <View className="theme-sheet prototype-sheet" onClick={(event) => event.stopPropagation()}>
             <View className="theme-sheet-head">
               <Text className="theme-sheet-title">外观主题</Text>
               <Text className="theme-sheet-close" onClick={() => setThemeSheetOpen(false)}>
